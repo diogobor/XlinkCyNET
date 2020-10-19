@@ -32,7 +32,9 @@ public class MenuBar implements ActionListener {
 
 		if (source == importNetwork) {
 			chooseNetwork = new JFileChooser();
-			chooseNetwork.setFileFilter(new ExtensionFileFilter("CSV file", "csv"));
+			chooseNetwork.setFileFilter(new ExtensionFileFilter("CSV file (*.csv)", "csv"));
+			chooseNetwork.setFileFilter(new ExtensionFileFilter("Uniprot file (*.tab)", "tab"));
+			chooseNetwork.setFileSelectionMode(JFileChooser.FILES_ONLY);
 			chooseNetwork.setDialogTitle("Import file");
 
 			if (chooseNetwork.showOpenDialog(chooseNetwork) != JFileChooser.APPROVE_OPTION)
@@ -48,7 +50,7 @@ public class MenuBar implements ActionListener {
 		menuBar.add(getFileMenu());
 		return menuBar;
 	}
-	
+
 	public void setEnabled(boolean b) {
 		fileMenu.setEnabled(b);
 	}

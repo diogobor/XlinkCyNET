@@ -16,7 +16,7 @@ public class ReaderWriterTextFile {
 
 	BufferedWriter bw;
 
-	String linha;
+	String line;
 
 	/**
 	 * Constructor 1: the argument is a file name
@@ -41,7 +41,7 @@ public class ReaderWriterTextFile {
 	 */
 
 	public String getLine() {
-		return linha;
+		return line;
 	}
 
 	/**
@@ -51,7 +51,7 @@ public class ReaderWriterTextFile {
 	 */
 	public boolean hasLine() throws IOException {
 		while (bf.ready()) { 
-			linha = bf.readLine();
+			line = bf.readLine();
 			return true;
 		}
 		bf.close();

@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -59,8 +58,9 @@ import de.fmp.liulab.task.MainSingleNodeTask;
  */
 public class Util {
 
-	private static String PROTEIN_LENGTH_A = "length_protein_a";
-	private static String PROTEIN_LENGTH_B = "length_protein_b";
+	public static String PROTEIN_LENGTH_A = "length_protein_a";
+	public static String PROTEIN_LENGTH_B = "length_protein_b";
+	public static String NODE_LABEL_POSITION = "NODE_LABEL_POSITION";
 	private static String XL_PROTEIN_A_B = "pro_site_ab";
 	private static String XL_PROTEIN_B_A = "pro_site_ba";
 	private static String PROTEIN_A = "protein_a";

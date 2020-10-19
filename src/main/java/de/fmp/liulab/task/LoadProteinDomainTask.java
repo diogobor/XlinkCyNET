@@ -27,6 +27,7 @@ import java.util.StringTokenizer;
 import java.util.function.Predicate;
 
 import javax.swing.AbstractAction;
+import javax.swing.AbstractListModel;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
@@ -35,11 +36,13 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
+import javax.swing.ListModel;
 import javax.swing.table.DefaultTableModel;
 
 import org.cytoscape.application.CyApplicationManager;
@@ -59,11 +62,10 @@ import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.TaskMonitor;
 
 import de.fmp.liulab.internal.UpdateViewListener;
+import de.fmp.liulab.internal.view.JTableRowRenderer;
 import de.fmp.liulab.internal.view.MenuBar;
-import de.fmp.liulab.model.CrossLink;
 import de.fmp.liulab.model.GeneDomain;
 import de.fmp.liulab.model.ProteinDomain;
-import de.fmp.liulab.utils.Tuple2;
 import de.fmp.liulab.utils.Util;
 
 public class LoadProteinDomainTask extends AbstractTask implements ActionListener {
@@ -244,7 +246,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		};
 
 		mainProteinDomainTable = new JTable(tableDataModel);
-		setTableProperties();
+		setTableProperties(1);
 
 		Action insertLineToTableAction = new AbstractAction("insertLineToTable") {
 			/**
@@ -395,7 +397,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 											countPtnDomain, 1);
 									countPtnDomain++;
 								}
-								setTableProperties();
+								setTableProperties(geneListFromTable.size());
 								isPfamLoaded = true;
 							}
 						};
@@ -641,13 +643,37 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	/**
 	 * Set properties to the Node domain table
 	 */
-	public static void setTableProperties() {
+	public static void setTableProperties(int number_lines) {
 		if (mainProteinDomainTable != null) {
 			mainProteinDomainTable.setPreferredScrollableViewportSize(new Dimension(490, 90));
 			mainProteinDomainTable.getColumnModel().getColumn(0).setPreferredWidth(50);
 			mainProteinDomainTable.getColumnModel().getColumn(1).setPreferredWidth(250);
 			mainProteinDomainTable.setFillsViewportHeight(true);
 			mainProteinDomainTable.setAutoCreateRowSorter(true);
+
+			final String[] headers = new String[number_lines];
+			for (int count = 0; count < number_lines; count++) {
+				headers[count] = String.valueOf(count + 1);
+			}
+
+			ListModel lm = new AbstractListModel() {
+
+				@Override
+				public int getSize() {
+					return headers.length;
+				}
+
+				@Override
+				public Object getElementAt(int index) {
+					return headers[index];
+				}
+
+			};
+
+			JList rowHeader = new JList(lm);
+			rowHeader.setFixedCellWidth(50);
+			rowHeader.setFixedCellHeight(mainProteinDomainTable.getRowHeight());
+			rowHeader.setCellRenderer(new JTableRowRenderer(mainProteinDomainTable));
 		}
 	}
 
@@ -707,7 +733,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 					}
 				}
 
-				setTableProperties();
+				setTableProperties(st1.countTokens());
 
 			} catch (Exception ex) {
 				ex.printStackTrace();

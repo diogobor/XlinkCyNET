@@ -36,7 +36,6 @@ import javax.swing.table.DefaultTableModel;
 
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.model.CyEdge;
-import org.cytoscape.model.CyIdentifiable;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyRow;
@@ -63,6 +62,8 @@ import de.fmp.liulab.utils.Tuple2;
 import de.fmp.liulab.utils.Util;
 
 public class MainSingleNodeTask extends AbstractTask implements ActionListener {
+
+	public static boolean isPlotDone = false;
 
 	private CyApplicationManager cyApplicationManager;
 	private CyNetwork myNetwork;
@@ -97,7 +98,6 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	public static ArrayList<CrossLink> intraLinks;
 	public static float proteinLength;
 	public static CyNode node;
-	public static boolean isPlotDone = false;
 
 	private Thread pfamThread;
 	private JButton pFamButton;
@@ -323,8 +323,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		myCurrentRow = myNetwork.getRow(node);
 		nodeView = netView.getNodeView(node);
-		Object length_protein_a = myCurrentRow.getRaw("length_protein_a");
-		Object length_protein_b = myCurrentRow.getRaw("length_protein_b");
+		Object length_protein_a = myCurrentRow.getRaw(Util.PROTEIN_LENGTH_A);
+		Object length_protein_b = myCurrentRow.getRaw(Util.PROTEIN_LENGTH_B);
 
 		double currentNodeWidth = nodeView.getVisualProperty(BasicVisualLexicon.NODE_WIDTH);
 		if (currentNodeWidth == 0)
@@ -342,7 +342,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		 */
 		currentNodeWidth = ((Number) length_protein_a).doubleValue();
 		proteinLength = (float) currentNodeWidth;
-		
+
 		/**
 		 * Get intra and interlinks
 		 */
@@ -674,7 +674,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting protein domains to node...");
 				setNodeDomainColors();
 				taskMonitor.setProgress(0.75);
-				
+
 				textLabel_status_result.setText("Setting styles on the edges...");
 				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting styles on the edges...");
 				isPlotDone = false;
@@ -745,7 +745,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Restoring node label position...");
 
 		// Try to get the label visual property by its ID
-		VisualProperty<?> vp_label_position = lexicon.lookup(CyNode.class, "NODE_LABEL_POSITION");
+		VisualProperty<?> vp_label_position = lexicon.lookup(CyNode.class, Util.NODE_LABEL_POSITION);
 		if (vp_label_position != null) {
 			nodeView.clearValueLock(vp_label_position);
 		}
@@ -1081,7 +1081,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		// ######################### NODE_LABEL_POSITION ######################
 
 		// Try to get the label visual property by its ID
-		VisualProperty<?> vp_label_position = lexicon.lookup(CyNode.class, "NODE_LABEL_POSITION");
+		VisualProperty<?> vp_label_position = lexicon.lookup(CyNode.class, Util.NODE_LABEL_POSITION);
 		if (vp_label_position != null) {
 
 			// If the property is supported by this rendering engine,
