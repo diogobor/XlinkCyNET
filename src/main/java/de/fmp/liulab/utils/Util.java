@@ -227,8 +227,7 @@ public class Util {
 		}
 
 		UpdateViewListener.isNodeModified = true;
-		LoadProteinDomainTask.isPlotDone = true;
-		
+		LoadProteinDomainTask.isPlotDone = true;		
 		return true;
 	}
 
