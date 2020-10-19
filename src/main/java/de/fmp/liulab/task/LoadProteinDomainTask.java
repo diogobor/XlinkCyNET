@@ -95,6 +95,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	private String rowstring, value;
 	private Clipboard clipboard;
 	private StringSelection stsel;
+	private static JList rowHeader;
 
 	private boolean isPfamLoaded = true;
 	private boolean pfamDoStop = false;
@@ -306,6 +307,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		JScrollPane proteinDomainTableScrollPanel = new JScrollPane();
 		proteinDomainTableScrollPanel.setBounds(10, 130, 500, 105);
 		proteinDomainTableScrollPanel.setViewportView(mainProteinDomainTable);
+		proteinDomainTableScrollPanel.setRowHeaderView(rowHeader);
 		mainPanel.add(proteinDomainTableScrollPanel);
 	}
 
@@ -670,7 +672,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 			};
 
-			JList rowHeader = new JList(lm);
+			rowHeader = new JList(lm);
 			rowHeader.setFixedCellWidth(50);
 			rowHeader.setFixedCellHeight(mainProteinDomainTable.getRowHeight());
 			rowHeader.setCellRenderer(new JTableRowRenderer(mainProteinDomainTable));
