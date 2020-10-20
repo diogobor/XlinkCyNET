@@ -96,6 +96,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	private Clipboard clipboard;
 	private StringSelection stsel;
 	private static JList rowHeader;
+	private static JScrollPane proteinDomainTableScrollPanel;
 
 	private boolean isPfamLoaded = true;
 	private boolean pfamDoStop = false;
@@ -257,6 +258,8 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 			public void actionPerformed(ActionEvent evt) {
 				tableDataModel.addRow(new Object[] { "" });
+
+				updateRowHeader(tableDataModel.getRowCount());
 				textLabel_status_result.setText("Row has been inserted.");
 			}
 		};
@@ -276,11 +279,13 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 				if (mainProteinDomainTable.getSelectedRow() != -1) {
 
-					int input = JOptionPane.showConfirmDialog(null, "Do you confirm the removal of the line?");
+					int input = JOptionPane.showConfirmDialog(null, "Do you confirm the removal of the line "
+							+ (mainProteinDomainTable.getSelectedRow() + 1) + "?");
 					// 0=yes, 1=no, 2=cancel
 					if (input == 0) {
 						// remove selected row from the model
 						tableDataModel.removeRow(mainProteinDomainTable.getSelectedRow());
+						updateRowHeader(tableDataModel.getRowCount());
 					}
 				}
 
@@ -304,7 +309,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
 		// Create the scroll pane and add the table to it.
-		JScrollPane proteinDomainTableScrollPanel = new JScrollPane();
+		proteinDomainTableScrollPanel = new JScrollPane();
 		proteinDomainTableScrollPanel.setBounds(10, 130, 500, 105);
 		proteinDomainTableScrollPanel.setViewportView(mainProteinDomainTable);
 		proteinDomainTableScrollPanel.setRowHeaderView(rowHeader);
@@ -642,6 +647,35 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 			return sbError.toString();
 	}
 
+	private static void updateRowHeader(int number_lines) {
+
+		final String[] headers = new String[number_lines];
+		for (int count = 0; count < number_lines; count++) {
+			headers[count] = String.valueOf(count + 1);
+		}
+
+		ListModel lm = new AbstractListModel() {
+
+			@Override
+			public int getSize() {
+				return headers.length;
+			}
+
+			@Override
+			public Object getElementAt(int index) {
+				return headers[index];
+			}
+
+		};
+
+		rowHeader = new JList(lm);
+		rowHeader.setFixedCellWidth(50);
+		rowHeader.setFixedCellHeight(mainProteinDomainTable.getRowHeight());
+		rowHeader.setCellRenderer(new JTableRowRenderer(mainProteinDomainTable));
+		if (proteinDomainTableScrollPanel != null)
+			proteinDomainTableScrollPanel.setRowHeaderView(rowHeader);
+	}
+
 	/**
 	 * Set properties to the Node domain table
 	 */
@@ -653,29 +687,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 			mainProteinDomainTable.setFillsViewportHeight(true);
 			mainProteinDomainTable.setAutoCreateRowSorter(true);
 
-			final String[] headers = new String[number_lines];
-			for (int count = 0; count < number_lines; count++) {
-				headers[count] = String.valueOf(count + 1);
-			}
-
-			ListModel lm = new AbstractListModel() {
-
-				@Override
-				public int getSize() {
-					return headers.length;
-				}
-
-				@Override
-				public Object getElementAt(int index) {
-					return headers[index];
-				}
-
-			};
-
-			rowHeader = new JList(lm);
-			rowHeader.setFixedCellWidth(50);
-			rowHeader.setFixedCellHeight(mainProteinDomainTable.getRowHeight());
-			rowHeader.setCellRenderer(new JTableRowRenderer(mainProteinDomainTable));
+			updateRowHeader(number_lines);
 		}
 	}
 

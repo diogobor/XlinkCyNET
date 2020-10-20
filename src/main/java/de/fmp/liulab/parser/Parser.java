@@ -61,12 +61,17 @@ public class Parser {
 					index = Arrays.asList(uniprot_header_lines).indexOf("Gene names  (ordered locus )");
 				if (index == -1)
 					return;
-				gene_name = each_line_cols[index];
+
+				if (index < each_line_cols.length)
+					gene_name = each_line_cols[index];
 
 				index = Arrays.asList(uniprot_header_lines).indexOf("Topological domain");
 				if (index == -1)
 					return;
-				String col_topological_domains = each_line_cols[index];
+
+				String col_topological_domains = "";
+				if (index < each_line_cols.length)
+					col_topological_domains = each_line_cols[index];
 
 				String[] cols_topol_domains = col_topological_domains.split(";");// e.g. TOPO_DOM 1..83;
 																					// /note="Cytoplasmic";
@@ -107,10 +112,16 @@ public class Parser {
 				domains = line.substring(firstComma + 1).replace('\"', ' ').trim();
 			}
 
-			if(domains.equals("") || gene_name.equals(""))
+			if (domains.equals("") || gene_name.equals(""))
 				System.out.println();
-			LoadProteinDomainTask.tableDataModel.setValueAt(gene_name, countPtnDomain, 0);
-			LoadProteinDomainTask.tableDataModel.setValueAt(domains, countPtnDomain, 1);
+			
+			String[] cols_gene = gene_name.split(" ");
+			for(String each_gene: cols_gene) {
+				
+				LoadProteinDomainTask.tableDataModel.setValueAt(each_gene, countPtnDomain, 0);
+				LoadProteinDomainTask.tableDataModel.setValueAt(domains, countPtnDomain, 1);
+			}
+			
 			countPtnDomain++;
 		}
 

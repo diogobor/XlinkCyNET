@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.swing.AbstractAction;
+import javax.swing.AbstractListModel;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
@@ -27,11 +28,13 @@ import javax.swing.JButton;
 import javax.swing.JColorChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
+import javax.swing.ListModel;
 import javax.swing.table.DefaultTableModel;
 
 import org.cytoscape.application.CyApplicationManager;
@@ -56,6 +59,7 @@ import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.TaskMonitor;
 
 import de.fmp.liulab.internal.UpdateViewListener;
+import de.fmp.liulab.internal.view.JTableRowRenderer;
 import de.fmp.liulab.model.CrossLink;
 import de.fmp.liulab.model.ProteinDomain;
 import de.fmp.liulab.utils.Tuple2;
@@ -89,10 +93,12 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	private JPanel mainPanel;
 	private JLabel textLabel_status_result;
 	private String[] columnNames = { "Domain(*)", "Start Residue(*)", "End Residue(*)", "e-value", "Color" };
-	private JTable mainProteinDomainTable;
 	private final Class[] columnClass = new Class[] { String.class, Integer.class, Integer.class, String.class,
 			String.class };
 	private DefaultTableModel tableDataModel;
+	private static JTable mainProteinDomainTable;
+	private static JList rowHeader;
+	private static JScrollPane proteinDomainTableScrollPanel;
 
 	public static ArrayList<CrossLink> interLinks;
 	public static ArrayList<CrossLink> intraLinks;
@@ -389,10 +395,39 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 	}
 
+	private static void updateRowHeader(int number_lines) {
+
+		final String[] headers = new String[number_lines];
+		for (int count = 0; count < number_lines; count++) {
+			headers[count] = String.valueOf(count + 1);
+		}
+
+		ListModel lm = new AbstractListModel() {
+
+			@Override
+			public int getSize() {
+				return headers.length;
+			}
+
+			@Override
+			public Object getElementAt(int index) {
+				return headers[index];
+			}
+
+		};
+
+		rowHeader = new JList(lm);
+		rowHeader.setFixedCellWidth(50);
+		rowHeader.setFixedCellHeight(mainProteinDomainTable.getRowHeight());
+		rowHeader.setCellRenderer(new JTableRowRenderer(mainProteinDomainTable));
+		if (proteinDomainTableScrollPanel != null)
+			proteinDomainTableScrollPanel.setRowHeaderView(rowHeader);
+	}
+
 	/**
 	 * Set properties to the Node domain table
 	 */
-	private void setTableProperties() {
+	private void setTableProperties(int number_lines) {
 		if (mainProteinDomainTable != null) {
 			mainProteinDomainTable.setPreferredScrollableViewportSize(new Dimension(490, 90));
 			mainProteinDomainTable.getColumnModel().getColumn(0).setPreferredWidth(150);
@@ -402,6 +437,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			mainProteinDomainTable.getColumnModel().getColumn(4).setPreferredWidth(100);
 			mainProteinDomainTable.setFillsViewportHeight(true);
 			mainProteinDomainTable.setAutoCreateRowSorter(true);
+
+			updateRowHeader(number_lines);
 		}
 	}
 
@@ -507,7 +544,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 								countPtnDomain++;
 							}
 
-							setTableProperties();
+							setTableProperties(pFamProteinDomains.size());
 							pFamButton.setEnabled(true);
 						}
 					};
@@ -563,7 +600,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		}
 
 		mainProteinDomainTable = new JTable(tableDataModel);
-		setTableProperties();
+		setTableProperties(1);
 
 		mainProteinDomainTable.addMouseListener(new java.awt.event.MouseAdapter() {
 			@Override
@@ -596,6 +633,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 			public void actionPerformed(ActionEvent evt) {
 				tableDataModel.addRow(new Object[] { "" });
+				updateRowHeader(tableDataModel.getRowCount());
 				textLabel_status_result.setText("Row has been inserted.");
 			}
 		};
@@ -615,11 +653,13 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 				if (mainProteinDomainTable.getSelectedRow() != -1) {
 
-					int input = JOptionPane.showConfirmDialog(null, "Do you confirm the removal of the line?");
+					int input = JOptionPane.showConfirmDialog(null, "Do you confirm the removal of the line "
+							+ (mainProteinDomainTable.getSelectedRow() + 1) + "?");
 					// 0=yes, 1=no, 2=cancel
 					if (input == 0) {
 						// remove selected row from the model
 						tableDataModel.removeRow(mainProteinDomainTable.getSelectedRow());
+						updateRowHeader(tableDataModel.getRowCount());
 					}
 				}
 
@@ -633,9 +673,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 				"deleteLineToTable");
 
 		// Create the scroll pane and add the table to it.
-		JScrollPane proteinDomainTableScrollPanel = new JScrollPane();
+		proteinDomainTableScrollPanel = new JScrollPane();
 		proteinDomainTableScrollPanel.setBounds(10, 140, 500, 90);
 		proteinDomainTableScrollPanel.setViewportView(mainProteinDomainTable);
+		proteinDomainTableScrollPanel.setRowHeaderView(rowHeader);
 		mainPanel.add(proteinDomainTableScrollPanel);
 
 		Icon iconBtnOk = new ImageIcon(getClass().getResource("/images/okBtn.png"));
