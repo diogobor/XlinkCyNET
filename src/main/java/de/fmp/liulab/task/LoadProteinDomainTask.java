@@ -52,10 +52,7 @@ import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyRow;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.VisualLexicon;
-import org.cytoscape.view.presentation.customgraphics.CyCustomGraphics2;
 import org.cytoscape.view.presentation.customgraphics.CyCustomGraphics2Factory;
-import org.cytoscape.view.presentation.property.values.BendFactory;
-import org.cytoscape.view.presentation.property.values.HandleFactory;
 import org.cytoscape.view.vizmap.VisualMappingManager;
 import org.cytoscape.view.vizmap.VisualStyle;
 import org.cytoscape.work.AbstractTask;
@@ -210,9 +207,9 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		textLabel_status_result.setBounds(55, 60, 350, 100);
 
 		ImageIcon imgIcon = new ImageIcon(getClass().getResource("/images/logo.png"));
-		imgIcon.setImage(getScaledImage(imgIcon.getImage(), 80, 68));
+		imgIcon.setImage(getScaledImage(imgIcon.getImage(), 90, 85));
 		JLabel jLabelIcon = new JLabel();
-		jLabelIcon.setBounds(400, 0, 100, 100);
+		jLabelIcon.setBounds(380, 20, 100, 100);
 		jLabelIcon.setIcon(imgIcon);
 		mainPanel.add(jLabelIcon);
 

@@ -22,6 +22,7 @@ import javax.swing.AbstractAction;
 import javax.swing.AbstractListModel;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -31,6 +32,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
@@ -446,52 +448,75 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	 * Set all labels in XLinkCyNET window / frame
 	 */
 	private void setFrameLabels() {
-		JLabel textLabel_Protein_lbl = new JLabel("Protein:");
+
+		JPanel protein_panel = new JPanel();
+		protein_panel.setBorder(BorderFactory.createTitledBorder("Protein"));
+		protein_panel.setBounds(10, 10, 250, 120);
+		protein_panel.setLayout(null);
+		mainPanel.add(protein_panel);
+
+		JLabel textLabel_Protein_lbl = new JLabel("Name:");
 		textLabel_Protein_lbl.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		textLabel_Protein_lbl.setBounds(10, -20, 50, 100);
-		mainPanel.add(textLabel_Protein_lbl);
+		protein_panel.add(textLabel_Protein_lbl);
 
 		JLabel textLabel_Protein_result = new JLabel();
 		textLabel_Protein_result.setText((String) myCurrentRow.getRaw(CyNetwork.NAME));
 		textLabel_Protein_result.setFont(new java.awt.Font("Tahoma", Font.BOLD, 12));
-		textLabel_Protein_result.setBounds(85, -20, 100, 100);
-		mainPanel.add(textLabel_Protein_result);
+		textLabel_Protein_result.setBounds(80, -20, 100, 100);
+		protein_panel.add(textLabel_Protein_result);
 
-		JLabel textLabel_Protein_size_lbl = new JLabel("Protein size:");
+		JLabel textLabel_Protein_size_lbl = new JLabel("Size:");
 		textLabel_Protein_size_lbl.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		textLabel_Protein_size_lbl.setBounds(10, 10, 70, 100);
-		mainPanel.add(textLabel_Protein_size_lbl);
+		protein_panel.add(textLabel_Protein_size_lbl);
 
 		JLabel textLabel_Protein_size_result = new JLabel();
 		textLabel_Protein_size_result.setText((int) proteinLength + " residues");
 		textLabel_Protein_size_result.setFont(new java.awt.Font("Tahoma", Font.BOLD, 12));
-		textLabel_Protein_size_result.setBounds(85, 10, 100, 100);
-		mainPanel.add(textLabel_Protein_size_result);
+		textLabel_Protein_size_result.setBounds(80, 10, 100, 100);
+		protein_panel.add(textLabel_Protein_size_result);
+
+		JLabel textLabel_Protein_expansion_lbl = new JLabel("Expansion:");
+		textLabel_Protein_expansion_lbl.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
+		textLabel_Protein_expansion_lbl.setBounds(10, 40, 70, 100);
+		protein_panel.add(textLabel_Protein_expansion_lbl);
+
+		JRadioButton protein_expansion_horizontal = new JRadioButton("Horizontal");
+		protein_expansion_horizontal.setBounds(70, 80, 105, 20);
+		protein_expansion_horizontal.setSelected(true);
+		protein_panel.add(protein_expansion_horizontal);
+		JRadioButton protein_expansion_vertical = new JRadioButton("Vertical");
+		protein_expansion_vertical.setBounds(165, 80, 95, 20);
+		protein_panel.add(protein_expansion_vertical);
+		ButtonGroup bg = new ButtonGroup();
+		bg.add(protein_expansion_horizontal);
+		bg.add(protein_expansion_vertical);
 
 		JLabel textLabel_Pfam = new JLabel("Search for domains in Pfam database:");
 		textLabel_Pfam.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_Pfam.setBounds(10, 40, 300, 100);
+		textLabel_Pfam.setBounds(10, 95, 300, 100);
 		mainPanel.add(textLabel_Pfam);
 
 		textLabel_status_result = new JLabel("???");
 		textLabel_status_result.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		textLabel_status_result.setForeground(new Color(159, 17, 17));
-		textLabel_status_result.setBounds(85, 70, 350, 100);
+		textLabel_status_result.setBounds(85, 120, 350, 100);
 
 		JLabel jLabelIcon = new JLabel();
-		jLabelIcon.setBounds(340, -90, 300, 300);
+		jLabelIcon.setBounds(340, -80, 300, 300);
 		jLabelIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/logo.png")));
 		mainPanel.add(jLabelIcon);
 
 		JLabel textLabel_status = new JLabel("Status:");
 		textLabel_status.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_status.setBounds(10, 70, 50, 100);
+		textLabel_status.setBounds(10, 120, 50, 100);
 		mainPanel.add(textLabel_status);
 		mainPanel.add(textLabel_status_result);
 
 		JLabel textLabel_required_fields = new JLabel("(*) Required fields");
 		textLabel_required_fields.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 10));
-		textLabel_required_fields.setBounds(10, 190, 150, 100);
+		textLabel_required_fields.setBounds(10, 232, 150, 100);
 		mainPanel.add(textLabel_required_fields);
 	}
 
@@ -506,7 +531,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		Icon iconBtn = new ImageIcon(getClass().getResource("/images/browse_Icon.png"));
 		pFamButton = new JButton(iconBtn);
-		pFamButton.setBounds(220, 75, 30, 30);
+		pFamButton.setBounds(230, 130, 30, 30);
 		pFamButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
 				taskMonitor.setTitle("XL interactions");
@@ -674,7 +699,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		// Create the scroll pane and add the table to it.
 		proteinDomainTableScrollPanel = new JScrollPane();
-		proteinDomainTableScrollPanel.setBounds(10, 140, 500, 90);
+		proteinDomainTableScrollPanel.setBounds(10, 185, 500, 90);
 		proteinDomainTableScrollPanel.setViewportView(mainProteinDomainTable);
 		proteinDomainTableScrollPanel.setRowHeaderView(rowHeader);
 		mainPanel.add(proteinDomainTableScrollPanel);
@@ -682,7 +707,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		Icon iconBtnOk = new ImageIcon(getClass().getResource("/images/okBtn.png"));
 		JButton okButton = new JButton(iconBtnOk);
 		okButton.setText("OK");
-		okButton.setBounds(30, 260, 220, 25);
+		okButton.setBounds(30, 290, 220, 25);
 
 		okButton.addMouseListener(new MouseAdapter() {
 
@@ -737,7 +762,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		Icon iconBtnCancel = new ImageIcon(getClass().getResource("/images/cancelBtn.png"));
 		JButton cancelButton = new JButton(iconBtnCancel);
 		cancelButton.setText("Cancel");
-		cancelButton.setBounds(265, 260, 220, 25);
+		cancelButton.setBounds(265, 290, 220, 25);
 
 		cancelButton.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
@@ -749,7 +774,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		Icon iconBtnRestoreStyle = new ImageIcon(getClass().getResource("/images/restore.png"));
 		JButton restoreStyleButton = new JButton(iconBtnRestoreStyle);
 		restoreStyleButton.setText("Restore style");
-		restoreStyleButton.setBounds(390, 115, 120, 25);
+		restoreStyleButton.setBounds(390, 160, 120, 25);
 
 		restoreStyleButton.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
