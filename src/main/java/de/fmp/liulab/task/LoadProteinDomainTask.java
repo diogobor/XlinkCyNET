@@ -631,7 +631,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 						proteinDomains.add(new ProteinDomain(domainName, startId, endId, ""));
 					}
 				} catch (Exception e) {
-					sbError.append("ERROR: Row: " + row
+					sbError.append("ERROR: Row: " + (row + 1)
 							+ " - Protein domains don't match with the pattern 'name[start_index-end_index]'\n");
 				}
 			}

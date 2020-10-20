@@ -38,10 +38,8 @@ public class Parser {
 
 	public void updateDataModel() {
 
-		Object[][] data = new Object[qtdParser.size()][2];
-		LoadProteinDomainTask.tableDataModel.setDataVector(data, columnNames);
+		StringBuilder sb_data_to_be_stored = new StringBuilder();
 
-		int countPtnDomain = 0;
 		for (String line : qtdParser) {
 
 			String gene_name = "";
@@ -81,7 +79,7 @@ public class Parser {
 				if (cols_topol_domains.length > 1) {
 					for (int i = 0; i < cols_topol_domains.length; i++) {
 						String protein_domain_name = cols_topol_domains[i + 1].replace("/note=\"", "").replace("\"", "")
-								.trim();
+								.replace(",", "-").trim();
 						String[] cols_range = cols_topol_domains[i].replace("TOPO_DOM ", "").split("\\.");
 						int start_index = Integer.parseInt(cols_range[0].trim());
 						int end_index = 0;
@@ -112,16 +110,27 @@ public class Parser {
 				domains = line.substring(firstComma + 1).replace('\"', ' ').trim();
 			}
 
-			if (domains.equals("") || gene_name.equals(""))
-				System.out.println();
-			
 			String[] cols_gene = gene_name.split(" ");
-			for(String each_gene: cols_gene) {
-				
-				LoadProteinDomainTask.tableDataModel.setValueAt(each_gene, countPtnDomain, 0);
-				LoadProteinDomainTask.tableDataModel.setValueAt(domains, countPtnDomain, 1);
+			for (String each_gene : cols_gene) {
+
+				sb_data_to_be_stored.append(each_gene);
+				sb_data_to_be_stored.append("\t");
+				sb_data_to_be_stored.append(domains).append("\n");
 			}
-			
+
+		}
+
+		int countPtnDomain = 0;
+		String[] data_to_be_stored = sb_data_to_be_stored.toString().split("\n");
+
+		Object[][] data = new Object[data_to_be_stored.length][2];
+		LoadProteinDomainTask.tableDataModel.setDataVector(data, columnNames);
+
+		for (String line : data_to_be_stored) {
+			String[] cols_line = line.split("\t");
+			LoadProteinDomainTask.tableDataModel.setValueAt(cols_line[0], countPtnDomain, 0);
+			if (cols_line.length > 1)
+				LoadProteinDomainTask.tableDataModel.setValueAt(cols_line[1], countPtnDomain, 1);
 			countPtnDomain++;
 		}
 
