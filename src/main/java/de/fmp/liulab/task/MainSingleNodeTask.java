@@ -491,7 +491,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		if (Util.isWindows() || Util.isUnix()) {
 			protein_expansion_horizontal.setBounds(75, 80, 90, 20);
 		} else {
-			protein_expansion_horizontal.setBounds(70, 80, 90, 20);
+			protein_expansion_horizontal.setBounds(70, 80, 105, 20);
 		}
 		
 		protein_expansion_horizontal.setSelected(true);
