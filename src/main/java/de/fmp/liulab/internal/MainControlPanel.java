@@ -1,6 +1,5 @@
 package de.fmp.liulab.internal;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
@@ -32,6 +31,11 @@ import org.cytoscape.application.swing.CytoPanelName;
 
 import de.fmp.liulab.utils.Util;
 
+/**
+ * Class responsible for controlling all layout parameters
+ * @author diogobor
+ *
+ */
 public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 	private static final long serialVersionUID = 8292806967891823933L;
@@ -39,16 +43,22 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	private JPanel link_legend_panel;
 	private JPanel other_panel;
 
+	/**
+	 * Constructor
+	 */
 	public MainControlPanel() {
 
 		setFrameObjects();
 		this.setVisible(true);
 	}
 
+	/**
+	 * Method responsible for putting objects to Panel
+	 */
 	private void setFrameObjects() {
 
 		// use the border layout for this CytoPanel
-		setLayout(null);
+		setLayout(new GridLayout(5, 1));
 
 		setSize(250, 120);
 		init_group_panels();
@@ -58,7 +68,11 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 	}
 
+	/**
+	 * Method responsible for initializing JPanels
+	 */
 	private void init_group_panels() {
+		
 		color_panel = new JPanel();
 		color_panel.setBorder(BorderFactory.createTitledBorder("Color"));
 		color_panel.setBounds(10, 10, 250, 120);
@@ -138,6 +152,9 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		final JButton intraLinkColorButton = new JButton();
 		intraLinkColorButton.setBounds(offset_x, offset_y, 30, 15);
 		intraLinkColorButton.setBackground(Util.IntraLinksColor);
+		intraLinkColorButton.setForeground(Util.IntraLinksColor);
+		intraLinkColorButton.setOpaque(true);
+		intraLinkColorButton.setBorderPainted(false);
 		intraLinkColorButton.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 
@@ -157,6 +174,9 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		final JButton interLinkColorButton = new JButton();
 		interLinkColorButton.setBounds(offset_x, offset_y, 30, 15);
 		interLinkColorButton.setBackground(Util.InterLinksColor);
+		interLinkColorButton.setForeground(Util.InterLinksColor);
+		interLinkColorButton.setOpaque(true);
+		interLinkColorButton.setBorderPainted(false);
 		interLinkColorButton.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 
@@ -173,23 +193,26 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		color_panel.add(interLinkColorButton);
 		offset_y += 30;
 
-		final JButton BorderNodeColorButton = new JButton();
-		BorderNodeColorButton.setBounds(offset_x, offset_y, 30, 15);
-		BorderNodeColorButton.setBackground(Util.NodeBorderColor);
-		BorderNodeColorButton.addMouseListener(new MouseAdapter() {
+		final JButton borderNodeColorButton = new JButton();
+		borderNodeColorButton.setBounds(offset_x, offset_y, 30, 15);
+		borderNodeColorButton.setBackground(Util.NodeBorderColor);
+		borderNodeColorButton.setForeground(Util.NodeBorderColor);
+		borderNodeColorButton.setOpaque(true);
+		borderNodeColorButton.setBorderPainted(false);
+		borderNodeColorButton.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 
-				Color initialcolor = BorderNodeColorButton.getBackground();
+				Color initialcolor = borderNodeColorButton.getBackground();
 				Color color = JColorChooser.showDialog(null, "Select a color", initialcolor);
-				BorderNodeColorButton.setBackground(color);
-				BorderNodeColorButton.setForeground(color);
-				BorderNodeColorButton.setOpaque(true);
-				BorderNodeColorButton.setBorderPainted(false);
+				borderNodeColorButton.setBackground(color);
+				borderNodeColorButton.setForeground(color);
+				borderNodeColorButton.setOpaque(true);
+				borderNodeColorButton.setBorderPainted(false);
 
 				Util.NodeBorderColor = color;
 			}
 		});
-		color_panel.add(BorderNodeColorButton);
+		color_panel.add(borderNodeColorButton);
 	}
 
 	/**
