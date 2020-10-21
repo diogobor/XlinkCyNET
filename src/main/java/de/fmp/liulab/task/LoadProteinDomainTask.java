@@ -65,9 +65,12 @@ import de.fmp.liulab.model.GeneDomain;
 import de.fmp.liulab.model.ProteinDomain;
 import de.fmp.liulab.utils.Util;
 
+/**
+ * Class responsible for loading domains of a set of proteins
+ * @author borges.diogo
+ *
+ */
 public class LoadProteinDomainTask extends AbstractTask implements ActionListener {
-
-	private static String OS = System.getProperty("os.name").toLowerCase();
 
 	private CyApplicationManager cyApplicationManager;
 	private CyNetwork myNetwork;
@@ -132,7 +135,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 		mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		Dimension appSize = null;
-		if (this.isWindows() || this.isUnix()) {
+		if (Util.isWindows() || Util.isUnix()) {
 			appSize = new Dimension(540, 345);
 		} else {
 			appSize = new Dimension(540, 315);
@@ -207,7 +210,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		textLabel_status_result.setBounds(55, 60, 350, 100);
 
 		ImageIcon imgIcon = new ImageIcon(getClass().getResource("/images/logo.png"));
-		imgIcon.setImage(getScaledImage(imgIcon.getImage(), 90, 85));
+		imgIcon.setImage(getScaledImage(imgIcon.getImage(), 100, 85));
 		JLabel jLabelIcon = new JLabel();
 		jLabelIcon.setBounds(380, 20, 100, 100);
 		jLabelIcon.setIcon(imgIcon);
@@ -751,13 +754,5 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 			}
 
 		}
-	}
-
-	private boolean isWindows() {
-		return (OS.indexOf("win") >= 0);
-	}
-
-	private boolean isUnix() {
-		return (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0);
 	}
 }

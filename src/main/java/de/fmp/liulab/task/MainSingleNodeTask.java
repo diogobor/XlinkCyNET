@@ -141,7 +141,12 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			mainFrame = new JFrame("XlinkCyNET - Single Node");
 
 		mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		Dimension appSize = new Dimension(540, 345);
+		Dimension appSize = null;
+		if (Util.isWindows() || Util.isUnix()) {
+			appSize = new Dimension(540, 365);
+		} else {
+			appSize = new Dimension(540, 345);
+		}
 		mainFrame.setSize(appSize);
 		mainFrame.setResizable(false);
 
@@ -434,7 +439,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			mainProteinDomainTable.setPreferredScrollableViewportSize(new Dimension(490, 90));
 			mainProteinDomainTable.getColumnModel().getColumn(0).setPreferredWidth(150);
 			mainProteinDomainTable.getColumnModel().getColumn(1).setPreferredWidth(150);
-			mainProteinDomainTable.getColumnModel().getColumn(2).setPreferredWidth(100);
+			mainProteinDomainTable.getColumnModel().getColumn(2).setPreferredWidth(150);
 			mainProteinDomainTable.getColumnModel().getColumn(3).setPreferredWidth(80);
 			mainProteinDomainTable.getColumnModel().getColumn(4).setPreferredWidth(100);
 			mainProteinDomainTable.setFillsViewportHeight(true);
@@ -483,11 +488,16 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		protein_panel.add(textLabel_Protein_expansion_lbl);
 
 		JRadioButton protein_expansion_horizontal = new JRadioButton("Horizontal");
-		protein_expansion_horizontal.setBounds(70, 80, 105, 20);
+		if (Util.isWindows() || Util.isUnix()) {
+			protein_expansion_horizontal.setBounds(75, 80, 90, 20);
+		} else {
+			protein_expansion_horizontal.setBounds(70, 80, 90, 20);
+		}
+		
 		protein_expansion_horizontal.setSelected(true);
 		protein_panel.add(protein_expansion_horizontal);
 		JRadioButton protein_expansion_vertical = new JRadioButton("Vertical");
-		protein_expansion_vertical.setBounds(165, 80, 95, 20);
+		protein_expansion_vertical.setBounds(165, 80, 80, 20);
 		protein_panel.add(protein_expansion_vertical);
 		ButtonGroup bg = new ButtonGroup();
 		bg.add(protein_expansion_horizontal);
@@ -501,12 +511,18 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		textLabel_status_result = new JLabel("???");
 		textLabel_status_result.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		textLabel_status_result.setForeground(new Color(159, 17, 17));
-		textLabel_status_result.setBounds(85, 120, 350, 100);
+		textLabel_status_result.setBounds(90, 120, 350, 100);
 
+		JPanel logo_panel = new JPanel();
+		logo_panel.setBorder(BorderFactory.createTitledBorder(""));
+		logo_panel.setBounds(265, 16, 245, 112);
+		logo_panel.setLayout(null);
+		mainPanel.add(logo_panel);
+		
 		JLabel jLabelIcon = new JLabel();
-		jLabelIcon.setBounds(340, -80, 300, 300);
+		jLabelIcon.setBounds(70, -95, 300, 300);
 		jLabelIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/logo.png")));
-		mainPanel.add(jLabelIcon);
+		logo_panel.add(jLabelIcon);
 
 		JLabel textLabel_status = new JLabel("Status:");
 		textLabel_status.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
@@ -531,7 +547,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		Icon iconBtn = new ImageIcon(getClass().getResource("/images/browse_Icon.png"));
 		pFamButton = new JButton(iconBtn);
-		pFamButton.setBounds(230, 130, 30, 30);
+		pFamButton.setBounds(228, 130, 30, 30);
 		pFamButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
 				taskMonitor.setTitle("XL interactions");
@@ -707,7 +723,12 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		Icon iconBtnOk = new ImageIcon(getClass().getResource("/images/okBtn.png"));
 		JButton okButton = new JButton(iconBtnOk);
 		okButton.setText("OK");
-		okButton.setBounds(30, 290, 220, 25);
+		
+		if (Util.isWindows() || Util.isUnix()) {
+			okButton.setBounds(30, 295, 220, 25);
+		} else {
+			okButton.setBounds(30, 290, 220, 25);
+		}
 
 		okButton.addMouseListener(new MouseAdapter() {
 
@@ -762,7 +783,12 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		Icon iconBtnCancel = new ImageIcon(getClass().getResource("/images/cancelBtn.png"));
 		JButton cancelButton = new JButton(iconBtnCancel);
 		cancelButton.setText("Cancel");
-		cancelButton.setBounds(265, 290, 220, 25);
+		
+		if (Util.isWindows() || Util.isUnix()) {
+			cancelButton.setBounds(265, 295, 220, 25);
+		} else {
+			cancelButton.setBounds(265, 290, 220, 25);
+		}
 
 		cancelButton.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
@@ -774,7 +800,12 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		Icon iconBtnRestoreStyle = new ImageIcon(getClass().getResource("/images/restore.png"));
 		JButton restoreStyleButton = new JButton(iconBtnRestoreStyle);
 		restoreStyleButton.setText("Restore style");
-		restoreStyleButton.setBounds(390, 160, 120, 25);
+		
+		if (Util.isWindows() || Util.isUnix()) {
+			restoreStyleButton.setBounds(390, 155, 120, 25);
+		} else {
+			restoreStyleButton.setBounds(390, 160, 120, 25);
+		}
 
 		restoreStyleButton.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {

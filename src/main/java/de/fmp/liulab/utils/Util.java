@@ -66,6 +66,7 @@ public class Util {
 	private static String PROTEIN_A = "protein_a";
 	private static String PROTEIN_B = "protein_b";
 
+	private static String OS = System.getProperty("os.name").toLowerCase();
 	private final static float OFFSET = 2;
 	private static String edge_label_blank_spaces = "\n\n";
 
@@ -1200,5 +1201,13 @@ public class Util {
 
 	private static double getYPositionOf(View<CyNode> nodeView) {
 		return nodeView.getVisualProperty(BasicVisualLexicon.NODE_Y_LOCATION);
+	}
+	
+	public static boolean isWindows() {
+		return (OS.indexOf("win") >= 0);
+	}
+
+	public static boolean isUnix() {
+		return (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0);
 	}
 }

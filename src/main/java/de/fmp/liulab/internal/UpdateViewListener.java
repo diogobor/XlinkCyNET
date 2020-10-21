@@ -116,7 +116,8 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 								length_other_protein_a = length_other_protein_b;
 						}
 						MainSingleNodeTask.proteinLength = ((Number) length_other_protein_a).floatValue();
-						Tuple2 inter_and_intralinks = Util.getAllLinksFromAdjacentEdgesNode(this.selectedNode, myNetwork);
+						Tuple2 inter_and_intralinks = Util.getAllLinksFromAdjacentEdgesNode(this.selectedNode,
+								myNetwork);
 						MainSingleNodeTask.interLinks = (ArrayList<CrossLink>) inter_and_intralinks.getFirst();
 						MainSingleNodeTask.intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
 
@@ -188,7 +189,8 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 
 						if (this.selectedNode != null) {// If selectedNode is null means that the node is just
 														// plotted.
-							Tuple2 inter_and_intralinks = Util.getAllLinksFromAdjacentEdgesNode(this.selectedNode, myNetwork);
+							Tuple2 inter_and_intralinks = Util.getAllLinksFromAdjacentEdgesNode(this.selectedNode,
+									myNetwork);
 							MainSingleNodeTask.interLinks = (ArrayList<CrossLink>) inter_and_intralinks.getFirst();
 							MainSingleNodeTask.intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
 						}
@@ -245,46 +247,50 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 		MainSingleNodeTask.interLinks = null;
 		MainSingleNodeTask.intraLinks = null;
 
-		// Update variables
-		if (cyApplicationManager == null)
-			return;
-		myNetwork = cyApplicationManager.getCurrentNetwork();
-		netView = cyApplicationManager.getCurrentNetworkView();
-		if (netView == null)
-			return;
-		if (cyApplicationManager.getCurrentRenderingEngine() == null)
-			return;
-		MainSingleNodeTask.lexicon = cyApplicationManager.getCurrentRenderingEngine().getVisualLexicon();
-		MainSingleNodeTask.style = this.style;
+		try {
+			// Update variables
+			if (cyApplicationManager == null)
+				return;
+			myNetwork = cyApplicationManager.getCurrentNetwork();
+			netView = cyApplicationManager.getCurrentNetworkView();
+			if (netView == null)
+				return;
+			if (cyApplicationManager.getCurrentRenderingEngine() == null)
+				return;
+			MainSingleNodeTask.lexicon = cyApplicationManager.getCurrentRenderingEngine().getVisualLexicon();
+			MainSingleNodeTask.style = this.style;
 
-		List<CyNode> nodes = CyTableUtil.getNodesInState(myNetwork, CyNetwork.SELECTED, true);
-		if (nodes.size() == 1) {
+			List<CyNode> nodes = CyTableUtil.getNodesInState(myNetwork, CyNetwork.SELECTED, true);
+			if (nodes.size() == 1) {
 
-			CyRow proteinA_node_row = myNetwork.getRow(nodes.get(0));
-			Object length_other_protein_a = proteinA_node_row.getRaw("length_protein_a");
-			Object length_other_protein_b = proteinA_node_row.getRaw("length_protein_b");
+				CyRow proteinA_node_row = myNetwork.getRow(nodes.get(0));
+				Object length_other_protein_a = proteinA_node_row.getRaw("length_protein_a");
+				Object length_other_protein_b = proteinA_node_row.getRaw("length_protein_b");
 
-			if (length_other_protein_a == null) {
-				if (length_other_protein_b == null)
-					length_other_protein_a = 10;
-				else
-					length_other_protein_a = length_other_protein_b;
-			}
+				if (length_other_protein_a == null) {
+					if (length_other_protein_b == null)
+						length_other_protein_a = 10;
+					else
+						length_other_protein_a = length_other_protein_b;
+				}
 
-			MainSingleNodeTask.proteinLength = ((Number) length_other_protein_a).floatValue();
+				MainSingleNodeTask.proteinLength = ((Number) length_other_protein_a).floatValue();
 
-			try {
-				if (this.style == null)
+				try {
+					if (this.style == null)
+						isNodeModified = false;
+					else
+						isNodeModified = Util.IsNodeModified(myNetwork, netView, style, nodes.get(0));
+
+				} catch (Exception e2) {
 					isNodeModified = false;
-				else
-					isNodeModified = Util.IsNodeModified(myNetwork, netView, style, nodes.get(0));
-
-			} catch (Exception e2) {
-				isNodeModified = false;
+				}
 			}
-		}
+		} catch (Exception exception) {
+		} finally {
 
-		MainSingleNodeTask.isPlotDone = true;
-		LoadProteinDomainTask.isPlotDone = true;
+			MainSingleNodeTask.isPlotDone = true;
+			LoadProteinDomainTask.isPlotDone = true;
+		}
 	}
 }
