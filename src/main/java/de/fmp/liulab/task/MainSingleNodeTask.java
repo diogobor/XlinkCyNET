@@ -8,6 +8,8 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -55,6 +57,7 @@ import org.cytoscape.view.presentation.property.BasicVisualLexicon;
 import org.cytoscape.view.presentation.property.NodeShapeVisualProperty;
 import org.cytoscape.view.presentation.property.values.BendFactory;
 import org.cytoscape.view.presentation.property.values.HandleFactory;
+import org.cytoscape.view.presentation.property.values.ObjectPosition;
 import org.cytoscape.view.vizmap.VisualMappingManager;
 import org.cytoscape.view.vizmap.VisualStyle;
 import org.cytoscape.work.AbstractTask;
@@ -86,6 +89,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	private static View<CyNode> nodeView;
 	private CyRow myCurrentRow;
 	private List<CyNode> nodes;
+	private boolean isCurrentNode_modified = false;
 
 	private ArrayList<ProteinDomain> pFamProteinDomains;
 	private ArrayList<ProteinDomain> myProteinDomains;
@@ -159,6 +163,19 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		mainFrame.setLocation((screenSize.width - appSize.width) / 2, (screenSize.height - appSize.height) / 2);
 	}
+	
+	@Override
+	public void run(final TaskMonitor taskMonitor) throws Exception {
+
+		taskMonitor.setTitle("XlinkCyNET - Layout task");
+		// Write your own function here.
+		if (cyApplicationManager.getCurrentNetwork() == null) {
+			throw new Exception("ERROR: No network has been loaded.");
+		}
+
+		checkSingleOrMultipleSelectedNodes(taskMonitor);
+
+	}
 
 	private void checkSingleOrMultipleSelectedNodes(final TaskMonitor taskMonitor) throws Exception {
 
@@ -194,7 +211,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		} else {// Action comes from Shortcut
 
-			if (Util.IsNodeModified(myNetwork, netView, style, node)) {
+			if (isCurrentNode_modified) {
 				if (isPlotDone)
 					this.restoreDefaultStyle(taskMonitor);
 
@@ -219,20 +236,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			executeSingleNode(taskMonitor);
 		}
 	}
-
-	@Override
-	public void run(final TaskMonitor taskMonitor) throws Exception {
-
-		taskMonitor.setTitle("XlinkCyNET - Layout task");
-		// Write your own function here.
-		if (cyApplicationManager.getCurrentNetwork() == null) {
-			throw new Exception("ERROR: No network has been loaded.");
-		}
-
-		checkSingleOrMultipleSelectedNodes(taskMonitor);
-
-	}
-
+	
 	@Override
 	public void cancel() {
 
@@ -363,6 +367,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		interLinks = (ArrayList<CrossLink>) inter_and_intralinks.getFirst();
 		intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
 
+		isCurrentNode_modified = Util.IsNodeModified(myNetwork, netView, style, node);
+
 		/**
 		 * Get possible domains
 		 */
@@ -488,16 +494,45 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		protein_panel.add(textLabel_Protein_expansion_lbl);
 
 		JRadioButton protein_expansion_horizontal = new JRadioButton("Horizontal");
+		protein_expansion_horizontal.setSelected(Util.isProtein_expansion_horizontal);
 		if (Util.isWindows() || Util.isUnix()) {
 			protein_expansion_horizontal.setBounds(75, 80, 90, 20);
 		} else {
 			protein_expansion_horizontal.setBounds(70, 80, 105, 20);
 		}
-		
-		protein_expansion_horizontal.setSelected(true);
+		protein_expansion_horizontal.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent event) {
+				int state = event.getStateChange();
+				if (state == ItemEvent.SELECTED) {
+
+					Util.isProtein_expansion_horizontal = true;
+				} else if (state == ItemEvent.DESELECTED) {
+
+					Util.isProtein_expansion_horizontal = false;
+				}
+			}
+		});
 		protein_panel.add(protein_expansion_horizontal);
+
 		JRadioButton protein_expansion_vertical = new JRadioButton("Vertical");
+		protein_expansion_vertical.setSelected(!Util.isProtein_expansion_horizontal);
 		protein_expansion_vertical.setBounds(165, 80, 80, 20);
+		protein_expansion_vertical.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent event) {
+				int state = event.getStateChange();
+				if (state == ItemEvent.SELECTED) {
+
+					Util.isProtein_expansion_horizontal = false;
+				} else if (state == ItemEvent.DESELECTED) {
+
+					Util.isProtein_expansion_horizontal = true;
+				}
+			}
+		});
 		protein_panel.add(protein_expansion_vertical);
 		ButtonGroup bg = new ButtonGroup();
 		bg.add(protein_expansion_horizontal);
@@ -518,7 +553,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		logo_panel.setBounds(265, 16, 245, 112);
 		logo_panel.setLayout(null);
 		mainPanel.add(logo_panel);
-		
+
 		JLabel jLabelIcon = new JLabel();
 		jLabelIcon.setBounds(70, -95, 300, 300);
 		jLabelIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/logo.png")));
@@ -619,6 +654,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		getProteinDomains(node); // Fill in myProteinDomains collection based on the main Map
 									// (Util.proteinDomainsMap)
+
+		mainProteinDomainTable = new JTable(tableDataModel);
 		if (myProteinDomains != null && myProteinDomains.size() > 0) {
 			data = new Object[myProteinDomains.size()][5];
 			tableDataModel.setDataVector(data, columnNames);
@@ -638,10 +675,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 				}
 				countPtnDomain++;
 			}
+			setTableProperties(myProteinDomains.size());
+		} else {
+			setTableProperties(1);
 		}
-
-		mainProteinDomainTable = new JTable(tableDataModel);
-		setTableProperties(1);
 
 		mainProteinDomainTable.addMouseListener(new java.awt.event.MouseAdapter() {
 			@Override
@@ -723,7 +760,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		Icon iconBtnOk = new ImageIcon(getClass().getResource("/images/okBtn.png"));
 		JButton okButton = new JButton(iconBtnOk);
 		okButton.setText("OK");
-		
+
 		if (Util.isWindows() || Util.isUnix()) {
 			okButton.setBounds(30, 295, 220, 25);
 		} else {
@@ -783,7 +820,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		Icon iconBtnCancel = new ImageIcon(getClass().getResource("/images/cancelBtn.png"));
 		JButton cancelButton = new JButton(iconBtnCancel);
 		cancelButton.setText("Cancel");
-		
+
 		if (Util.isWindows() || Util.isUnix()) {
 			cancelButton.setBounds(265, 295, 220, 25);
 		} else {
@@ -800,7 +837,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		Icon iconBtnRestoreStyle = new ImageIcon(getClass().getResource("/images/restore.png"));
 		JButton restoreStyleButton = new JButton(iconBtnRestoreStyle);
 		restoreStyleButton.setText("Restore style");
-		
+
 		if (Util.isWindows() || Util.isUnix()) {
 			restoreStyleButton.setBounds(390, 155, 120, 25);
 		} else {
@@ -1130,7 +1167,11 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			colors.add(new Color(255, 255, 255, 100));
 			chartProps.put("cy_gradientFractions", values);
 			chartProps.put("cy_gradientColors", colors);
-			chartProps.put("cy_angle", 0.0);
+
+			if (Util.isProtein_expansion_horizontal)
+				chartProps.put("cy_angle", 0.0);
+			else
+				chartProps.put("cy_angle", 270.0);
 
 			CyCustomGraphics2<?> customGraphics = vgFactory.getInstance(chartProps);
 			if (vp_node_linear_gradient != null)
@@ -1164,7 +1205,15 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	 * Set style to node
 	 */
 	private void setNodeStyles() {
-		nodeView.setLockedValue(BasicVisualLexicon.NODE_WIDTH, ((Number) proteinLength).doubleValue());
+
+		if (Util.isProtein_expansion_horizontal) {
+			nodeView.setLockedValue(BasicVisualLexicon.NODE_WIDTH, ((Number) proteinLength).doubleValue());
+			nodeView.setLockedValue(BasicVisualLexicon.NODE_HEIGHT, 15d);
+		} else {
+			nodeView.setLockedValue(BasicVisualLexicon.NODE_WIDTH, 15d);
+			nodeView.setLockedValue(BasicVisualLexicon.NODE_HEIGHT, ((Number) proteinLength).doubleValue());
+		}
+
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_TRANSPARENCY, 200);
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_PAINT, Color.WHITE);
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_LABEL_COLOR, Color.GRAY);
@@ -1172,7 +1221,6 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_SELECTED_PAINT, new Color(255, 255, 255, 165));
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_BORDER_WIDTH, 1.5d);
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_BORDER_PAINT, Util.NodeBorderColor);
-		nodeView.setLockedValue(BasicVisualLexicon.NODE_HEIGHT, 15d);
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_SHAPE, NodeShapeVisualProperty.ROUND_RECTANGLE);
 
 		// ######################### NODE_LABEL_POSITION ######################
@@ -1187,7 +1235,11 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			int ptn_label_length = myNetwork.getDefaultNodeTable().getRow(node.getSUID()).getRaw(CyNetwork.NAME)
 					.toString().length();
 			ptn_label_length *= 9;
-			Object position = vp_label_position.parseSerializableString("W,W,c,-" + ptn_label_length + ".00,0.00");
+			Object position = null;
+			if (Util.isProtein_expansion_horizontal)
+				position = vp_label_position.parseSerializableString("W,W,c,-" + ptn_label_length + ".00,0.00");
+			else
+				position = (ObjectPosition) vp_label_position.parseSerializableString("N,S,c,0.00,0.00");
 
 			// If the parsed value is ok, apply it to the visual style
 			// as default value or a visual mapping

@@ -37,6 +37,7 @@ import org.cytoscape.view.presentation.property.values.Bend;
 import org.cytoscape.view.presentation.property.values.BendFactory;
 import org.cytoscape.view.presentation.property.values.Handle;
 import org.cytoscape.view.presentation.property.values.HandleFactory;
+import org.cytoscape.view.presentation.property.values.ObjectPosition;
 import org.cytoscape.view.vizmap.VisualStyle;
 import org.cytoscape.work.TaskMonitor;
 import org.w3c.dom.Document;
@@ -78,6 +79,7 @@ public class Util {
 	public static Integer node_label_font_size = 12;
 	public static Integer edge_label_opacity = 120;
 	public static Integer edge_link_opacity = 120;
+	public static boolean isProtein_expansion_horizontal = true;
 	// Map<Network name, Map<Protein - Node SUID, List<ProteinDomain>>
 	public static Map<String, Map<Long, List<ProteinDomain>>> proteinDomainsMap = new HashMap<String, Map<Long, List<ProteinDomain>>>();
 
@@ -113,20 +115,75 @@ public class Util {
 		float proteinA_node_width = ((Number) proteinA_nodeView.getVisualProperty(BasicVisualLexicon.NODE_WIDTH))
 				.floatValue();
 
-		if (((Number) length_other_protein_a).floatValue() == proteinA_node_width) {
+		if (((Number) length_other_protein_a).floatValue() == proteinA_node_width) {// Expansion - horizontal
+			return checkModifiedNode(myNetwork, netView, style, node);
 
-			View<CyNode> nodeView = netView.getNodeView(node);
-			if (nodeView.getVisualProperty(BasicVisualLexicon.NODE_HEIGHT) != style
-					.getDefaultValue(BasicVisualLexicon.NODE_HEIGHT)
-					&& !nodeView.getVisualProperty(BasicVisualLexicon.NODE_TOOLTIP)
-							.equals(style.getDefaultValue(BasicVisualLexicon.NODE_TOOLTIP))) {
-				return true;
-			} else {
-				return false;
+		} else {// Expansion - vertical
+
+			float proteinA_node_height = ((Number) proteinA_nodeView.getVisualProperty(BasicVisualLexicon.NODE_HEIGHT))
+					.floatValue();
+
+			if (((Number) length_other_protein_a).floatValue() == proteinA_node_height) {
+				return checkModifiedNode(myNetwork, netView, style, node);
 			}
-		} else {
 			return false;
 		}
+	}
+
+	private static boolean checkModifiedNode(CyNetwork myNetwork, CyNetworkView netView, VisualStyle style,
+			CyNode node) {
+		View<CyNode> nodeView = netView.getNodeView(node);
+
+		VisualLexicon lexicon = MainSingleNodeTask.lexicon;
+		if (lexicon == null)
+			lexicon = LoadProteinDomainTask.lexicon;
+
+		if (lexicon == null)
+			return false;
+
+		// Try to get the label visual property by its ID
+		VisualProperty<?> vp_label_position = lexicon.lookup(CyNode.class, Util.NODE_LABEL_POSITION);
+		if (vp_label_position != null) {
+
+			// If the property is supported by this rendering engine,
+			// use the serialization string value to create the actual property value
+
+			int ptn_label_length = myNetwork.getDefaultNodeTable().getRow(node.getSUID()).getRaw(CyNetwork.NAME)
+					.toString().length();
+			ptn_label_length *= 9;
+			ObjectPosition position = (ObjectPosition) vp_label_position
+					.parseSerializableString("W,W,c,-" + ptn_label_length + ".00,0.00");
+
+			// If the parsed value is ok, apply it to the visual style
+			// as default value or a visual mapping
+
+			if (position != null) {
+				ObjectPosition current_position = (ObjectPosition) nodeView.getVisualProperty(vp_label_position);
+				if (current_position.getJustify() == position.getJustify()
+						&& current_position.getOffsetX() == position.getOffsetX()
+						&& current_position.getOffsetY() == position.getOffsetY()
+						&& (!nodeView.getVisualProperty(BasicVisualLexicon.NODE_TOOLTIP)
+								.equals(style.getDefaultValue(BasicVisualLexicon.NODE_TOOLTIP)))) {// Expansion
+																									// horizontal
+					isProtein_expansion_horizontal = true;
+					return true;
+				} else {
+					isProtein_expansion_horizontal = false;
+					position = (ObjectPosition) vp_label_position.parseSerializableString("N,S,c,0.00,0.00");
+					if (current_position.getJustify() == position.getJustify()
+							&& current_position.getOffsetX() == position.getOffsetX()
+							&& current_position.getOffsetY() == position.getOffsetY()
+							&& (!nodeView.getVisualProperty(BasicVisualLexicon.NODE_TOOLTIP)
+									.equals(style.getDefaultValue(BasicVisualLexicon.NODE_TOOLTIP))))// Expansion
+																										// vertical
+						return true;
+					else
+						return false;
+				}
+			} else
+				return false;
+		} else
+			return false;
 	}
 
 	/**
@@ -228,7 +285,7 @@ public class Util {
 		}
 
 		UpdateViewListener.isNodeModified = true;
-		LoadProteinDomainTask.isPlotDone = true;		
+		LoadProteinDomainTask.isPlotDone = true;
 		return true;
 	}
 
@@ -245,10 +302,11 @@ public class Util {
 		double initial_positionX_node = getXPositionOf(nodeView);
 		double initial_positionY_node = getYPositionOf(nodeView);
 		double center_position_node = proteinLength / 2.0;
-		double xPos_source = 0;
+
+		double x_or_y_Pos_source = 0;
 		double xl_pos_source = 0;
 
-		double xPos_target = 0;
+		double x_or_y_Pos_target = 0;
 		double xl_pos_target = 0;
 
 		for (int countEdge = 0; countEdge < intraLinks.size(); countEdge++) {
@@ -308,49 +366,79 @@ public class Util {
 
 				xl_pos_source = intraLinks.get(countEdge).pos_site_a;
 				if (xl_pos_source <= center_position_node) { // [-protein_length/2, 0]
-					xPos_source = (-center_position_node) + xl_pos_source;
+					x_or_y_Pos_source = (-center_position_node) + xl_pos_source;
 				} else { // [0, protein_length/2]
-					xPos_source = xl_pos_source - center_position_node;
+					x_or_y_Pos_source = xl_pos_source - center_position_node;
 				}
-				xPos_source += initial_positionX_node;
+				if (isProtein_expansion_horizontal) {
+					x_or_y_Pos_source += initial_positionX_node;
+				} else {
+					x_or_y_Pos_source += initial_positionY_node;
+				}
 
 				xl_pos_target = intraLinks.get(countEdge).pos_site_b;
 				if (xl_pos_target <= center_position_node) { // [-protein_length/2, 0]
-					xPos_target = (-center_position_node) + xl_pos_target;
+					x_or_y_Pos_target = (-center_position_node) + xl_pos_target;
 				} else { // [0, protein_length/2]
-					xPos_target = xl_pos_target - center_position_node;
+					x_or_y_Pos_target = xl_pos_target - center_position_node;
 				}
-				xPos_target += initial_positionX_node;
+				if (isProtein_expansion_horizontal) {
+					x_or_y_Pos_target += initial_positionX_node;
+				} else {
+					x_or_y_Pos_target += initial_positionY_node;
+				}
 
 				View<CyNode> new_node_source_view = netView.getNodeView(new_node_source);
 
-				new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, xPos_source);
-				new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, initial_positionY_node);
+				if (isProtein_expansion_horizontal) {
+					new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, x_or_y_Pos_source);
+					new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, initial_positionY_node);
+				} else {
+					new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, initial_positionX_node);
+					new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, x_or_y_Pos_source);
+				}
+
 				new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_WIDTH, 0.01);
 				new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_LABEL_TRANSPARENCY, 0);
 				new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_LABEL, "");
 
 				View<CyNode> new_node_target_view = netView.getNodeView(new_node_target);
-				new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, xPos_target);
-				new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, initial_positionY_node);
+				if (isProtein_expansion_horizontal) {
+					new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, x_or_y_Pos_target);
+					new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, initial_positionY_node);
+				} else {
+					new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, initial_positionX_node);
+					new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, x_or_y_Pos_target);
+				}
+
 				new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_WIDTH, 0.01);
 				new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_LABEL_TRANSPARENCY, 0);
 				new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_LABEL, "");
 
 				Bend bend = bendFactory.createBend();
 
-				double yPos = (xPos_source + xPos_target) / 2;
+				double x_or_y_Pos = (x_or_y_Pos_source + x_or_y_Pos_target) / 2;
 
-				if (Math.abs(xPos_source) > Math.abs(xPos_target)) {
-					yPos = Math.abs(xPos_source) - Math.abs(yPos);
+				if (Math.abs(x_or_y_Pos_source) > Math.abs(x_or_y_Pos_target)) {
+					x_or_y_Pos = Math.abs(x_or_y_Pos_source) - Math.abs(x_or_y_Pos);
 				} else {
-					yPos = Math.abs(xPos_target) - Math.abs(yPos);
+					x_or_y_Pos = Math.abs(x_or_y_Pos_target) - Math.abs(x_or_y_Pos);
 				}
-				yPos += 50;
-				yPos += initial_positionY_node;
+				x_or_y_Pos += 50;
+				if (isProtein_expansion_horizontal) {
+					x_or_y_Pos += initial_positionY_node;
+				} else {
+					x_or_y_Pos += initial_positionX_node;
+				}
 
 				Handle h = null;
-				h = handleFactory.createHandle(netView, newEdgeView, (xPos_source + xPos_target) / 2, yPos);
+				if (isProtein_expansion_horizontal) {
+					h = handleFactory.createHandle(netView, newEdgeView, (x_or_y_Pos_source + x_or_y_Pos_target) / 2,
+							x_or_y_Pos);
+				} else {
+					h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos,
+							(x_or_y_Pos_source + x_or_y_Pos_target) / 2);
+				}
 
 				bend.insertHandleAt(0, h);
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_BEND, bend);
@@ -358,8 +446,8 @@ public class Util {
 			} else { // Update edge position
 
 				View<CyEdge> edgeView = netView.getEdgeView(current_edge);
-				updateIntraLinkEdgesPosition(myNetwork, netView, edgeView, intraLinks, countEdge, xPos_source,
-						xl_pos_source, xPos_target, xl_pos_target, center_position_node, initial_positionX_node,
+				updateIntraLinkEdgesPosition(myNetwork, netView, edgeView, intraLinks, countEdge, x_or_y_Pos_source,
+						xl_pos_source, x_or_y_Pos_target, xl_pos_target, center_position_node, initial_positionX_node,
 						initial_positionY_node);
 			}
 		}
@@ -470,20 +558,17 @@ public class Util {
 		final String target_node_name = myNetwork.getDefaultNodeTable().getRow(targetNode.getSUID())
 				.getRaw(CyNetwork.NAME).toString();
 
-		double xPos_source = 0;
+		double x_or_y_Pos_source = 0;
 		double xl_pos_source = 0;
 
-		double xPos_target = 0;
+		double x_or_y_Pos_target = 0;
 		double xl_pos_target = 0;
 
 		double center_position_source_node = 0;
 		double center_position_target_node = 0;
 
-		double initial_position_source_node = getXPositionOf(sourceNodeView);
-		double initial_position_target_node = getXPositionOf(targetNodeView);
-
-		float other_node_width = ((Number) targetNodeView.getVisualProperty(BasicVisualLexicon.NODE_WIDTH))
-				.floatValue();
+		double initial_position_source_node = 0;
+		double initial_position_target_node = 0;
 
 		Object length_other_protein_a;
 		Object length_other_protein_b;
@@ -514,6 +599,44 @@ public class Util {
 						|| o.protein_a.equals(target_node_name) && o.protein_b.equals(source_node_name));
 			}
 		});
+
+		float other_node_width_or_height = 0;
+		if (current_inter_links.size() > 0) {
+			if (isProtein_expansion_horizontal) {
+
+				initial_position_source_node = getXPositionOf(sourceNodeView);
+				initial_position_target_node = getXPositionOf(targetNodeView);
+
+				other_node_width_or_height = ((Number) targetNodeView.getVisualProperty(BasicVisualLexicon.NODE_WIDTH))
+						.floatValue();
+
+				if (other_node_width_or_height == proteinLength)
+					other_node_width_or_height = ((Number) sourceNodeView
+							.getVisualProperty(BasicVisualLexicon.NODE_WIDTH)).floatValue();
+			} else {
+
+				initial_position_source_node = getYPositionOf(sourceNodeView);
+				initial_position_target_node = getYPositionOf(targetNodeView);
+
+				other_node_width_or_height = ((Number) targetNodeView.getVisualProperty(BasicVisualLexicon.NODE_HEIGHT))
+						.floatValue();
+
+				if (other_node_width_or_height == proteinLength)
+					other_node_width_or_height = ((Number) sourceNodeView
+							.getVisualProperty(BasicVisualLexicon.NODE_HEIGHT)).floatValue();
+			}
+
+			if (sourceNode.getSUID() == node.getSUID()) {
+				center_position_source_node = proteinLength / 2.0;
+				center_position_target_node = other_node_width_or_height / 2.0;
+
+			} else {
+				center_position_source_node = other_node_width_or_height / 2.0;
+				center_position_target_node = proteinLength / 2.0;
+			}
+		} else {
+			return;
+		}
 
 		for (int countEdge = 0; countEdge < current_inter_links.size(); countEdge++) {
 
@@ -581,40 +704,21 @@ public class Util {
 
 				// #########################
 
-				initial_position_source_node = getXPositionOf(sourceNodeView);
-				initial_position_target_node = getXPositionOf(targetNodeView);
-
-				other_node_width = ((Number) targetNodeView.getVisualProperty(BasicVisualLexicon.NODE_WIDTH))
-						.floatValue();
-
-				if (other_node_width == proteinLength)
-					other_node_width = ((Number) sourceNodeView.getVisualProperty(BasicVisualLexicon.NODE_WIDTH))
-							.floatValue();
-
-				if (sourceNode.getSUID() == node.getSUID()) {
-					center_position_source_node = proteinLength / 2.0;
-					center_position_target_node = other_node_width / 2.0;
-
-				} else {
-					center_position_source_node = other_node_width / 2.0;
-					center_position_target_node = proteinLength / 2.0;
-				}
-
 				xl_pos_source = current_inter_links.get(countEdge).pos_site_a;
 				xl_pos_target = current_inter_links.get(countEdge).pos_site_b;
 
 				if (xl_pos_source <= center_position_source_node) { // [-protein_length/2, 0]
-					xPos_source = (-center_position_source_node) + xl_pos_source;
+					x_or_y_Pos_source = (-center_position_source_node) + xl_pos_source;
 				} else { // [0, protein_length/2]
-					xPos_source = xl_pos_source - center_position_source_node;
+					x_or_y_Pos_source = xl_pos_source - center_position_source_node;
 				}
-				xPos_source += initial_position_source_node;
+				x_or_y_Pos_source += initial_position_source_node;
 				if (xl_pos_target <= center_position_target_node) { // [-protein_length/2, 0]
-					xPos_target = (-center_position_target_node) + xl_pos_target;
+					x_or_y_Pos_target = (-center_position_target_node) + xl_pos_target;
 				} else { // [0, protein_length/2]
-					xPos_target = xl_pos_target - center_position_target_node;
+					x_or_y_Pos_target = xl_pos_target - center_position_target_node;
 				}
-				xPos_target += initial_position_target_node;
+				x_or_y_Pos_target += initial_position_target_node;
 
 				// ########## GET EDGE_BEND STYLE TO MODIFY #########
 
@@ -623,24 +727,47 @@ public class Util {
 				Handle h = null;
 				Handle h2 = null;
 
-				if (other_node_width == ((Number) length_other_protein_a).floatValue()) {// Target node has already been
-					// modified
-					h = handleFactory.createHandle(netView, newEdgeView, xPos_source - OFFSET,
-							getYPositionOf(sourceNodeView));
-					h2 = handleFactory.createHandle(netView, newEdgeView, xPos_target - OFFSET,
-							getYPositionOf(targetNodeView));
+				if (other_node_width_or_height == ((Number) length_other_protein_a).floatValue()) {// Target node has
+																									// already been
+																									// modified
+
+					if (isProtein_expansion_horizontal) {
+
+						h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_source - OFFSET,
+								getYPositionOf(sourceNodeView));
+						h2 = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_target - OFFSET,
+								getYPositionOf(targetNodeView));
+					} else {
+						// modified
+						h = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(sourceNodeView),
+								x_or_y_Pos_source - OFFSET);
+						h2 = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(targetNodeView),
+								x_or_y_Pos_target - OFFSET);
+					}
+
 					bend.insertHandleAt(0, h);
 					bend.insertHandleAt(1, h2);
 
 				} else {// Target node is intact
 
-					if (sourceNode.getSUID() == node.getSUID()) {
-						h = handleFactory.createHandle(netView, newEdgeView, xPos_source - OFFSET,
-								getYPositionOf(sourceNodeView));
+					if (isProtein_expansion_horizontal) {
+						if (sourceNode.getSUID() == node.getSUID()) {
+							h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_source - OFFSET,
+									getYPositionOf(sourceNodeView));
+						} else {
+							h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_target - OFFSET,
+									getYPositionOf(targetNodeView));
+						}
 					} else {
-						h = handleFactory.createHandle(netView, newEdgeView, xPos_target - OFFSET,
-								getYPositionOf(targetNodeView));
+						if (sourceNode.getSUID() == node.getSUID()) {
+							h = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(sourceNodeView),
+									x_or_y_Pos_source - OFFSET);
+						} else {
+							h = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(targetNodeView),
+									x_or_y_Pos_target - OFFSET);
+						}
 					}
+
 					bend.insertHandleAt(0, h);
 				}
 
@@ -707,31 +834,47 @@ public class Util {
 		 * Modify node style
 		 */
 
-		float other_node_width = ((Number) targetNodeView.getVisualProperty(BasicVisualLexicon.NODE_WIDTH))
-				.floatValue();
+		float other_node_width_or_height = 0;
 
-		if (other_node_width == proteinLength)
-			other_node_width = ((Number) sourceNodeView.getVisualProperty(BasicVisualLexicon.NODE_WIDTH)).floatValue();
+		double initial_position_source_node = 0;
+		double initial_position_target_node = 0;
+
+		if (isProtein_expansion_horizontal) {
+			other_node_width_or_height = ((Number) targetNodeView.getVisualProperty(BasicVisualLexicon.NODE_WIDTH))
+					.floatValue();
+			if (other_node_width_or_height == proteinLength)
+				other_node_width_or_height = ((Number) sourceNodeView.getVisualProperty(BasicVisualLexicon.NODE_WIDTH))
+						.floatValue();
+
+			initial_position_source_node = getXPositionOf(sourceNodeView);
+			initial_position_target_node = getXPositionOf(targetNodeView);
+		} else {
+			other_node_width_or_height = ((Number) targetNodeView.getVisualProperty(BasicVisualLexicon.NODE_HEIGHT))
+					.floatValue();
+			if (other_node_width_or_height == proteinLength)
+				other_node_width_or_height = ((Number) sourceNodeView.getVisualProperty(BasicVisualLexicon.NODE_HEIGHT))
+						.floatValue();
+
+			initial_position_source_node = getYPositionOf(sourceNodeView);
+			initial_position_target_node = getYPositionOf(targetNodeView);
+		}
 
 		double center_position_source_node = 0;
 		double center_position_target_node = 0;
 
-		double initial_position_source_node = getXPositionOf(sourceNodeView);
-		double initial_position_target_node = getXPositionOf(targetNodeView);
-
 		if (sourceNode.getSUID() == node.getSUID()) {
 			center_position_source_node = proteinLength / 2.0;
-			center_position_target_node = other_node_width / 2.0;
+			center_position_target_node = other_node_width_or_height / 2.0;
 
 		} else {
-			center_position_source_node = other_node_width / 2.0;
+			center_position_source_node = other_node_width_or_height / 2.0;
 			center_position_target_node = proteinLength / 2.0;
 		}
 
-		double xPos_source = 0;
+		double x_or_y_Pos_source = 0;
 		double xl_pos_source = 0;
 
-		double xPos_target = 0;
+		double x_or_y_Pos_target = 0;
 		double xl_pos_target = 0;
 
 		String[] edgeNameArr = edge_name.split("\\[|\\]");
@@ -742,17 +885,17 @@ public class Util {
 		xl_pos_target = Double.parseDouble(position2[1]);
 
 		if (xl_pos_source <= center_position_source_node) { // [-protein_length/2, 0]
-			xPos_source = (-center_position_source_node) + xl_pos_source;
+			x_or_y_Pos_source = (-center_position_source_node) + xl_pos_source;
 		} else { // [0, protein_length/2]
-			xPos_source = xl_pos_source - center_position_source_node;
+			x_or_y_Pos_source = xl_pos_source - center_position_source_node;
 		}
-		xPos_source += initial_position_source_node;
+		x_or_y_Pos_source += initial_position_source_node;
 		if (xl_pos_target <= center_position_target_node) { // [-protein_length/2, 0]
-			xPos_target = (-center_position_target_node) + xl_pos_target;
+			x_or_y_Pos_target = (-center_position_target_node) + xl_pos_target;
 		} else { // [0, protein_length/2]
-			xPos_target = xl_pos_target - center_position_target_node;
+			x_or_y_Pos_target = xl_pos_target - center_position_target_node;
 		}
-		xPos_target += initial_position_target_node;
+		x_or_y_Pos_target += initial_position_target_node;
 
 		// BLEND
 
@@ -763,22 +906,44 @@ public class Util {
 		Handle h = null;
 		Handle h2 = null;
 
-		if (other_node_width == ((Number) length_other_protein_a).floatValue()) {// Target node has already been
-																					// modified
-			h = handleFactory.createHandle(netView, newEdgeView, xPos_source - OFFSET, getYPositionOf(sourceNodeView));
-			h2 = handleFactory.createHandle(netView, newEdgeView, xPos_target - OFFSET, getYPositionOf(targetNodeView));
+		if (other_node_width_or_height == ((Number) length_other_protein_a).floatValue()) {// Target node has already
+																							// been modified
+
+			if (isProtein_expansion_horizontal) {
+				h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_source - OFFSET,
+						getYPositionOf(sourceNodeView));
+				h2 = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_target - OFFSET,
+						getYPositionOf(targetNodeView));
+			} else {
+				h = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(sourceNodeView),
+						x_or_y_Pos_source - OFFSET);
+				h2 = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(targetNodeView),
+						x_or_y_Pos_target - OFFSET);
+			}
+
 			bend.insertHandleAt(0, h);
 			bend.insertHandleAt(1, h2);
 
 		} else {// Target node is intact
 
-			if (sourceNode.getSUID() == node.getSUID()) {
-				h = handleFactory.createHandle(netView, newEdgeView, xPos_source - OFFSET,
-						getYPositionOf(sourceNodeView));
+			if (isProtein_expansion_horizontal) {
+				if (sourceNode.getSUID() == node.getSUID()) {
+					h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_source - OFFSET,
+							getYPositionOf(sourceNodeView));
+				} else {
+					h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_target - OFFSET,
+							getYPositionOf(targetNodeView));
+				}
 			} else {
-				h = handleFactory.createHandle(netView, newEdgeView, xPos_target - OFFSET,
-						getYPositionOf(targetNodeView));
+				if (sourceNode.getSUID() == node.getSUID()) {
+					h = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(sourceNodeView),
+							x_or_y_Pos_source - OFFSET);
+				} else {
+					h = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(targetNodeView),
+							x_or_y_Pos_target - OFFSET);
+				}
 			}
+
 			bend.insertHandleAt(0, h);
 		}
 
@@ -814,17 +979,17 @@ public class Util {
 	 * position
 	 * 
 	 * @param countEdge
-	 * @param xPos_source
+	 * @param x_or_y_Pos_source
 	 * @param xl_pos_source
-	 * @param xPos_target
+	 * @param x_or_y_Pos_target
 	 * @param xl_pos_target
 	 * @param center_position_node
 	 * @param initial_positionX_node
 	 * @param initial_positionY_node
 	 */
 	private static void updateIntraLinkEdgesPosition(CyNetwork myNetwork, CyNetworkView netView, View<CyEdge> edgeView,
-			ArrayList<CrossLink> intraLinks, int countEdge, double xPos_source, double xl_pos_source,
-			double xPos_target, double xl_pos_target, double center_position_node, double initial_positionX_node,
+			ArrayList<CrossLink> intraLinks, int countEdge, double x_or_y_Pos_source, double xl_pos_source,
+			double x_or_y_Pos_target, double xl_pos_target, double center_position_node, double initial_positionX_node,
 			double initial_positionY_node) {
 
 		final String node_name_source = intraLinks.get(countEdge).protein_a + " ["
@@ -835,16 +1000,24 @@ public class Util {
 
 			xl_pos_source = intraLinks.get(countEdge).pos_site_a;
 			if (xl_pos_source <= center_position_node) { // [-protein_length/2, 0]
-				xPos_source = (-center_position_node) + xl_pos_source;
+				x_or_y_Pos_source = (-center_position_node) + xl_pos_source;
 			} else { // [0, protein_length/2]
-				xPos_source = xl_pos_source - center_position_node;
+				x_or_y_Pos_source = xl_pos_source - center_position_node;
 			}
-			xPos_source += initial_positionX_node;
+			if (isProtein_expansion_horizontal) {
+				x_or_y_Pos_source += initial_positionX_node;
+			} else {
+				x_or_y_Pos_source += initial_positionY_node;
+			}
 
 			View<CyNode> new_node_source_view = netView.getNodeView(new_node_source);
-
-			new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, xPos_source);
-			new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, initial_positionY_node);
+			if (isProtein_expansion_horizontal) {
+				new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, x_or_y_Pos_source);
+				new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, initial_positionY_node);
+			} else {
+				new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, initial_positionX_node);
+				new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, x_or_y_Pos_source);
+			}
 		}
 
 		final String node_name_target = intraLinks.get(countEdge).protein_a + " ["
@@ -855,15 +1028,24 @@ public class Util {
 
 			xl_pos_target = intraLinks.get(countEdge).pos_site_b;
 			if (xl_pos_target <= center_position_node) { // [-protein_length/2, 0]
-				xPos_target = (-center_position_node) + xl_pos_target;
+				x_or_y_Pos_target = (-center_position_node) + xl_pos_target;
 			} else { // [0, protein_length/2]
-				xPos_target = xl_pos_target - center_position_node;
+				x_or_y_Pos_target = xl_pos_target - center_position_node;
 			}
-			xPos_target += initial_positionX_node;
+			if (isProtein_expansion_horizontal) {
+				x_or_y_Pos_target += initial_positionX_node;
+			} else {
+				x_or_y_Pos_target += initial_positionY_node;
+			}
 
 			View<CyNode> new_node_target_view = netView.getNodeView(new_node_target);
-			new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, xPos_target);
-			new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, initial_positionY_node);
+			if (isProtein_expansion_horizontal) {
+				new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, x_or_y_Pos_target);
+				new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, initial_positionY_node);
+			} else {
+				new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, initial_positionX_node);
+				new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, x_or_y_Pos_target);
+			}
 		}
 
 		// #### UPDATE EDGE COLOR ####
@@ -1202,7 +1384,7 @@ public class Util {
 	private static double getYPositionOf(View<CyNode> nodeView) {
 		return nodeView.getVisualProperty(BasicVisualLexicon.NODE_Y_LOCATION);
 	}
-	
+
 	public static boolean isWindows() {
 		return (OS.indexOf("win") >= 0);
 	}
