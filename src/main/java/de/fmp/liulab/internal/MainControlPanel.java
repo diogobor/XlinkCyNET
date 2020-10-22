@@ -5,8 +5,8 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.GridLayout;
-import java.awt.MouseInfo;
-import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
@@ -25,7 +25,6 @@ import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.ToolTipManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.DefaultFormatter;
@@ -83,6 +82,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		color_panel.setBorder(BorderFactory.createTitledBorder("Color"));
 		color_panel.setBounds(10, 10, 250, 120);
 		color_panel.setLayout(null);
+		color_panel.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		this.add(color_panel);
 
 		link_legend_panel = new JPanel();
@@ -167,7 +167,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 				+ Util.IntraLinksColor.getGreen() + " B:" + Util.IntraLinksColor.getBlue() + " - "
 				+ String.format("#%02X%02X%02X", Util.IntraLinksColor.getRed(), Util.IntraLinksColor.getGreen(),
 						Util.IntraLinksColor.getBlue()));
-		intraLinkColorButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		
 		intraLinkColorButton.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 
@@ -186,6 +186,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			}
 		});
 		color_panel.add(intraLinkColorButton);
+		color_panel.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		offset_y += 30;
 
 		final JButton interLinkColorButton = new JButton();
