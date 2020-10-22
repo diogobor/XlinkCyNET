@@ -18,6 +18,11 @@ import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.TaskIterator;
 import org.cytoscape.work.swing.DialogTaskManager;
 
+/**
+ * Method responsible for creating main context menu
+ * @author diogobor
+ *
+ */
 public class MainContextMenu implements CyNodeViewContextMenuFactory, ActionListener {
 	private TaskFactory myFactory;
 	private DialogTaskManager dialogTaskManager;
@@ -32,6 +37,9 @@ public class MainContextMenu implements CyNodeViewContextMenuFactory, ActionList
 		this.dialogTaskManager = dialogTaskManager;
 	}
 
+	/**
+	 * Method responsible for creating main MenuItem
+	 */
 	public CyMenuItem createMenuItem(CyNetworkView netView, View<CyNode> nodeView) {
 		JMenuItem menuItem = new JMenuItem("XlinkCyNET");
 		menuItem.addActionListener(this);

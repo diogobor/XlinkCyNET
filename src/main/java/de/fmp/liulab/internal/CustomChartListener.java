@@ -4,6 +4,11 @@ import java.util.Map;
 
 import org.cytoscape.view.presentation.customgraphics.CyCustomGraphics2Factory;
 
+/**
+ * Class responsible for customizing linear gradient color as chart color
+ * @author diogobor
+ *
+ */
 public class CustomChartListener {
 	 private static final String FACTORY_ID = "org.cytoscape.LinearGradient";
      private CyCustomGraphics2Factory<?> factory;
@@ -19,10 +24,19 @@ public class CustomChartListener {
              }
      }
      
+     /**
+      * Method responsible for removing the customized GraphicsFactory
+      * @param factory
+      * @param serviceProps
+      */
      public void removeCustomGraphicsFactory(CyCustomGraphics2Factory<?> factory, Map<Object,Object> serviceProps) {
              this.factory = null;
      }
      
+     /**
+      * Get current Factory
+      * @return current Factory
+      */
      public CyCustomGraphics2Factory<?> getFactory() {
              return factory;
      }

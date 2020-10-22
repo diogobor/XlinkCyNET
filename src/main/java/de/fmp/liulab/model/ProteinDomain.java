@@ -40,10 +40,16 @@ public class ProteinDomain implements Comparable<ProteinDomain> {
 		this.color = color;
 	}
 
+	/**
+	 * Method responsible for comparing two objects
+	 */
 	public int compareTo(ProteinDomain d) {
 		return this.startId - d.startId;
 	}
 
+	/**
+	 * Convert to string
+	 */
 	@Override
 	public String toString() {
 		return "Protein domain {" + this.name + "}";

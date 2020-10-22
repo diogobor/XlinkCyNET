@@ -10,6 +10,12 @@ import org.cytoscape.work.TaskIterator;
 
 import de.fmp.liulab.internal.CustomChartListener;
 
+/**
+ * Class responsible for initializing Layout node task
+ * 
+ * @author diogobor
+ *
+ */
 public class MainSingleNodeTaskFactory extends AbstractTaskFactory {
 
 	private CyApplicationManager cyApplicationManager;
@@ -19,7 +25,16 @@ public class MainSingleNodeTaskFactory extends AbstractTaskFactory {
 	private BendFactory bendFactory;
 	private boolean forcedWindowOpen;
 
-	// Constructor
+	/**
+	 * Constructor
+	 * 
+	 * @param cyApplicationManager
+	 * @param vmmServiceRef
+	 * @param customChartListener
+	 * @param bendFactory
+	 * @param handleFactory
+	 * @param forcedWindowOpen
+	 */
 	public MainSingleNodeTaskFactory(CyApplicationManager cyApplicationManager,
 			final VisualMappingManager vmmServiceRef, CustomChartListener customChartListener, BendFactory bendFactory,
 			HandleFactory handleFactory, boolean forcedWindowOpen) {
@@ -31,12 +46,18 @@ public class MainSingleNodeTaskFactory extends AbstractTaskFactory {
 		this.forcedWindowOpen = forcedWindowOpen;
 	}
 
+	/**
+	 * Empty constructor
+	 */
 	public MainSingleNodeTaskFactory() {
 	}
 
+	/**
+	 * Method responsible for initializing task
+	 */
 	public TaskIterator createTaskIterator() {
-		return new TaskIterator(
-				new MainSingleNodeTask(cyApplicationManager, vmmServiceRef, vgFactory, bendFactory, handleFactory, forcedWindowOpen));
+		return new TaskIterator(new MainSingleNodeTask(cyApplicationManager, vmmServiceRef, vgFactory, bendFactory,
+				handleFactory, forcedWindowOpen));
 	}
 
 }

@@ -1,9 +1,7 @@
 package de.fmp.liulab.internal;
 
 import static org.cytoscape.work.ServiceProperties.COMMAND_DESCRIPTION;
-import static org.cytoscape.work.ServiceProperties.MENU_GRAVITY;
 import static org.cytoscape.work.ServiceProperties.PREFERRED_MENU;
-import static org.cytoscape.work.ServiceProperties.INSERT_SEPARATOR_BEFORE;
 
 import java.util.Properties;
 
@@ -34,11 +32,19 @@ import de.fmp.liulab.internal.action.ShortcutSingleNodeExecuteAction;
 import de.fmp.liulab.task.LoadProteinDomainsTaskFactory;
 import de.fmp.liulab.task.MainSingleNodeTaskFactory;
 
+/**
+ * Class responsible for initializing cytoscape methods
+ * @author diogobor
+ *
+ */
 public class CyActivator extends AbstractCyActivator {
 	public CyActivator() {
 		super();
 	}
 
+	/**
+	 * Method responsible for starting context
+	 */
 	public void start(BundleContext bc) {
 
 		// #### 1 - ABOUT ####

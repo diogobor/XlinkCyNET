@@ -1,5 +1,12 @@
 package de.fmp.liulab.utils;
 
+/**
+ * Class responsible for creating tuple
+ * @author diogobor
+ *
+ * @param <K>
+ * @param <V>
+ */
 public class Tuple2<K, V> {
 	 
     private K first;

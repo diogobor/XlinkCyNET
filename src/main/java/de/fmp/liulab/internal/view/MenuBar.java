@@ -26,6 +26,9 @@ public class MenuBar implements ActionListener {
 	private JMenu fileMenu = new JMenu();
 	private JMenuItem importNetwork = new JMenuItem();
 
+	/**
+	 * Method responsible for activating action.
+	 */
 	@Override
 	public void actionPerformed(ActionEvent evt) {
 		Object source = evt.getSource();
@@ -45,6 +48,10 @@ public class MenuBar implements ActionListener {
 		}
 	}
 
+	/**
+	 * Get current menu bar
+	 * @return menu bar
+	 */
 	public JMenuBar getMenuBar() {
 		menuBar.setVisible(true);
 		menuBar.add(getFileMenu());
@@ -58,7 +65,7 @@ public class MenuBar implements ActionListener {
 	/**
 	 * Creates main menu
 	 * 
-	 * @return
+	 * @return current menu
 	 */
 	protected JMenu getFileMenu() {
 		fileMenu.setMnemonic('F');
@@ -68,6 +75,10 @@ public class MenuBar implements ActionListener {
 		return fileMenu;
 	}
 
+	/**
+	 * Get current subMenu item: 'Import file'
+	 * @return current subMenu item
+	 */
 	protected JMenuItem getSubMenuImportNetwork() {
 		importNetwork.setMnemonic('I');
 		importNetwork.setText("Import file");

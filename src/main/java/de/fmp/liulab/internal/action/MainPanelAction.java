@@ -10,6 +10,11 @@ import org.cytoscape.application.swing.CytoPanelState;
 
 import de.fmp.liulab.internal.MainControlPanel;
 
+/**
+ * Method responsible for creating main panel
+ * @author diogobor
+ *
+ */
 public class MainPanelAction extends AbstractCyAction {
 
 	private static final String MENU_NAME = "Settings";
@@ -19,6 +24,11 @@ public class MainPanelAction extends AbstractCyAction {
 	private final CytoPanel cytoPanelWest;
 	private MainControlPanel myControlPanel;
 
+	/**
+	 * Constructor
+	 * @param desktopApp
+	 * @param myCytoPanel
+	 */
 	public MainPanelAction(CySwingApplication desktopApp, MainControlPanel myCytoPanel) {
 		super(MENU_NAME);
 		setPreferredMenu(MENU_CATEGORY);
@@ -30,6 +40,9 @@ public class MainPanelAction extends AbstractCyAction {
 		this.myControlPanel = myCytoPanel;
 	}
 
+	/**
+	 * Method responsible for activating action.
+	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		// If the state of the cytoPanelWest is HIDE, show it

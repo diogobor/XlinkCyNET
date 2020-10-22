@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.swing.AbstractAction;
-import javax.swing.AbstractListModel;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -38,7 +37,6 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
-import javax.swing.ListModel;
 import javax.swing.table.DefaultTableModel;
 
 import org.cytoscape.application.CyApplicationManager;
@@ -64,12 +62,17 @@ import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.TaskMonitor;
 
 import de.fmp.liulab.internal.UpdateViewListener;
-import de.fmp.liulab.internal.view.JTableRowRenderer;
 import de.fmp.liulab.model.CrossLink;
 import de.fmp.liulab.model.ProteinDomain;
 import de.fmp.liulab.utils.Tuple2;
 import de.fmp.liulab.utils.Util;
 
+/**
+ * Class responsible for applying layout to a node
+ * 
+ * @author diogobor
+ *
+ */
 public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 	public static boolean isPlotDone = false;
@@ -114,6 +117,16 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	private Thread pfamThread;
 	private JButton pFamButton;
 
+	/**
+	 * Constructor
+	 * 
+	 * @param cyApplicationManager
+	 * @param vmmServiceRef
+	 * @param vgFactory
+	 * @param bendFactory
+	 * @param handleFactory
+	 * @param forcedWindowOpen
+	 */
 	public MainSingleNodeTask(CyApplicationManager cyApplicationManager, final VisualMappingManager vmmServiceRef,
 			CyCustomGraphics2Factory<?> vgFactory, BendFactory bendFactory, HandleFactory handleFactory,
 			boolean forcedWindowOpen) {
@@ -164,7 +177,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		mainFrame.setLocation((screenSize.width - appSize.width) / 2, (screenSize.height - appSize.height) / 2);
 	}
-	
+
+	/**
+	 * Method responsible for initializing the task
+	 */
 	@Override
 	public void run(final TaskMonitor taskMonitor) throws Exception {
 
@@ -178,6 +194,12 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 	}
 
+	/**
+	 * Method responsible for checking how many nodes have been selected
+	 * 
+	 * @param taskMonitor
+	 * @throws Exception
+	 */
 	private void checkSingleOrMultipleSelectedNodes(final TaskMonitor taskMonitor) throws Exception {
 
 		nodes = CyTableUtil.getNodesInState(myNetwork, CyNetwork.SELECTED, true);
@@ -237,7 +259,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			executeSingleNode(taskMonitor);
 		}
 	}
-	
+
 	@Override
 	public void cancel() {
 
@@ -370,72 +392,6 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		isCurrentNode_modified = Util.IsNodeModified(myNetwork, netView, style, node);
 
-		/**
-		 * Get possible domains
-		 */
-
-//			List<Color> nodeDomainColors = null;
-//
-//			VisualProperty<CyCustomGraphics2<?>> vp_node_linear_gradient = (VisualProperty<CyCustomGraphics2<?>>) lexicon
-//					.lookup(CyNode.class, "NODE_CUSTOMGRAPHICS_1");
-//			if (vp_node_linear_gradient != null) {
-//				try {
-//					Map<String, Object> chartProps = nodeView.getVisualProperty(vp_node_linear_gradient)
-//							.getProperties();
-//					if (chartProps != null) {
-//						for (Map.Entry<String, Object> entry : chartProps.entrySet()) {
-//							if (entry.getKey().equals("cy_gradientColors")) {
-//								nodeDomainColors = (List<Color>) entry.getValue();
-//							}
-//						}
-//					}
-//
-//					myProteinDomains = new ArrayList<ProteinDomain>();
-//					String[] node_toolTip = nodeView.getVisualProperty(BasicVisualLexicon.NODE_TOOLTIP)
-//							.split("<p>|</p>");
-//					int countColors = 2;
-//					for (int i = 5; i < node_toolTip.length; i++) {
-//						if (node_toolTip[i].startsWith("<") || node_toolTip[i].equals(""))
-//							continue;
-//						String[] cols = node_toolTip[i].split("\\[|\\]| - ");
-//						// String domain, int startId, int endId, double eValue
-//						myProteinDomains.add(new ProteinDomain(cols[0].trim(), Integer.parseInt(cols[1]),
-//								Integer.parseInt(cols[2]), nodeDomainColors.get(countColors)));
-//						countColors += 4;
-//					}
-//				} catch (Exception e) {
-//				}
-//			}
-
-	}
-
-	private static void updateRowHeader(int number_lines) {
-
-		final String[] headers = new String[number_lines];
-		for (int count = 0; count < number_lines; count++) {
-			headers[count] = String.valueOf(count + 1);
-		}
-
-		ListModel lm = new AbstractListModel() {
-
-			@Override
-			public int getSize() {
-				return headers.length;
-			}
-
-			@Override
-			public Object getElementAt(int index) {
-				return headers[index];
-			}
-
-		};
-
-		rowHeader = new JList(lm);
-		rowHeader.setFixedCellWidth(50);
-		rowHeader.setFixedCellHeight(mainProteinDomainTable.getRowHeight());
-		rowHeader.setCellRenderer(new JTableRowRenderer(mainProteinDomainTable));
-		if (proteinDomainTableScrollPanel != null)
-			proteinDomainTableScrollPanel.setRowHeaderView(rowHeader);
 	}
 
 	/**
@@ -452,7 +408,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			mainProteinDomainTable.setFillsViewportHeight(true);
 			mainProteinDomainTable.setAutoCreateRowSorter(true);
 
-			updateRowHeader(number_lines);
+			Util.updateRowHeader(number_lines, mainProteinDomainTable, rowHeader, proteinDomainTableScrollPanel);
 		}
 	}
 
@@ -657,6 +613,13 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 									// (Util.proteinDomainsMap)
 
 		mainProteinDomainTable = new JTable(tableDataModel);
+		// Create the scroll pane and add the table to it.
+		proteinDomainTableScrollPanel = new JScrollPane();
+		proteinDomainTableScrollPanel.setBounds(10, 185, 500, 90);
+		proteinDomainTableScrollPanel.setViewportView(mainProteinDomainTable);
+		proteinDomainTableScrollPanel.setRowHeaderView(rowHeader);
+		mainPanel.add(proteinDomainTableScrollPanel);
+
 		if (myProteinDomains != null && myProteinDomains.size() > 0) {
 			data = new Object[myProteinDomains.size()][5];
 			tableDataModel.setDataVector(data, columnNames);
@@ -712,7 +675,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 			public void actionPerformed(ActionEvent evt) {
 				tableDataModel.addRow(new Object[] { "" });
-				updateRowHeader(tableDataModel.getRowCount());
+				Util.updateRowHeader(tableDataModel.getRowCount(), mainProteinDomainTable, rowHeader,
+						proteinDomainTableScrollPanel);
 				textLabel_status_result.setText("Row has been inserted.");
 			}
 		};
@@ -738,7 +702,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 					if (input == 0) {
 						// remove selected row from the model
 						tableDataModel.removeRow(mainProteinDomainTable.getSelectedRow());
-						updateRowHeader(tableDataModel.getRowCount());
+						Util.updateRowHeader(tableDataModel.getRowCount(), mainProteinDomainTable, rowHeader,
+								proteinDomainTableScrollPanel);
 					}
 				}
 
@@ -750,13 +715,6 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		mainProteinDomainTable.getActionMap().put("deleteLineToTable", deleteLineToTableAction);
 		mainProteinDomainTable.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(keyStrokeDeleteLine,
 				"deleteLineToTable");
-
-		// Create the scroll pane and add the table to it.
-		proteinDomainTableScrollPanel = new JScrollPane();
-		proteinDomainTableScrollPanel.setBounds(10, 185, 500, 90);
-		proteinDomainTableScrollPanel.setViewportView(mainProteinDomainTable);
-		proteinDomainTableScrollPanel.setRowHeaderView(rowHeader);
-		mainPanel.add(proteinDomainTableScrollPanel);
 
 		Icon iconBtnOk = new ImageIcon(getClass().getResource("/images/okBtn.png"));
 		JButton okButton = new JButton(iconBtnOk);

@@ -5,6 +5,11 @@ import java.awt.event.ActionEvent;
 import org.cytoscape.application.swing.AbstractCyAction;
 import org.cytoscape.util.swing.OpenBrowser;
 
+/**
+ * Class responsible for the Browser action
+ * @author diogobor
+ *
+ */
 public class ControlURLAction extends AbstractCyAction {
 
 	private static final String MENU_NAME = "About";
@@ -24,6 +29,9 @@ public class ControlURLAction extends AbstractCyAction {
 		this.openBrowser = openBrowser;
 	}
 
+	/**
+	 * Method responsible for activating action.
+	 */
 	public void actionPerformed(ActionEvent e) {
 		openBrowser.openURL("http://diogobor.droppages.com/xlinkcynet_protocol_exchange.png");
 	}

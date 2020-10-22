@@ -24,6 +24,12 @@ import de.fmp.liulab.internal.view.ExtensionFileFilter;
 import de.fmp.liulab.model.ProteinDomain;
 import de.fmp.liulab.utils.Util;
 
+/**
+ * Method responsible for exporting protein domains
+ * 
+ * @author diogobor
+ *
+ */
 public class ExportProteinDomainsAction extends AbstractCyAction {
 
 	private static final String MENU_NAME = "Export";
@@ -32,6 +38,11 @@ public class ExportProteinDomainsAction extends AbstractCyAction {
 	private CyApplicationManager cyApplicationManager;
 	private CyNetwork myNetwork;
 
+	/**
+	 * Constructor
+	 * 
+	 * @param cyApplicationManager
+	 */
 	public ExportProteinDomainsAction(CyApplicationManager cyApplicationManager) {
 		super(MENU_NAME);
 		setPreferredMenu(MENU_CATEGORY);
@@ -39,6 +50,9 @@ public class ExportProteinDomainsAction extends AbstractCyAction {
 		this.cyApplicationManager = cyApplicationManager;
 	}
 
+	/**
+	 * Method responsible for activating action.
+	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
 
@@ -133,5 +147,4 @@ public class ExportProteinDomainsAction extends AbstractCyAction {
 
 		}
 	}
-
 }

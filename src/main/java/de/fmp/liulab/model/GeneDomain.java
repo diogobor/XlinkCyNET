@@ -22,11 +22,17 @@ public class GeneDomain implements Comparable<GeneDomain> {
 		this.proteinDomains = proteinDomains;
 	}
 
+	/**
+	 * Method responsible for comparing two objects
+	 */
 	@Override
 	public int compareTo(GeneDomain o) {
 		return getGeneName.compareTo(o.getGeneName);
 	}
 
+	/**
+	 * Convert to string
+	 */
 	@Override
 	public String toString() {
 		return "Gene {" + this.getGeneName + "}";

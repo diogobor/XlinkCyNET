@@ -9,6 +9,11 @@ import javax.swing.ListCellRenderer;
 import javax.swing.UIManager;
 import javax.swing.table.JTableHeader;
 
+/**
+ * Class responsible for controlling JTable RowHeader
+ * @author diogobor
+ *
+ */
 public class JTableRowRenderer extends JLabel implements ListCellRenderer<Object> {
 
 	/**
@@ -16,6 +21,10 @@ public class JTableRowRenderer extends JLabel implements ListCellRenderer<Object
 	 */
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * Constructor
+	 * @param table
+	 */
 	public JTableRowRenderer(JTable table) {
 		JTableHeader header = table.getTableHeader();
 		setOpaque(true);
@@ -26,6 +35,9 @@ public class JTableRowRenderer extends JLabel implements ListCellRenderer<Object
 		setFont(header.getFont());
 	}
 
+	/**
+	 * Method responsible for getting current component.
+	 */
 	@Override
 	public Component getListCellRendererComponent(JList<?> list, Object obj, int index, boolean selected,
 			boolean focused) {

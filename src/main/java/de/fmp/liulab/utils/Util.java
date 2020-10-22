@@ -18,6 +18,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import javax.swing.AbstractListModel;
+import javax.swing.JList;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.ListModel;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -46,13 +51,14 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 import de.fmp.liulab.internal.UpdateViewListener;
+import de.fmp.liulab.internal.view.JTableRowRenderer;
 import de.fmp.liulab.model.CrossLink;
 import de.fmp.liulab.model.ProteinDomain;
 import de.fmp.liulab.task.LoadProteinDomainTask;
 import de.fmp.liulab.task.MainSingleNodeTask;
 
 /**
- * Class responsible for getting several kind of attributes
+ * Class responsible for getting / setting common methods
  * 
  * @author borges.diogo
  *
@@ -130,6 +136,14 @@ public class Util {
 		}
 	}
 
+	/**
+	 * Method responsible for checking if a node is modified
+	 * @param myNetwork
+	 * @param netView
+	 * @param style
+	 * @param node
+	 * @return
+	 */
 	private static boolean checkModifiedNode(CyNetwork myNetwork, CyNetworkView netView, VisualStyle style,
 			CyNode node) {
 		View<CyNode> nodeView = netView.getNodeView(node);
@@ -1167,6 +1181,41 @@ public class Util {
 	}
 
 	/**
+	 * Method responsible for updating table row header
+	 * 
+	 * @param number_lines
+	 */
+	public static void updateRowHeader(int number_lines, JTable mainProteinDomainTable, JList rowHeader,
+			JScrollPane proteinDomainTableScrollPanel) {
+
+		final String[] headers = new String[number_lines];
+		for (int count = 0; count < number_lines; count++) {
+			headers[count] = String.valueOf(count + 1);
+		}
+
+		ListModel lm = new AbstractListModel() {
+
+			@Override
+			public int getSize() {
+				return headers.length;
+			}
+
+			@Override
+			public Object getElementAt(int index) {
+				return headers[index];
+			}
+
+		};
+
+		rowHeader = new JList(lm);
+		rowHeader.setFixedCellWidth(50);
+		rowHeader.setFixedCellHeight(mainProteinDomainTable.getRowHeight());
+		rowHeader.setCellRenderer(new JTableRowRenderer(mainProteinDomainTable));
+		if (proteinDomainTableScrollPanel != null)
+			proteinDomainTableScrollPanel.setRowHeaderView(rowHeader);
+	}
+
+	/**
 	 * Get all links from adjacent edges of a node
 	 */
 	public static Tuple2<ArrayList<CrossLink>, ArrayList<CrossLink>> getAllLinksFromAdjacentEdgesNode(CyNode node,
@@ -1385,18 +1434,36 @@ public class Util {
 		return null;
 	}
 
+	/**
+	 * Returns X position of a node
+	 * @param nodeView
+	 * @return
+	 */
 	private static double getXPositionOf(View<CyNode> nodeView) {
 		return nodeView.getVisualProperty(BasicVisualLexicon.NODE_X_LOCATION);
 	}
 
+	/**
+	 * Returns Y position of a node
+	 * @param nodeView
+	 * @return
+	 */
 	private static double getYPositionOf(View<CyNode> nodeView) {
 		return nodeView.getVisualProperty(BasicVisualLexicon.NODE_Y_LOCATION);
 	}
 
+	/**
+	 * Check if the operating system is Windows
+	 * @return
+	 */
 	public static boolean isWindows() {
 		return (OS.indexOf("win") >= 0);
 	}
 
+	/**
+	 * Check if the operating system is Linux
+	 * @return
+	 */
 	public static boolean isUnix() {
 		return (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0);
 	}

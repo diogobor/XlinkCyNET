@@ -11,12 +11,20 @@ public class CrossLink implements Comparable<CrossLink> {
 	public int pos_site_a;
 	public int pos_site_b;
 
-	//Empty Constructor
+	/**
+	 * Empty Constructor
+	 */
 	public CrossLink() {
 		
 	}
 	
-	// Constructor
+	/**
+	 * Constructor
+	 * @param ptn_a
+	 * @param ptn_b
+	 * @param pos_a
+	 * @param pos_b
+	 */
 	public CrossLink(String ptn_a, String ptn_b, int pos_a, int pos_b) {
 		this.protein_a = ptn_a;
 		this.protein_b = ptn_b;
@@ -24,6 +32,9 @@ public class CrossLink implements Comparable<CrossLink> {
 		this.pos_site_b = pos_b;
 	}
 
+	/**
+	 * Method responsible for comparing two objects
+	 */
 	public int compareTo(CrossLink d) {
 
 		int result = this.pos_site_a - d.pos_site_a;
@@ -34,6 +45,9 @@ public class CrossLink implements Comparable<CrossLink> {
 		return this.pos_site_b - d.pos_site_b;
 	}
 
+	/**
+	 * Convert to string
+	 */
 	@Override
 	public String toString() {
 		return "CrossLink {" + this.protein_a + " - " + this.protein_b + " [" + this.pos_site_a + " - "

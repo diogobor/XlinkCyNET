@@ -25,6 +25,11 @@ public class LoadProteinDomainsAction extends AbstractCyAction {
 	private DialogTaskManager dialogTaskManager;
 	private TaskFactory myFactory;
 
+	/**
+	 * Constructor
+	 * @param dialogTaskManager
+	 * @param myFactory
+	 */
 	public LoadProteinDomainsAction(DialogTaskManager dialogTaskManager, TaskFactory myFactory) {
 		super(MENU_NAME);
 		setPreferredMenu(MENU_CATEGORY);
@@ -33,6 +38,9 @@ public class LoadProteinDomainsAction extends AbstractCyAction {
 		this.myFactory = myFactory;
 	}
 
+	/**
+	 * Method responsible for activating action.
+	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		// Get the task iterator

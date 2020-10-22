@@ -6,16 +6,27 @@ import java.util.List;
 
 import de.fmp.liulab.task.LoadProteinDomainTask;
 
+/**
+ * Class responsible for parsing input files
+ * @author diogobor
+ *
+ */
 public class Parser {
 
 	private ReaderWriterTextFile parserFile;
 	private List<String> qtdParser = new ArrayList<String>();
 	private String[] columnNames = { "Gene", "Domain(s)" };
 
-	// UNIPROT
+	/**
+	 * UNIPROT lines
+	 */
 	private String[] uniprot_header_lines;
 	private boolean isUniprot;
 
+	/**
+	 * Constructor
+	 * @param fileName
+	 */
 	public Parser(String fileName) {
 
 		try {
@@ -36,6 +47,9 @@ public class Parser {
 		}
 	}
 
+	/**
+	 * Method responsible for updating data model table
+	 */
 	public void updateDataModel() {
 
 		StringBuilder sb_data_to_be_stored = new StringBuilder();

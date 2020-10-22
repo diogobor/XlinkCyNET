@@ -27,7 +27,6 @@ import java.util.StringTokenizer;
 import java.util.function.Predicate;
 
 import javax.swing.AbstractAction;
-import javax.swing.AbstractListModel;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
@@ -42,7 +41,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
-import javax.swing.ListModel;
 import javax.swing.table.DefaultTableModel;
 
 import org.cytoscape.application.CyApplicationManager;
@@ -59,7 +57,6 @@ import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.TaskMonitor;
 
 import de.fmp.liulab.internal.UpdateViewListener;
-import de.fmp.liulab.internal.view.JTableRowRenderer;
 import de.fmp.liulab.internal.view.MenuBar;
 import de.fmp.liulab.model.GeneDomain;
 import de.fmp.liulab.model.ProteinDomain;
@@ -67,6 +64,7 @@ import de.fmp.liulab.utils.Util;
 
 /**
  * Class responsible for loading domains of a set of proteins
+ * 
  * @author borges.diogo
  *
  */
@@ -107,6 +105,13 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 	public static boolean isPlotDone = false;
 
+	/**
+	 * Constructor
+	 * 
+	 * @param cyApplicationManager
+	 * @param vmmServiceRef
+	 * @param vgFactory
+	 */
 	public LoadProteinDomainTask(CyApplicationManager cyApplicationManager, final VisualMappingManager vmmServiceRef,
 			CyCustomGraphics2Factory vgFactory) {
 		this.cyApplicationManager = cyApplicationManager;
@@ -155,6 +160,9 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		mainFrame.setVisible(true);
 	}
 
+	/**
+	 * Method responsible for running task
+	 */
 	@Override
 	public void run(TaskMonitor taskMonitor) throws Exception {
 
@@ -172,6 +180,14 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		mainFrame.setVisible(true);
 	}
 
+	/**
+	 * Method responsible for cropping image
+	 * 
+	 * @param srcImg
+	 * @param w
+	 * @param h
+	 * @return cropped image
+	 */
 	private Image getScaledImage(Image srcImg, int w, int h) {
 		BufferedImage resizedImg = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2 = resizedImg.createGraphics();
@@ -248,8 +264,6 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		};
 
 		mainProteinDomainTable = new JTable(tableDataModel);
-		setTableProperties(1);
-
 		Action insertLineToTableAction = new AbstractAction("insertLineToTable") {
 			/**
 			 * 
@@ -259,7 +273,8 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 			public void actionPerformed(ActionEvent evt) {
 				tableDataModel.addRow(new Object[] { "" });
 
-				updateRowHeader(tableDataModel.getRowCount());
+				Util.updateRowHeader(tableDataModel.getRowCount(), mainProteinDomainTable, rowHeader,
+						proteinDomainTableScrollPanel);
 				textLabel_status_result.setText("Row has been inserted.");
 			}
 		};
@@ -285,7 +300,8 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 					if (input == 0) {
 						// remove selected row from the model
 						tableDataModel.removeRow(mainProteinDomainTable.getSelectedRow());
-						updateRowHeader(tableDataModel.getRowCount());
+						Util.updateRowHeader(tableDataModel.getRowCount(), mainProteinDomainTable, rowHeader,
+								proteinDomainTableScrollPanel);
 					}
 				}
 
@@ -313,6 +329,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		proteinDomainTableScrollPanel.setBounds(10, 130, 500, 105);
 		proteinDomainTableScrollPanel.setViewportView(mainProteinDomainTable);
 		proteinDomainTableScrollPanel.setRowHeaderView(rowHeader);
+		setTableProperties(1);
 		mainPanel.add(proteinDomainTableScrollPanel);
 	}
 
@@ -522,6 +539,12 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		mainPanel.add(cancelButton);
 	}
 
+	/**
+	 * Method responsible for converting ProteinDomain collection into string
+	 * 
+	 * @param proteinDomains
+	 * @return
+	 */
 	private String ToStringProteinDomains(List<ProteinDomain> proteinDomains) {
 
 		if (proteinDomains == null || proteinDomains.size() == 0) {
@@ -647,35 +670,6 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 			return sbError.toString();
 	}
 
-	private static void updateRowHeader(int number_lines) {
-
-		final String[] headers = new String[number_lines];
-		for (int count = 0; count < number_lines; count++) {
-			headers[count] = String.valueOf(count + 1);
-		}
-
-		ListModel lm = new AbstractListModel() {
-
-			@Override
-			public int getSize() {
-				return headers.length;
-			}
-
-			@Override
-			public Object getElementAt(int index) {
-				return headers[index];
-			}
-
-		};
-
-		rowHeader = new JList(lm);
-		rowHeader.setFixedCellWidth(50);
-		rowHeader.setFixedCellHeight(mainProteinDomainTable.getRowHeight());
-		rowHeader.setCellRenderer(new JTableRowRenderer(mainProteinDomainTable));
-		if (proteinDomainTableScrollPanel != null)
-			proteinDomainTableScrollPanel.setRowHeaderView(rowHeader);
-	}
-
 	/**
 	 * Set properties to the Node domain table
 	 */
@@ -687,10 +681,13 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 			mainProteinDomainTable.setFillsViewportHeight(true);
 			mainProteinDomainTable.setAutoCreateRowSorter(true);
 
-			updateRowHeader(number_lines);
+			Util.updateRowHeader(number_lines, mainProteinDomainTable, rowHeader, proteinDomainTableScrollPanel);
 		}
 	}
 
+	/**
+	 * Method responsible for activating action.
+	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
 
