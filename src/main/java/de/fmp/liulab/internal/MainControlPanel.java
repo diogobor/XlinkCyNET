@@ -2,8 +2,11 @@ package de.fmp.liulab.internal;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.MouseInfo;
+import java.awt.Point;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
@@ -22,6 +25,7 @@ import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.ToolTipManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.DefaultFormatter;
@@ -33,6 +37,7 @@ import de.fmp.liulab.utils.Util;
 
 /**
  * Class responsible for controlling all layout parameters
+ * 
  * @author diogobor
  *
  */
@@ -72,20 +77,23 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	 * Method responsible for initializing JPanels
 	 */
 	private void init_group_panels() {
-		
+
 		color_panel = new JPanel();
+		color_panel.setBackground(Color.WHITE);
 		color_panel.setBorder(BorderFactory.createTitledBorder("Color"));
 		color_panel.setBounds(10, 10, 250, 120);
 		color_panel.setLayout(null);
 		this.add(color_panel);
 
 		link_legend_panel = new JPanel();
+		link_legend_panel.setBackground(Color.WHITE);
 		link_legend_panel.setBorder(BorderFactory.createTitledBorder("Link legend"));
 		link_legend_panel.setBounds(10, 140, 250, 120);
 		link_legend_panel.setLayout(null);
 		this.add(link_legend_panel);
 
 		other_panel = new JPanel();
+		other_panel.setBackground(Color.WHITE);
 		other_panel.setBorder(BorderFactory.createTitledBorder("Other"));
 		other_panel.setBounds(10, 270, 250, 90);
 		other_panel.setLayout(null);
@@ -155,6 +163,11 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		intraLinkColorButton.setForeground(Util.IntraLinksColor);
 		intraLinkColorButton.setOpaque(true);
 		intraLinkColorButton.setBorderPainted(false);
+		intraLinkColorButton.setToolTipText("Value: R:" + Util.IntraLinksColor.getRed() + " G:"
+				+ Util.IntraLinksColor.getGreen() + " B:" + Util.IntraLinksColor.getBlue() + " - "
+				+ String.format("#%02X%02X%02X", Util.IntraLinksColor.getRed(), Util.IntraLinksColor.getGreen(),
+						Util.IntraLinksColor.getBlue()));
+		intraLinkColorButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		intraLinkColorButton.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 
@@ -164,8 +177,12 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 				intraLinkColorButton.setForeground(color);
 				intraLinkColorButton.setOpaque(true);
 				intraLinkColorButton.setBorderPainted(false);
-
 				Util.IntraLinksColor = color;
+
+				intraLinkColorButton.setToolTipText("Value: R:" + Util.IntraLinksColor.getRed() + " G:"
+						+ Util.IntraLinksColor.getGreen() + " B:" + Util.IntraLinksColor.getBlue() + " - "
+						+ String.format("#%02X%02X%02X", Util.IntraLinksColor.getRed(), Util.IntraLinksColor.getGreen(),
+								Util.IntraLinksColor.getBlue()));
 			}
 		});
 		color_panel.add(intraLinkColorButton);
@@ -177,6 +194,11 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		interLinkColorButton.setForeground(Util.InterLinksColor);
 		interLinkColorButton.setOpaque(true);
 		interLinkColorButton.setBorderPainted(false);
+		interLinkColorButton.setToolTipText("Value: R:" + Util.InterLinksColor.getRed() + " G:"
+				+ Util.InterLinksColor.getGreen() + " B:" + Util.InterLinksColor.getBlue() + " - "
+				+ String.format("#%02X%02X%02X", Util.InterLinksColor.getRed(), Util.InterLinksColor.getGreen(),
+						Util.InterLinksColor.getBlue()));
+		interLinkColorButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		interLinkColorButton.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 
@@ -186,8 +208,12 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 				interLinkColorButton.setForeground(color);
 				interLinkColorButton.setOpaque(true);
 				interLinkColorButton.setBorderPainted(false);
-
 				Util.InterLinksColor = color;
+
+				interLinkColorButton.setToolTipText("Value: R:" + Util.InterLinksColor.getRed() + " G:"
+						+ Util.InterLinksColor.getGreen() + " B:" + Util.InterLinksColor.getBlue() + " - "
+						+ String.format("#%02X%02X%02X", Util.InterLinksColor.getRed(), Util.InterLinksColor.getGreen(),
+								Util.InterLinksColor.getBlue()));
 			}
 		});
 		color_panel.add(interLinkColorButton);
@@ -199,6 +225,11 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		borderNodeColorButton.setForeground(Util.NodeBorderColor);
 		borderNodeColorButton.setOpaque(true);
 		borderNodeColorButton.setBorderPainted(false);
+		borderNodeColorButton.setToolTipText("Value: R:" + Util.NodeBorderColor.getRed() + " G:"
+				+ Util.NodeBorderColor.getGreen() + " B:" + Util.NodeBorderColor.getBlue() + " - "
+				+ String.format("#%02X%02X%02X", Util.NodeBorderColor.getRed(), Util.NodeBorderColor.getGreen(),
+						Util.NodeBorderColor.getBlue()));
+		borderNodeColorButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		borderNodeColorButton.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 
@@ -208,8 +239,12 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 				borderNodeColorButton.setForeground(color);
 				borderNodeColorButton.setOpaque(true);
 				borderNodeColorButton.setBorderPainted(false);
-
 				Util.NodeBorderColor = color;
+
+				borderNodeColorButton.setToolTipText("Value: R:" + Util.NodeBorderColor.getRed() + " G:"
+						+ Util.NodeBorderColor.getGreen() + " B:" + Util.NodeBorderColor.getBlue() + " - "
+						+ String.format("#%02X%02X%02X", Util.NodeBorderColor.getRed(), Util.NodeBorderColor.getGreen(),
+								Util.NodeBorderColor.getBlue()));
 			}
 		});
 		color_panel.add(borderNodeColorButton);
@@ -265,6 +300,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		offset_y += 30;
 
 		JCheckBox show_links_legend = new JCheckBox("Display");
+		show_links_legend.setBackground(Color.WHITE);
 		show_links_legend.setSelected(true);
 		show_links_legend.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		show_links_legend.setBounds(5, offset_y - 85, 200, 20);
