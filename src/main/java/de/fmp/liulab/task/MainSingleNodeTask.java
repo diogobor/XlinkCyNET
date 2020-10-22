@@ -140,6 +140,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		available_colors.add(new Color(255, 255, 0, 100));
 		available_colors.add(new Color(0, 64, 0, 100));
 		available_colors.add(new Color(204, 0, 0, 100));
+		available_colors.add(new Color(255, 198, 0, 100));
 
 		if (mainFrame == null)
 			mainFrame = new JFrame("XlinkCyNET - Single Node");

@@ -74,7 +74,7 @@ public class Util {
 	public static Color IntraLinksColor = Color.GRAY;
 	public static Color InterLinksColor = Color.GRAY;
 	public static Color NodeBorderColor = new Color(315041);// Dark green
-	public static boolean showLinksLegend = true;
+	public static boolean showLinksLegend = false;
 	public static Integer edge_label_font_size = 12;
 	public static Integer node_label_font_size = 12;
 	public static Integer edge_label_opacity = 120;
@@ -351,6 +351,8 @@ public class Util {
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TRANSPARENCY, edge_link_opacity);
 
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL, "[" + intraLinks.get(countEdge).pos_site_a
+						+ "] - [" + intraLinks.get(countEdge).pos_site_b + "]");
+				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TOOLTIP, "[" + intraLinks.get(countEdge).pos_site_a
 						+ "] - [" + intraLinks.get(countEdge).pos_site_b + "]");
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_FONT_SIZE, edge_label_font_size);
 
@@ -694,6 +696,12 @@ public class Util {
 						newEdgeView.setLockedValue(vp_edge_label, edge_label);
 
 				}
+
+				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TOOLTIP,
+						current_inter_links.get(countEdge).protein_a + " ["
+								+ current_inter_links.get(countEdge).pos_site_a + "] - "
+								+ current_inter_links.get(countEdge).protein_b + " ["
+								+ current_inter_links.get(countEdge).pos_site_b + "]");
 
 				if (showLinksLegend) {
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, edge_label_opacity);

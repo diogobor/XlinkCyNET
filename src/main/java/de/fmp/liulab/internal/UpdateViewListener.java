@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -175,65 +177,68 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 				}
 			}
 
-			if (nodeSuidList.size() == 1) {// Only one node has been selected
+			// Iterating over hash set items
+			Iterator<CyNode> _iterator_CyNode = nodeSuidList.iterator();
+			while (_iterator_CyNode.hasNext()) {
 
-				CyNode current_node = nodeSuidList.iterator().next();
+				final CyNode current_node = _iterator_CyNode.next();
 
 				myNetwork = cyApplicationManager.getCurrentNetwork();
 				netView = cyApplicationManager.getCurrentNetworkView();
 
 				List<CyNode> nodes = CyTableUtil.getNodesInState(myNetwork, CyNetwork.SELECTED, true);
-				if (nodes.size() == 1) {
 
-					if (current_node.getSUID() == nodes.get(0).getSUID()) {
+				// Check if the node exists in the network
+				Optional<CyNode> isNodePresent = nodes.stream().filter(new Predicate<CyNode>() {
+					public boolean test(CyNode o) {
+						return o.getSUID() == current_node.getSUID();
+					}
+				}).findFirst();
 
-						if (this.selectedNode != null) {// If selectedNode is null means that the node is just
-														// plotted.
-							Tuple2 inter_and_intralinks = Util.getAllLinksFromAdjacentEdgesNode(this.selectedNode,
-									myNetwork);
-							MainSingleNodeTask.interLinks = (ArrayList<CrossLink>) inter_and_intralinks.getFirst();
-							MainSingleNodeTask.intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
-						}
-						View<CyNode> nodeView = netView.getNodeView(current_node);
+				if (isNodePresent.isPresent()) {
 
-						CyRow proteinA_node_row = myNetwork.getRow(current_node);
-						Object length_other_protein_a = proteinA_node_row.getRaw("length_protein_a");
-						Object length_other_protein_b = proteinA_node_row.getRaw("length_protein_b");
+					Tuple2 inter_and_intralinks = Util.getAllLinksFromAdjacentEdgesNode(current_node, myNetwork);
+					MainSingleNodeTask.interLinks = (ArrayList<CrossLink>) inter_and_intralinks.getFirst();
+					MainSingleNodeTask.intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
+					View<CyNode> nodeView = netView.getNodeView(current_node);
 
-						if (length_other_protein_a == null) {
-							if (length_other_protein_b == null)
-								length_other_protein_a = 10;
-							else
-								length_other_protein_a = length_other_protein_b;
-						}
+					CyRow proteinA_node_row = myNetwork.getRow(current_node);
+					Object length_other_protein_a = proteinA_node_row.getRaw("length_protein_a");
+					Object length_other_protein_b = proteinA_node_row.getRaw("length_protein_b");
 
-						VisualStyle style = MainSingleNodeTask.style;
-						if (style == null)
-							style = LoadProteinDomainTask.style;
-						if (style == null)
-							return;
+					if (length_other_protein_a == null) {
+						if (length_other_protein_b == null)
+							length_other_protein_a = 10;
+						else
+							length_other_protein_a = length_other_protein_b;
+					}
 
-						VisualLexicon lexicon = MainSingleNodeTask.lexicon;
-						if (lexicon == null)
-							lexicon = LoadProteinDomainTask.lexicon;
-						if (lexicon == null)
-							return;
+					VisualStyle style = MainSingleNodeTask.style;
+					if (style == null)
+						style = LoadProteinDomainTask.style;
+					if (style == null)
+						return;
 
-						if (MainSingleNodeTask.interLinks.size() > 0) { // The selectedNode has interlinks
-							IsIntraLink = false;
-						} else {
-							IsIntraLink = true;
-						}
+					VisualLexicon lexicon = MainSingleNodeTask.lexicon;
+					if (lexicon == null)
+						lexicon = LoadProteinDomainTask.lexicon;
+					if (lexicon == null)
+						return;
 
-						if (Util.IsNodeModified(myNetwork, netView, style, current_node)) {
-							Util.addOrUpdateEdgesToNetwork(myNetwork, current_node, style, netView, nodeView,
-									handleFactory, bendFactory, lexicon, ((Number) length_other_protein_a).floatValue(),
-									MainSingleNodeTask.intraLinks, MainSingleNodeTask.interLinks, null);
-						} else if (!IsIntraLink) {
-							Util.updateAllAssiciatedInterlinkNodes(myNetwork, cyApplicationManager, netView,
-									handleFactory, bendFactory, current_node);// Check if all associated nodes are
-																				// unmodified
-						}
+					if (MainSingleNodeTask.interLinks.size() > 0) { // The selectedNode has interlinks
+						IsIntraLink = false;
+					} else {
+						IsIntraLink = true;
+					}
+
+					if (Util.IsNodeModified(myNetwork, netView, style, current_node)) {
+						Util.addOrUpdateEdgesToNetwork(myNetwork, current_node, style, netView, nodeView, handleFactory,
+								bendFactory, lexicon, ((Number) length_other_protein_a).floatValue(),
+								MainSingleNodeTask.intraLinks, MainSingleNodeTask.interLinks, null);
+					} else if (!IsIntraLink) {
+						Util.updateAllAssiciatedInterlinkNodes(myNetwork, cyApplicationManager, netView, handleFactory,
+								bendFactory, current_node);// Check if all associated nodes are
+															// unmodified
 					}
 				}
 			}

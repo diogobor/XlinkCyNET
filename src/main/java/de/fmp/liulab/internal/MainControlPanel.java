@@ -167,7 +167,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 				+ Util.IntraLinksColor.getGreen() + " B:" + Util.IntraLinksColor.getBlue() + " - "
 				+ String.format("#%02X%02X%02X", Util.IntraLinksColor.getRed(), Util.IntraLinksColor.getGreen(),
 						Util.IntraLinksColor.getBlue()));
-		
+
 		intraLinkColorButton.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 
@@ -302,9 +302,16 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 		JCheckBox show_links_legend = new JCheckBox("Display");
 		show_links_legend.setBackground(Color.WHITE);
-		show_links_legend.setSelected(true);
+		show_links_legend.setSelected(Util.showLinksLegend);
 		show_links_legend.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		show_links_legend.setBounds(5, offset_y - 85, 200, 20);
+		if (Util.showLinksLegend) {
+			spinner_link.setEnabled(true);
+			spinner_opacity_edge_label.setEnabled(true);
+		} else {
+			spinner_link.setEnabled(false);
+			spinner_opacity_edge_label.setEnabled(false);
+		}
 		show_links_legend.addItemListener(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
