@@ -160,7 +160,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		Dimension appSize = null;
-		if (Util.isWindows() || Util.isUnix()) {
+		if (Util.isWindows()) {
 			appSize = new Dimension(540, 365);
 		} else {
 			appSize = new Dimension(540, 345);
@@ -452,7 +452,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		JRadioButton protein_expansion_horizontal = new JRadioButton("Horizontal");
 		protein_expansion_horizontal.setSelected(Util.isProtein_expansion_horizontal);
-		if (Util.isWindows() || Util.isUnix()) {
+		if (Util.isWindows()) {
 			protein_expansion_horizontal.setBounds(75, 80, 90, 20);
 		} else {
 			protein_expansion_horizontal.setBounds(70, 80, 105, 20);
@@ -720,7 +720,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		JButton okButton = new JButton(iconBtnOk);
 		okButton.setText("OK");
 
-		if (Util.isWindows() || Util.isUnix()) {
+		if (Util.isWindows()) {
 			okButton.setBounds(30, 295, 220, 25);
 		} else {
 			okButton.setBounds(30, 290, 220, 25);
@@ -780,7 +780,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		JButton cancelButton = new JButton(iconBtnCancel);
 		cancelButton.setText("Cancel");
 
-		if (Util.isWindows() || Util.isUnix()) {
+		if (Util.isWindows()) {
 			cancelButton.setBounds(265, 295, 220, 25);
 		} else {
 			cancelButton.setBounds(265, 290, 220, 25);
@@ -797,7 +797,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		JButton restoreStyleButton = new JButton(iconBtnRestoreStyle);
 		restoreStyleButton.setText("Restore style");
 
-		if (Util.isWindows() || Util.isUnix()) {
+		if (Util.isWindows()) {
 			restoreStyleButton.setBounds(390, 155, 120, 25);
 		} else {
 			restoreStyleButton.setBounds(390, 160, 120, 25);

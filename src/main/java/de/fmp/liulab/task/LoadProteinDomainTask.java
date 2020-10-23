@@ -140,7 +140,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 		mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		Dimension appSize = null;
-		if (Util.isWindows() || Util.isUnix()) {
+		if (Util.isWindows()) {
 			appSize = new Dimension(540, 345);
 		} else {
 			appSize = new Dimension(540, 315);

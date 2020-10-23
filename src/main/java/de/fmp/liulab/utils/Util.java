@@ -38,6 +38,7 @@ import org.cytoscape.view.model.VisualLexicon;
 import org.cytoscape.view.model.VisualProperty;
 import org.cytoscape.view.presentation.property.ArrowShapeVisualProperty;
 import org.cytoscape.view.presentation.property.BasicVisualLexicon;
+import org.cytoscape.view.presentation.property.LineTypeVisualProperty;
 import org.cytoscape.view.presentation.property.values.Bend;
 import org.cytoscape.view.presentation.property.values.BendFactory;
 import org.cytoscape.view.presentation.property.values.Handle;
@@ -379,6 +380,7 @@ public class Util {
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_WIDTH, 2.0);
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TARGET_ARROW_SHAPE, ArrowShapeVisualProperty.NONE);
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_SOURCE_ARROW_SHAPE, ArrowShapeVisualProperty.NONE);
+				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LINE_TYPE, LineTypeVisualProperty.SOLID);
 
 				xl_pos_source = intraLinks.get(countEdge).pos_site_a;
 				if (xl_pos_source <= center_position_node) { // [-protein_length/2, 0]
@@ -688,6 +690,7 @@ public class Util {
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_WIDTH, 2.0);
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TARGET_ARROW_SHAPE, ArrowShapeVisualProperty.NONE);
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_SOURCE_ARROW_SHAPE, ArrowShapeVisualProperty.NONE);
+				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LINE_TYPE, LineTypeVisualProperty.SOLID);
 
 				// ##### EDGE_LABEL ########
 				String blank_spaces = edge_label_blank_spaces;
