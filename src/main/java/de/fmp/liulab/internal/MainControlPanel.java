@@ -45,6 +45,13 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	private JPanel link_legend_panel;
 	private JPanel other_panel;
 
+	private JButton intraLinkColorButton;
+	private JButton interLinkColorButton;
+	private JButton borderNodeColorButton;
+
+	private JSpinner spinner_link;
+	private JSpinner spinner_opacity_edge_label;
+
 	/**
 	 * Constructor
 	 */
@@ -64,9 +71,10 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 		setSize(250, 120);
 		init_group_panels();
-		init_labels();
 		init_color_buttons();
+		init_labels();
 		init_spinners();
+		init_checkBoxes();
 
 	}
 
@@ -100,22 +108,99 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	}
 
 	/**
+	 * Method responsible for initializing all checkboxes in the frame
+	 */
+	private void init_checkBoxes() {
+		int offset_y = 20;
+
+		JCheckBox show_intra_link = new JCheckBox("Display Intralink:");
+		show_intra_link.setBackground(Color.WHITE);
+		show_intra_link.setSelected(Util.showIntraLinks);
+		show_intra_link.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
+		show_intra_link.setBounds(5, offset_y, 115, 20);
+		if (Util.showIntraLinks) {
+			intraLinkColorButton.setEnabled(true);
+		} else {
+			intraLinkColorButton.setEnabled(false);
+		}
+		show_intra_link.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				if (e.getStateChange() == ItemEvent.SELECTED) {// checkbox has been selected
+					intraLinkColorButton.setEnabled(true);
+					Util.showIntraLinks = true;
+				} else {
+					intraLinkColorButton.setEnabled(false);
+					Util.showIntraLinks = false;
+				}
+				;
+			}
+		});
+		color_panel.add(show_intra_link);
+		offset_y += 30;
+
+		JCheckBox show_inter_link = new JCheckBox("Display Interlink:");
+		show_inter_link.setBackground(Color.WHITE);
+		show_inter_link.setSelected(Util.showInterLinks);
+		show_inter_link.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
+		show_inter_link.setBounds(5, offset_y, 115, 20);
+		if (Util.showInterLinks) {
+			interLinkColorButton.setEnabled(true);
+		} else {
+			interLinkColorButton.setEnabled(false);
+		}
+		show_inter_link.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				if (e.getStateChange() == ItemEvent.SELECTED) {// checkbox has been selected
+					interLinkColorButton.setEnabled(true);
+					Util.showInterLinks = true;
+				} else {
+					interLinkColorButton.setEnabled(false);
+					Util.showInterLinks = false;
+				}
+				;
+			}
+		});
+		color_panel.add(show_inter_link);
+
+		offset_y = 25;
+		JCheckBox show_links_legend = new JCheckBox("Display");
+		show_links_legend.setBackground(Color.WHITE);
+		show_links_legend.setSelected(Util.showLinksLegend);
+		show_links_legend.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
+		show_links_legend.setBounds(5, offset_y, 200, 20);
+		if (Util.showLinksLegend) {
+			spinner_link.setEnabled(true);
+			spinner_opacity_edge_label.setEnabled(true);
+		} else {
+			spinner_link.setEnabled(false);
+			spinner_opacity_edge_label.setEnabled(false);
+		}
+		show_links_legend.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				if (e.getStateChange() == ItemEvent.SELECTED) {// checkbox has been selected
+					spinner_link.setEnabled(true);
+					spinner_opacity_edge_label.setEnabled(true);
+					Util.showLinksLegend = true;
+				} else {
+					spinner_link.setEnabled(false);
+					spinner_opacity_edge_label.setEnabled(false);
+					Util.showLinksLegend = false;
+				}
+				;
+			}
+		});
+		link_legend_panel.add(show_links_legend);
+	}
+
+	/**
 	 * Method responsible for initializing all labels in the frame
 	 */
 	private void init_labels() {
 
-		int offset_y = -20;
-		JLabel textLabel_intra_link_color = new JLabel("Intralink:");
-		textLabel_intra_link_color.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_intra_link_color.setBounds(10, offset_y, 450, 100);
-		color_panel.add(textLabel_intra_link_color);
-		offset_y += 30;
-
-		JLabel textLabel_inter_link_color = new JLabel("Interlink:");
-		textLabel_inter_link_color.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_inter_link_color.setBounds(10, offset_y, 450, 100);
-		color_panel.add(textLabel_inter_link_color);
-		offset_y += 30;
+		int offset_y = 42;
 
 		JLabel textLabel_border_node_color = new JLabel("Node border:");
 		textLabel_border_node_color.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
@@ -152,10 +237,10 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	 */
 	private void init_color_buttons() {
 
-		int offset_x = 110;
+		int offset_x = 125;
 		int offset_y = 25;
 
-		final JButton intraLinkColorButton = new JButton();
+		intraLinkColorButton = new JButton();
 		intraLinkColorButton.setBounds(offset_x, offset_y, 30, 15);
 		intraLinkColorButton.setBackground(Util.IntraLinksColor);
 		intraLinkColorButton.setForeground(Util.IntraLinksColor);
@@ -168,28 +253,29 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 		intraLinkColorButton.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
+				if (intraLinkColorButton.isEnabled()) {
+					Color initialcolor = intraLinkColorButton.getBackground();
+					Color color = JColorChooser.showDialog(null, "Select a color", initialcolor);
+					if (color == null)
+						color = initialcolor;
+					intraLinkColorButton.setBackground(color);
+					intraLinkColorButton.setForeground(color);
+					intraLinkColorButton.setOpaque(true);
+					intraLinkColorButton.setBorderPainted(false);
+					Util.IntraLinksColor = color;
 
-				Color initialcolor = intraLinkColorButton.getBackground();
-				Color color = JColorChooser.showDialog(null, "Select a color", initialcolor);
-				if (color == null)
-					color = initialcolor;
-				intraLinkColorButton.setBackground(color);
-				intraLinkColorButton.setForeground(color);
-				intraLinkColorButton.setOpaque(true);
-				intraLinkColorButton.setBorderPainted(false);
-				Util.IntraLinksColor = color;
-
-				intraLinkColorButton.setToolTipText("Value: R:" + Util.IntraLinksColor.getRed() + " G:"
-						+ Util.IntraLinksColor.getGreen() + " B:" + Util.IntraLinksColor.getBlue() + " - "
-						+ String.format("#%02X%02X%02X", Util.IntraLinksColor.getRed(), Util.IntraLinksColor.getGreen(),
-								Util.IntraLinksColor.getBlue()));
+					intraLinkColorButton.setToolTipText("Value: R:" + Util.IntraLinksColor.getRed() + " G:"
+							+ Util.IntraLinksColor.getGreen() + " B:" + Util.IntraLinksColor.getBlue() + " - "
+							+ String.format("#%02X%02X%02X", Util.IntraLinksColor.getRed(),
+									Util.IntraLinksColor.getGreen(), Util.IntraLinksColor.getBlue()));
+				}
 			}
 		});
 		color_panel.add(intraLinkColorButton);
 		color_panel.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		offset_y += 30;
 
-		final JButton interLinkColorButton = new JButton();
+		interLinkColorButton = new JButton();
 		interLinkColorButton.setBounds(offset_x, offset_y, 30, 15);
 		interLinkColorButton.setBackground(Util.InterLinksColor);
 		interLinkColorButton.setForeground(Util.InterLinksColor);
@@ -202,27 +288,28 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		interLinkColorButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		interLinkColorButton.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
+				if (interLinkColorButton.isEnabled()) {
+					Color initialcolor = interLinkColorButton.getBackground();
+					Color color = JColorChooser.showDialog(null, "Select a color", initialcolor);
+					if (color == null)
+						color = initialcolor;
+					interLinkColorButton.setBackground(color);
+					interLinkColorButton.setForeground(color);
+					interLinkColorButton.setOpaque(true);
+					interLinkColorButton.setBorderPainted(false);
+					Util.InterLinksColor = color;
 
-				Color initialcolor = interLinkColorButton.getBackground();
-				Color color = JColorChooser.showDialog(null, "Select a color", initialcolor);
-				if (color == null)
-					color = initialcolor;
-				interLinkColorButton.setBackground(color);
-				interLinkColorButton.setForeground(color);
-				interLinkColorButton.setOpaque(true);
-				interLinkColorButton.setBorderPainted(false);
-				Util.InterLinksColor = color;
-
-				interLinkColorButton.setToolTipText("Value: R:" + Util.InterLinksColor.getRed() + " G:"
-						+ Util.InterLinksColor.getGreen() + " B:" + Util.InterLinksColor.getBlue() + " - "
-						+ String.format("#%02X%02X%02X", Util.InterLinksColor.getRed(), Util.InterLinksColor.getGreen(),
-								Util.InterLinksColor.getBlue()));
+					interLinkColorButton.setToolTipText("Value: R:" + Util.InterLinksColor.getRed() + " G:"
+							+ Util.InterLinksColor.getGreen() + " B:" + Util.InterLinksColor.getBlue() + " - "
+							+ String.format("#%02X%02X%02X", Util.InterLinksColor.getRed(),
+									Util.InterLinksColor.getGreen(), Util.InterLinksColor.getBlue()));
+				}
 			}
 		});
 		color_panel.add(interLinkColorButton);
 		offset_y += 30;
 
-		final JButton borderNodeColorButton = new JButton();
+		borderNodeColorButton = new JButton();
 		borderNodeColorButton.setBounds(offset_x, offset_y, 30, 15);
 		borderNodeColorButton.setBackground(Util.NodeBorderColor);
 		borderNodeColorButton.setForeground(Util.NodeBorderColor);
@@ -260,14 +347,14 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	 */
 	private void init_spinners() {
 
-		int offset_x = 110;
+		int offset_x = 125;
 		int offset_y = 50;
 
 		SpinnerModel model_link = new SpinnerNumberModel(Util.edge_label_font_size.intValue(), // initial value
 				0, // min
 				30, // max
 				1); // step
-		final JSpinner spinner_link = new JSpinner(model_link);
+		spinner_link = new JSpinner(model_link);
 		spinner_link.setBounds(offset_x, offset_y, 60, 20);
 		JComponent comp_link = spinner_link.getEditor();
 		JFormattedTextField field_link = (JFormattedTextField) comp_link.getComponent(0);
@@ -288,7 +375,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 				0, // min
 				255, // max
 				1); // step
-		final JSpinner spinner_opacity_edge_label = new JSpinner(model_opacity_edge_label);
+		spinner_opacity_edge_label = new JSpinner(model_opacity_edge_label);
 		spinner_opacity_edge_label.setBounds(offset_x, offset_y, 60, 20);
 		JComponent comp_opacitiy_edge_label = spinner_opacity_edge_label.getEditor();
 		JFormattedTextField field_opacity_edge_label = (JFormattedTextField) comp_opacitiy_edge_label.getComponent(0);
@@ -302,36 +389,6 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			}
 		});
 		link_legend_panel.add(spinner_opacity_edge_label);
-		offset_y += 30;
-
-		JCheckBox show_links_legend = new JCheckBox("Display");
-		show_links_legend.setBackground(Color.WHITE);
-		show_links_legend.setSelected(Util.showLinksLegend);
-		show_links_legend.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		show_links_legend.setBounds(5, offset_y - 85, 200, 20);
-		if (Util.showLinksLegend) {
-			spinner_link.setEnabled(true);
-			spinner_opacity_edge_label.setEnabled(true);
-		} else {
-			spinner_link.setEnabled(false);
-			spinner_opacity_edge_label.setEnabled(false);
-		}
-		show_links_legend.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				if (e.getStateChange() == ItemEvent.SELECTED) {// checkbox has been selected
-					spinner_link.setEnabled(true);
-					spinner_opacity_edge_label.setEnabled(true);
-					Util.showLinksLegend = true;
-				} else {
-					spinner_link.setEnabled(false);
-					spinner_opacity_edge_label.setEnabled(false);
-					Util.showLinksLegend = false;
-				}
-				;
-			}
-		});
-		link_legend_panel.add(show_links_legend);
 
 		offset_y = 20;
 		SpinnerModel model_node = new SpinnerNumberModel(Util.node_label_font_size.intValue(), // initial value

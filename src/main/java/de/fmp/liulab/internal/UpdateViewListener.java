@@ -124,7 +124,7 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 							IsIntraLink = true;
 						}
 
-						if (Util.IsNodeModified(myNetwork, netView, style, this.selectedNode)) {
+						if (Util.IsNodeModified(myNetwork, netView, this.selectedNode)) {
 							VisualStyle style = MainSingleNodeTask.style;
 							if (style == null)
 								style = LoadProteinDomainTask.style;
@@ -226,7 +226,7 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 						IsIntraLink = true;
 					}
 
-					if (Util.IsNodeModified(myNetwork, netView, style, current_node)) {
+					if (Util.IsNodeModified(myNetwork, netView, current_node)) {
 						Util.addOrUpdateEdgesToNetwork(myNetwork, current_node, style, netView, nodeView, handleFactory,
 								bendFactory, lexicon, ((Number) length_other_protein_a).floatValue(),
 								MainSingleNodeTask.intraLinks, MainSingleNodeTask.interLinks, null);
@@ -284,7 +284,7 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 					if (this.style == null)
 						isNodeModified = false;
 					else
-						isNodeModified = Util.IsNodeModified(myNetwork, netView, style, nodes.get(0));
+						isNodeModified = Util.IsNodeModified(myNetwork, netView, nodes.get(0));
 
 				} catch (Exception e2) {
 					isNodeModified = false;

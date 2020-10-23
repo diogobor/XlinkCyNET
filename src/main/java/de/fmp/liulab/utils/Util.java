@@ -82,6 +82,8 @@ public class Util {
 	public static Color InterLinksColor = Color.GRAY;
 	public static Color NodeBorderColor = new Color(315041);// Dark green
 	public static boolean showLinksLegend = false;
+	public static boolean showIntraLinks = true;
+	public static boolean showInterLinks = true;
 	public static Integer edge_label_font_size = 12;
 	public static Integer node_label_font_size = 12;
 	public static Integer edge_label_opacity = 120;
@@ -96,11 +98,11 @@ public class Util {
 	 * @param myNetwork
 	 * @param netView
 	 * @param node
-	 * @return
+	 * @return true if node is modified otherwise returns false
 	 */
-	public static boolean IsNodeModified(CyNetwork myNetwork, CyNetworkView netView, VisualStyle style, CyNode node) {
+	public static boolean IsNodeModified(CyNetwork myNetwork, CyNetworkView netView, CyNode node) {
 
-		if (myNetwork == null || netView == null || style == null || node == null)
+		if (myNetwork == null || netView == null || node == null)
 			return false;
 
 		Object length_other_protein_a;
@@ -123,7 +125,7 @@ public class Util {
 				.floatValue();
 
 		if (((Number) length_other_protein_a).floatValue() == proteinA_node_width) {// Expansion - horizontal
-			return checkModifiedNode(myNetwork, netView, style, node);
+			return checkModifiedNode(myNetwork, netView, node);
 
 		} else {// Expansion - vertical
 
@@ -131,7 +133,7 @@ public class Util {
 					.floatValue();
 
 			if (((Number) length_other_protein_a).floatValue() == proteinA_node_height) {
-				return checkModifiedNode(myNetwork, netView, style, node);
+				return checkModifiedNode(myNetwork, netView, node);
 			}
 			return false;
 		}
@@ -139,14 +141,14 @@ public class Util {
 
 	/**
 	 * Method responsible for checking if a node is modified
+	 * 
 	 * @param myNetwork
 	 * @param netView
 	 * @param style
 	 * @param node
-	 * @return
+	 * @return true if node is modified otherwise returns false
 	 */
-	private static boolean checkModifiedNode(CyNetwork myNetwork, CyNetworkView netView, VisualStyle style,
-			CyNode node) {
+	private static boolean checkModifiedNode(CyNetwork myNetwork, CyNetworkView netView, CyNode node) {
 		View<CyNode> nodeView = netView.getNodeView(node);
 
 		VisualLexicon lexicon = MainSingleNodeTask.lexicon;
@@ -154,6 +156,13 @@ public class Util {
 			lexicon = LoadProteinDomainTask.lexicon;
 
 		if (lexicon == null)
+			return false;
+
+		VisualStyle style = MainSingleNodeTask.style;
+		if (style == null)
+			style = LoadProteinDomainTask.style;
+
+		if (style == null)
 			return false;
 
 		// Try to get the label visual property by its ID
@@ -265,15 +274,19 @@ public class Util {
 
 				} else {
 					ContainsInterLink = true;
-					plotInterLinks(myNetwork, nodeView, netView, handleFactory, bendFactory, style, node, sourceNode,
-							targetNode, lexicon, proteinLength, interLinks);
+					if (showInterLinks) {
+						plotInterLinks(myNetwork, nodeView, netView, handleFactory, bendFactory, style, node,
+								sourceNode, targetNode, lexicon, proteinLength, interLinks);
+					}
 				}
 
 			} else { // Update all sites of the current selected node
 				HasAdjacentEdges = true;
 
-				updateInterLinkEdgesPosition(myNetwork, node, netView, handleFactory, bendFactory, style, lexicon, edge,
-						sourceNode, targetNode, edge_name, proteinLength);
+				if (showInterLinks) {
+					updateInterLinkEdgesPosition(myNetwork, node, netView, handleFactory, bendFactory, style, lexicon,
+							edge, sourceNode, targetNode, edge_name, proteinLength);
+				}
 			}
 
 			if (taskMonitor != null) {
@@ -296,7 +309,10 @@ public class Util {
 				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting styles on the intra link edges: 98%");
 			}
 
-			plotIntraLinks(myNetwork, nodeView, netView, handleFactory, bendFactory, style, proteinLength, intraLinks);
+			if (showIntraLinks) {
+				plotIntraLinks(myNetwork, nodeView, netView, handleFactory, bendFactory, style, proteinLength,
+						intraLinks);
+			}
 		}
 
 		UpdateViewListener.isNodeModified = true;
@@ -324,150 +340,165 @@ public class Util {
 		double x_or_y_Pos_target = 0;
 		double xl_pos_target = 0;
 
-		for (int countEdge = 0; countEdge < intraLinks.size(); countEdge++) {
+		if (showIntraLinks) {
+			for (int countEdge = 0; countEdge < intraLinks.size(); countEdge++) {
 
-			final String egde_name_added_by_app = "Edge" + countEdge + " [Source: "
-					+ intraLinks.get(countEdge).protein_a + " (" + intraLinks.get(countEdge).pos_site_a + ")] [Target: "
-					+ intraLinks.get(countEdge).protein_b + " (" + intraLinks.get(countEdge).pos_site_b + ")]";
+				final String egde_name_added_by_app = "Edge" + countEdge + " [Source: "
+						+ intraLinks.get(countEdge).protein_a + " (" + intraLinks.get(countEdge).pos_site_a
+						+ ")] [Target: " + intraLinks.get(countEdge).protein_b + " ("
+						+ intraLinks.get(countEdge).pos_site_b + ")]";
 
-			CyEdge current_edge = getEdge(myNetwork, egde_name_added_by_app);
-			if (current_edge == null) {// Add a new edge if does not exist
+				CyEdge current_edge = getEdge(myNetwork, egde_name_added_by_app);
+				if (current_edge == null) {// Add a new edge if does not exist
 
-				String node_name_source = intraLinks.get(countEdge).protein_a + " ["
-						+ intraLinks.get(countEdge).pos_site_a + " - " + intraLinks.get(countEdge).pos_site_b
-						+ "] - Source";
+					String node_name_source = intraLinks.get(countEdge).protein_a + " ["
+							+ intraLinks.get(countEdge).pos_site_a + " - " + intraLinks.get(countEdge).pos_site_b
+							+ "] - Source";
 
-				CyNode new_node_source = myNetwork.addNode();
-				myNetwork.getRow(new_node_source).set(CyNetwork.NAME, node_name_source);
+					CyNode new_node_source = myNetwork.addNode();
+					myNetwork.getRow(new_node_source).set(CyNetwork.NAME, node_name_source);
 
-				String node_name_target = intraLinks.get(countEdge).protein_a + " ["
-						+ intraLinks.get(countEdge).pos_site_a + " - " + intraLinks.get(countEdge).pos_site_b
-						+ "] - Target";
+					String node_name_target = intraLinks.get(countEdge).protein_a + " ["
+							+ intraLinks.get(countEdge).pos_site_a + " - " + intraLinks.get(countEdge).pos_site_b
+							+ "] - Target";
 
-				CyNode new_node_target = myNetwork.addNode();
-				myNetwork.getRow(new_node_target).set(CyNetwork.NAME, node_name_target);
+					CyNode new_node_target = myNetwork.addNode();
+					myNetwork.getRow(new_node_target).set(CyNetwork.NAME, node_name_target);
 
-				CyEdge newEdge = myNetwork.addEdge(new_node_source, new_node_target, true);
-				myNetwork.getRow(newEdge).set(CyNetwork.NAME, egde_name_added_by_app);
+					CyEdge newEdge = myNetwork.addEdge(new_node_source, new_node_target, true);
+					myNetwork.getRow(newEdge).set(CyNetwork.NAME, egde_name_added_by_app);
 
-				View<CyEdge> newEdgeView = netView.getEdgeView(newEdge);
-				while (newEdgeView == null) {
-					// Apply the change to the view
-					style.apply(netView);
-					netView.updateView();
-					try {
-						Thread.sleep(200);
-					} catch (InterruptedException e1) {
-						e1.printStackTrace();
+					View<CyEdge> newEdgeView = netView.getEdgeView(newEdge);
+					while (newEdgeView == null) {
+						// Apply the change to the view
+						style.apply(netView);
+						netView.updateView();
+						try {
+							Thread.sleep(200);
+						} catch (InterruptedException e1) {
+							e1.printStackTrace();
+						}
+						newEdgeView = netView.getEdgeView(newEdge);
 					}
-					newEdgeView = netView.getEdgeView(newEdge);
-				}
-				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_PAINT, IntraLinksColor);
-				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TRANSPARENCY, edge_link_opacity);
+					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_PAINT, IntraLinksColor);
+					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TRANSPARENCY, edge_link_opacity);
 
-				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL, "[" + intraLinks.get(countEdge).pos_site_a
-						+ "] - [" + intraLinks.get(countEdge).pos_site_b + "]");
-				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TOOLTIP, "[" + intraLinks.get(countEdge).pos_site_a
-						+ "] - [" + intraLinks.get(countEdge).pos_site_b + "]");
-				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_FONT_SIZE, edge_label_font_size);
-
-				if (showLinksLegend) {
-					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, edge_label_opacity);
+					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL, "[" + intraLinks.get(countEdge).pos_site_a
+							+ "] - [" + intraLinks.get(countEdge).pos_site_b + "]");
+					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TOOLTIP,
+							"[" + intraLinks.get(countEdge).pos_site_a + "] - [" + intraLinks.get(countEdge).pos_site_b
+									+ "]");
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_FONT_SIZE, edge_label_font_size);
-				} else {
-					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, 0);
+
+					if (showLinksLegend) {
+						newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, edge_label_opacity);
+						newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_FONT_SIZE, edge_label_font_size);
+					} else {
+						newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, 0);
+					}
+					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_WIDTH, 2.0);
+					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TARGET_ARROW_SHAPE,
+							ArrowShapeVisualProperty.NONE);
+					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_SOURCE_ARROW_SHAPE,
+							ArrowShapeVisualProperty.NONE);
+					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LINE_TYPE, LineTypeVisualProperty.SOLID);
+
+					xl_pos_source = intraLinks.get(countEdge).pos_site_a;
+					if (xl_pos_source <= center_position_node) { // [-protein_length/2, 0]
+						x_or_y_Pos_source = (-center_position_node) + xl_pos_source;
+					} else { // [0, protein_length/2]
+						x_or_y_Pos_source = xl_pos_source - center_position_node;
+					}
+					if (isProtein_expansion_horizontal) {
+						x_or_y_Pos_source += initial_positionX_node;
+					} else {
+						x_or_y_Pos_source += initial_positionY_node;
+					}
+
+					xl_pos_target = intraLinks.get(countEdge).pos_site_b;
+					if (xl_pos_target <= center_position_node) { // [-protein_length/2, 0]
+						x_or_y_Pos_target = (-center_position_node) + xl_pos_target;
+					} else { // [0, protein_length/2]
+						x_or_y_Pos_target = xl_pos_target - center_position_node;
+					}
+					if (isProtein_expansion_horizontal) {
+						x_or_y_Pos_target += initial_positionX_node;
+					} else {
+						x_or_y_Pos_target += initial_positionY_node;
+					}
+
+					View<CyNode> new_node_source_view = netView.getNodeView(new_node_source);
+
+					if (isProtein_expansion_horizontal) {
+						new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, x_or_y_Pos_source);
+						new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, initial_positionY_node);
+					} else {
+						new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, initial_positionX_node);
+						new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, x_or_y_Pos_source);
+					}
+
+					new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_WIDTH, 0.01);
+					new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_LABEL_TRANSPARENCY, 0);
+					new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_LABEL, "");
+					new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, true);
+					new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_BORDER_WIDTH, 0.0);
+					new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_BORDER_PAINT, Color.WHITE);
+
+					View<CyNode> new_node_target_view = netView.getNodeView(new_node_target);
+					if (isProtein_expansion_horizontal) {
+						new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, x_or_y_Pos_target);
+						new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, initial_positionY_node);
+					} else {
+						new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, initial_positionX_node);
+						new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, x_or_y_Pos_target);
+					}
+
+					new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_WIDTH, 0.01);
+					new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_LABEL_TRANSPARENCY, 0);
+					new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_LABEL, "");
+					new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, true);
+					new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_BORDER_WIDTH, 0.0);
+					new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_BORDER_PAINT, Color.WHITE);
+
+					Bend bend = bendFactory.createBend();
+
+					double x_or_y_Pos = (x_or_y_Pos_source + x_or_y_Pos_target) / 2;
+
+					if (Math.abs(x_or_y_Pos_source) > Math.abs(x_or_y_Pos_target)) {
+						x_or_y_Pos = Math.abs(x_or_y_Pos_source) - Math.abs(x_or_y_Pos);
+					} else {
+						x_or_y_Pos = Math.abs(x_or_y_Pos_target) - Math.abs(x_or_y_Pos);
+					}
+					x_or_y_Pos += 50;
+					if (isProtein_expansion_horizontal) {
+						x_or_y_Pos += initial_positionY_node;
+					} else {
+						x_or_y_Pos += initial_positionX_node;
+					}
+
+					Handle h = null;
+					if (isProtein_expansion_horizontal) {
+						h = handleFactory.createHandle(netView, newEdgeView,
+								(x_or_y_Pos_source + x_or_y_Pos_target) / 2, x_or_y_Pos);
+					} else {
+						h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos,
+								(x_or_y_Pos_source + x_or_y_Pos_target) / 2);
+					}
+
+					bend.insertHandleAt(0, h);
+					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_BEND, bend);
+
+				} else { // Update edge position
+
+					View<CyEdge> edgeView = netView.getEdgeView(current_edge);
+					edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+					updateIntraLinkEdgesPosition(myNetwork, netView, edgeView, intraLinks, countEdge, x_or_y_Pos_source,
+							xl_pos_source, x_or_y_Pos_target, xl_pos_target, center_position_node,
+							initial_positionX_node, initial_positionY_node);
 				}
-				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_WIDTH, 2.0);
-				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TARGET_ARROW_SHAPE, ArrowShapeVisualProperty.NONE);
-				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_SOURCE_ARROW_SHAPE, ArrowShapeVisualProperty.NONE);
-				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LINE_TYPE, LineTypeVisualProperty.SOLID);
-
-				xl_pos_source = intraLinks.get(countEdge).pos_site_a;
-				if (xl_pos_source <= center_position_node) { // [-protein_length/2, 0]
-					x_or_y_Pos_source = (-center_position_node) + xl_pos_source;
-				} else { // [0, protein_length/2]
-					x_or_y_Pos_source = xl_pos_source - center_position_node;
-				}
-				if (isProtein_expansion_horizontal) {
-					x_or_y_Pos_source += initial_positionX_node;
-				} else {
-					x_or_y_Pos_source += initial_positionY_node;
-				}
-
-				xl_pos_target = intraLinks.get(countEdge).pos_site_b;
-				if (xl_pos_target <= center_position_node) { // [-protein_length/2, 0]
-					x_or_y_Pos_target = (-center_position_node) + xl_pos_target;
-				} else { // [0, protein_length/2]
-					x_or_y_Pos_target = xl_pos_target - center_position_node;
-				}
-				if (isProtein_expansion_horizontal) {
-					x_or_y_Pos_target += initial_positionX_node;
-				} else {
-					x_or_y_Pos_target += initial_positionY_node;
-				}
-
-				View<CyNode> new_node_source_view = netView.getNodeView(new_node_source);
-
-				if (isProtein_expansion_horizontal) {
-					new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, x_or_y_Pos_source);
-					new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, initial_positionY_node);
-				} else {
-					new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, initial_positionX_node);
-					new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, x_or_y_Pos_source);
-				}
-
-				new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_WIDTH, 0.01);
-				new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_LABEL_TRANSPARENCY, 0);
-				new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_LABEL, "");
-
-				View<CyNode> new_node_target_view = netView.getNodeView(new_node_target);
-				if (isProtein_expansion_horizontal) {
-					new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, x_or_y_Pos_target);
-					new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, initial_positionY_node);
-				} else {
-					new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, initial_positionX_node);
-					new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, x_or_y_Pos_target);
-				}
-
-				new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_WIDTH, 0.01);
-				new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_LABEL_TRANSPARENCY, 0);
-				new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_LABEL, "");
-
-				Bend bend = bendFactory.createBend();
-
-				double x_or_y_Pos = (x_or_y_Pos_source + x_or_y_Pos_target) / 2;
-
-				if (Math.abs(x_or_y_Pos_source) > Math.abs(x_or_y_Pos_target)) {
-					x_or_y_Pos = Math.abs(x_or_y_Pos_source) - Math.abs(x_or_y_Pos);
-				} else {
-					x_or_y_Pos = Math.abs(x_or_y_Pos_target) - Math.abs(x_or_y_Pos);
-				}
-				x_or_y_Pos += 50;
-				if (isProtein_expansion_horizontal) {
-					x_or_y_Pos += initial_positionY_node;
-				} else {
-					x_or_y_Pos += initial_positionX_node;
-				}
-
-				Handle h = null;
-				if (isProtein_expansion_horizontal) {
-					h = handleFactory.createHandle(netView, newEdgeView, (x_or_y_Pos_source + x_or_y_Pos_target) / 2,
-							x_or_y_Pos);
-				} else {
-					h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos,
-							(x_or_y_Pos_source + x_or_y_Pos_target) / 2);
-				}
-
-				bend.insertHandleAt(0, h);
-				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_BEND, bend);
-
-			} else { // Update edge position
-
-				View<CyEdge> edgeView = netView.getEdgeView(current_edge);
-				updateIntraLinkEdgesPosition(myNetwork, netView, edgeView, intraLinks, countEdge, x_or_y_Pos_source,
-						xl_pos_source, x_or_y_Pos_target, xl_pos_target, center_position_node, initial_positionX_node,
-						initial_positionY_node);
 			}
+		} else {// restore intralinks
+			hideAllIntraLinks(myNetwork, netView);
 		}
 	}
 
@@ -1043,6 +1074,9 @@ public class Util {
 				new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, initial_positionX_node);
 				new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, x_or_y_Pos_source);
 			}
+			new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, true);
+			new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_BORDER_WIDTH, 0.0);
+			new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_BORDER_PAINT, Color.WHITE);
 		}
 
 		final String node_name_target = intraLinks.get(countEdge).protein_a + " ["
@@ -1071,6 +1105,9 @@ public class Util {
 				new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, initial_positionX_node);
 				new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, x_or_y_Pos_target);
 			}
+			new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, true);
+			new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_BORDER_WIDTH, 0.0);
+			new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_BORDER_PAINT, Color.WHITE);
 		}
 
 		// #### UPDATE EDGE COLOR ####
@@ -1148,7 +1185,7 @@ public class Util {
 							length_other_protein_a = length_other_protein_b;
 					}
 
-					if (Util.IsNodeModified(myNetwork, netView, style, proteinA_node)) {
+					if (IsNodeModified(myNetwork, netView, proteinA_node)) {
 						MainSingleNodeTask.node = proteinA_node;
 						MainSingleNodeTask.proteinLength = ((Number) length_other_protein_a).floatValue();
 
@@ -1162,15 +1199,15 @@ public class Util {
 								MainSingleNodeTask.intraLinks, MainSingleNodeTask.interLinks, null);
 
 						if (current_node != null) {
-							inter_and_intralinks = Util.getAllLinksFromAdjacentEdgesNode(current_node, myNetwork);// update
-																													// intraLinks
-																													// &
-																													// interLinks
-																													// with
-																													// the
-																													// current
-																													// selected
-																													// node
+							inter_and_intralinks = getAllLinksFromAdjacentEdgesNode(current_node, myNetwork);// update
+																												// intraLinks
+																												// &
+																												// interLinks
+																												// with
+																												// the
+																												// current
+																												// selected
+																												// node
 							MainSingleNodeTask.interLinks = (ArrayList<CrossLink>) inter_and_intralinks.getFirst();
 							MainSingleNodeTask.intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
 						}
@@ -1181,6 +1218,145 @@ public class Util {
 			}
 
 		}
+	}
+
+	/**
+	 * Method responsible for restoring edges style
+	 * 
+	 * @param taskMonitor
+	 */
+	public static void restoreEdgesStyle(final TaskMonitor taskMonitor, CyNetwork myNetwork,
+			CyApplicationManager cyApplicationManager, CyNetworkView netView, HandleFactory handleFactory,
+			BendFactory bendFactory, CyNode current_node) {
+
+		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Restoring edges...");
+
+		boolean IsModified_source_node = false;
+		boolean IsModified_target_node = false;
+		boolean IsIntraLink = false;
+
+		int total_edges = 0;
+		int old_progress = 0;
+		int summary_processed = 0;
+		if (taskMonitor != null)
+			total_edges = myNetwork.getAdjacentEdgeList(current_node, CyEdge.Type.ANY).size();
+
+		for (CyEdge edge : myNetwork.getAdjacentEdgeIterable(current_node, CyEdge.Type.ANY)) {
+
+			// Check if the edge was inserted by this app
+			String edge_name = myNetwork.getDefaultEdgeTable().getRow(edge.getSUID()).get(CyNetwork.NAME, String.class);
+
+			CyNode sourceNode = myNetwork.getEdge(edge.getSUID()).getSource();
+			CyNode targetNode = myNetwork.getEdge(edge.getSUID()).getTarget();
+
+			if (sourceNode.getSUID() == targetNode.getSUID()) {
+				IsIntraLink = true;
+			} else {
+				IsIntraLink = false;
+			}
+			IsModified_source_node = IsNodeModified(myNetwork, netView, sourceNode);
+			IsModified_target_node = IsNodeModified(myNetwork, netView, targetNode);
+			if (!edge_name.startsWith("[Source:")) {// original edges
+
+				if (IsIntraLink) {
+					View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
+					currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+				} else if (!IsModified_source_node && !IsModified_target_node) {
+					View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
+					currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+				}
+			} else { // created edges
+
+				if (IsIntraLink) {
+					View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
+					currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+
+				} else if (!IsModified_source_node && !IsModified_target_node) {
+					View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
+					currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+				}
+			}
+
+			if (taskMonitor != null) {
+				summary_processed++;
+				int new_progress = (int) ((double) summary_processed / (total_edges) * 100);
+				if (new_progress > old_progress) {
+					old_progress = new_progress;
+
+					taskMonitor.showMessage(TaskMonitor.Level.INFO, "Restoring edges styles: " + old_progress + "%");
+				}
+			}
+		}
+
+		if (MainSingleNodeTask.interLinks.size() > 0) {
+			if (taskMonitor != null) {
+				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting styles on the inter link edges: 95%");
+			}
+			updateAllAssiciatedInterlinkNodes(myNetwork, cyApplicationManager, netView, handleFactory, bendFactory,
+					current_node);
+		}
+		if (MainSingleNodeTask.intraLinks.size() > 0) {
+			if (taskMonitor != null) {
+				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting styles on the intra link edges: 99%");
+			}
+			hideAllIntraLinks(myNetwork, netView);
+		}
+
+		// ######################### UPDATE EDGES #########################
+	}
+
+	/**
+	 * Method responsible for removing all intralinks of a node when the layout is
+	 * restored
+	 */
+	public static void hideAllIntraLinks(CyNetwork myNetwork, CyNetworkView netView) {
+
+		CyNode current_node_source = null;
+		CyNode current_node_target = null;
+		CyEdge current_edge_intra = null;
+
+//		Set<CyNode> removeNodes = new HashSet<CyNode>();
+//		Set<CyEdge> removeEdges = new HashSet<CyEdge>();
+		for (int countEdge = 0; countEdge < MainSingleNodeTask.intraLinks.size(); countEdge++) {
+
+			final String egde_name_added_by_app = "Edge" + countEdge + " [Source: "
+					+ MainSingleNodeTask.intraLinks.get(countEdge).protein_a + " ("
+					+ MainSingleNodeTask.intraLinks.get(countEdge).pos_site_a + ")] [Target: "
+					+ MainSingleNodeTask.intraLinks.get(countEdge).protein_b + " ("
+					+ MainSingleNodeTask.intraLinks.get(countEdge).pos_site_b + ")]";
+
+			current_edge_intra = getEdge(myNetwork, egde_name_added_by_app);
+			if (current_edge_intra != null) {
+				View<CyEdge> currentEdgeView = netView.getEdgeView(current_edge_intra);
+				currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+//				removeEdges.add(current_edge_intra);
+			}
+
+			final String node_name_source = MainSingleNodeTask.intraLinks.get(countEdge).protein_a + " ["
+					+ MainSingleNodeTask.intraLinks.get(countEdge).pos_site_a + " - "
+					+ MainSingleNodeTask.intraLinks.get(countEdge).pos_site_b + "] - Source";
+
+			current_node_source = Util.getNode(myNetwork, node_name_source);
+			if (current_node_source != null) {
+				View<CyNode> currentNodeView = netView.getNodeView(current_node_source);
+				currentNodeView.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, false);
+//				removeNodes.add(current_node_source);
+			}
+
+			final String node_name_target = MainSingleNodeTask.intraLinks.get(countEdge).protein_a + " ["
+					+ MainSingleNodeTask.intraLinks.get(countEdge).pos_site_a + " - "
+					+ MainSingleNodeTask.intraLinks.get(countEdge).pos_site_b + "] - Target";
+
+			current_node_target = getNode(myNetwork, node_name_target);
+			if (current_node_target != null) {
+				View<CyNode> currentNodeView = netView.getNodeView(current_node_target);
+				currentNodeView.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, false);
+//				removeNodes.add(current_node_target);
+			}
+		}
+
+//		myNetwork.removeNodes(removeNodes);
+//		myNetwork.removeEdges(removeEdges);
 	}
 
 	/**
@@ -1439,6 +1615,7 @@ public class Util {
 
 	/**
 	 * Returns X position of a node
+	 * 
 	 * @param nodeView
 	 * @return
 	 */
@@ -1448,6 +1625,7 @@ public class Util {
 
 	/**
 	 * Returns Y position of a node
+	 * 
 	 * @param nodeView
 	 * @return
 	 */
@@ -1457,6 +1635,7 @@ public class Util {
 
 	/**
 	 * Check if the operating system is Windows
+	 * 
 	 * @return
 	 */
 	public static boolean isWindows() {
@@ -1465,6 +1644,7 @@ public class Util {
 
 	/**
 	 * Check if the operating system is Linux
+	 * 
 	 * @return
 	 */
 	public static boolean isUnix() {

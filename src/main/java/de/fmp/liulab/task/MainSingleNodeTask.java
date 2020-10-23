@@ -228,6 +228,9 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		getNodeInformation();
 
+		if (intraLinks.size() == 0 && interLinks.size() == 0)//It's a intralink_single_node
+			return;
+
 		if (forcedWindowOpen) {// Action comes from Context Menu item
 
 			this.init_xl_layout(taskMonitor);
@@ -390,7 +393,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		interLinks = (ArrayList<CrossLink>) inter_and_intralinks.getFirst();
 		intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
 
-		isCurrentNode_modified = Util.IsNodeModified(myNetwork, netView, style, node);
+		isCurrentNode_modified = Util.IsNodeModified(myNetwork, netView, node);
 
 	}
 
@@ -857,89 +860,6 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	}
 
 	/**
-	 * Method responsible for restoring edges style
-	 * 
-	 * @param taskMonitor
-	 */
-	private void restoreEdgesStyle(final TaskMonitor taskMonitor) {
-
-		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Restoring edges...");
-
-		boolean IsModified_source_node = false;
-		boolean IsModified_target_node = false;
-		boolean IsIntraLink = false;
-
-		int total_edges = 0;
-		int old_progress = 0;
-		int summary_processed = 0;
-		if (taskMonitor != null)
-			total_edges = myNetwork.getAdjacentEdgeList(node, CyEdge.Type.ANY).size();
-
-		for (CyEdge edge : myNetwork.getAdjacentEdgeIterable(node, CyEdge.Type.ANY)) {
-
-			// Check if the edge was inserted by this app
-			String edge_name = myNetwork.getDefaultEdgeTable().getRow(edge.getSUID()).get(CyNetwork.NAME, String.class);
-
-			CyNode sourceNode = myNetwork.getEdge(edge.getSUID()).getSource();
-			CyNode targetNode = myNetwork.getEdge(edge.getSUID()).getTarget();
-
-			if (sourceNode.getSUID() == targetNode.getSUID()) {
-				IsIntraLink = true;
-			} else {
-				IsIntraLink = false;
-			}
-			IsModified_source_node = Util.IsNodeModified(myNetwork, netView, style, sourceNode);
-			IsModified_target_node = Util.IsNodeModified(myNetwork, netView, style, targetNode);
-			if (!edge_name.startsWith("[Source:")) {// original edges
-
-				if (IsIntraLink) {
-					View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
-					currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
-				} else if (!IsModified_source_node && !IsModified_target_node) {
-					View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
-					currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
-				}
-			} else { // created edges
-
-				if (IsIntraLink) {
-					View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
-					currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
-
-				} else if (!IsModified_source_node && !IsModified_target_node) {
-					View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
-					currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
-				}
-			}
-
-			if (taskMonitor != null) {
-				summary_processed++;
-				int new_progress = (int) ((double) summary_processed / (total_edges) * 100);
-				if (new_progress > old_progress) {
-					old_progress = new_progress;
-
-					taskMonitor.showMessage(TaskMonitor.Level.INFO, "Restoring edges styles: " + old_progress + "%");
-				}
-			}
-		}
-
-		if (interLinks.size() > 0) {
-			if (taskMonitor != null) {
-				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting styles on the inter link edges: 95%");
-			}
-			Util.updateAllAssiciatedInterlinkNodes(myNetwork, cyApplicationManager, netView, handleFactory, bendFactory,
-					node);
-		}
-		if (intraLinks.size() > 0) {
-			if (taskMonitor != null) {
-				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting styles on the intra link edges: 99%");
-			}
-			removeAllIntraLinks();
-		}
-
-		// ######################### UPDATE EDGES #########################
-	}
-
-	/**
 	 * Method responsible for restoring the layout of the selected node.
 	 * 
 	 * @param taskMonitor
@@ -960,7 +880,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		this.clearNodeStyle(taskMonitor);
 		UpdateViewListener.isNodeModified = false;
-		this.restoreEdgesStyle(taskMonitor);
+		Util.restoreEdgesStyle(taskMonitor, myNetwork, cyApplicationManager, netView, handleFactory, bendFactory, node);
 
 		// Apply the change to the view
 		style.apply(netView);
@@ -969,55 +889,6 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Done!");
 
 		isPlotDone = true;
-	}
-
-	/**
-	 * Method responsible for removing all intralinks of a node when the layout is
-	 * restored
-	 */
-	private void removeAllIntraLinks() {
-
-		CyNode current_node_source = null;
-		CyNode current_node_target = null;
-		CyEdge current_edge_intra = null;
-
-		Set<CyNode> removeNodes = new HashSet<CyNode>();
-		Set<CyEdge> removeEdges = new HashSet<CyEdge>();
-		for (int countEdge = 0; countEdge < intraLinks.size(); countEdge++) {
-
-			final String egde_name_added_by_app = "Edge" + countEdge + " [Source: "
-					+ intraLinks.get(countEdge).protein_a + " (" + intraLinks.get(countEdge).pos_site_a + ")] [Target: "
-					+ intraLinks.get(countEdge).protein_b + " (" + intraLinks.get(countEdge).pos_site_b + ")]";
-
-			current_edge_intra = Util.getEdge(myNetwork, egde_name_added_by_app);
-			if (current_edge_intra != null) {
-
-				removeEdges.add(current_edge_intra);
-			}
-
-			final String node_name_source = intraLinks.get(countEdge).protein_a + " ["
-					+ intraLinks.get(countEdge).pos_site_a + " - " + intraLinks.get(countEdge).pos_site_b
-					+ "] - Source";
-
-			current_node_source = Util.getNode(myNetwork, node_name_source);
-			if (current_node_source != null) {
-
-				removeNodes.add(current_node_source);
-			}
-
-			final String node_name_target = intraLinks.get(countEdge).protein_a + " ["
-					+ intraLinks.get(countEdge).pos_site_a + " - " + intraLinks.get(countEdge).pos_site_b
-					+ "] - Target";
-
-			current_node_target = Util.getNode(myNetwork, node_name_target);
-			if (current_node_target != null) {
-
-				removeNodes.add(current_node_target);
-			}
-		}
-
-		myNetwork.removeNodes(removeNodes);
-		myNetwork.removeEdges(removeEdges);
 	}
 
 	/**
