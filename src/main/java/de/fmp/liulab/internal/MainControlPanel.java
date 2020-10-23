@@ -171,6 +171,8 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 				Color initialcolor = intraLinkColorButton.getBackground();
 				Color color = JColorChooser.showDialog(null, "Select a color", initialcolor);
+				if (color == null)
+					color = initialcolor;
 				intraLinkColorButton.setBackground(color);
 				intraLinkColorButton.setForeground(color);
 				intraLinkColorButton.setOpaque(true);
@@ -203,6 +205,8 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 				Color initialcolor = interLinkColorButton.getBackground();
 				Color color = JColorChooser.showDialog(null, "Select a color", initialcolor);
+				if (color == null)
+					color = initialcolor;
 				interLinkColorButton.setBackground(color);
 				interLinkColorButton.setForeground(color);
 				interLinkColorButton.setOpaque(true);
@@ -234,6 +238,8 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 				Color initialcolor = borderNodeColorButton.getBackground();
 				Color color = JColorChooser.showDialog(null, "Select a color", initialcolor);
+				if (color == null)
+					color = initialcolor;
 				borderNodeColorButton.setBackground(color);
 				borderNodeColorButton.setForeground(color);
 				borderNodeColorButton.setOpaque(true);
