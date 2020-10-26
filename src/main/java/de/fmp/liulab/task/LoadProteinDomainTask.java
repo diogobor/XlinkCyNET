@@ -614,21 +614,11 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 			proteinDomains.put(node.getSUID(), myProteinDomains);
 			Util.proteinDomainsMap.put(network_name, proteinDomains);
 		}
-		updateProteinDomainsColorMap(myProteinDomains);
+		Util.updateProteinDomainsColorMap(myProteinDomains);
 
 	}
 
-	private void updateProteinDomainsColorMap(List<ProteinDomain> proteinDomains) {
-
-		for (ProteinDomain ptnDomain : proteinDomains) {
-			if (!Util.proteinDomainsColorMap.containsKey(ptnDomain)) {
-
-				Util.proteinDomainsColorMap.put(ptnDomain,
-						Util.available_domain_colors.get(proteinDomains.indexOf(ptnDomain) % Util.available_domain_colors.size()));
-			}
-		}
-
-	}
+	
 
 	/**
 	 * Get all nodes filled out in JTable

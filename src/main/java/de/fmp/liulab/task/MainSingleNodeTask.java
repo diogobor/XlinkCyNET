@@ -905,6 +905,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		if (myProteinDomains.size() == 0) {
 			throw new Exception("WARNING: No domain has been found.");
 		}
+		Util.updateProteinDomainsColorMap(myProteinDomains);
 	}
 
 	/**
@@ -951,7 +952,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 				}
 				colors.add(new Color(255, 255, 255, 100));
 				if (domain.color == null) {
-					colors.add(Util.proteinDomainsColorMap.get(domain));
+					colors.add(Util.proteinDomainsColorMap.get(domain.name));
 				} else {
 					colors.add(domain.color);
 				}
@@ -967,7 +968,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 				}
 
 				if (domain.color == null) {
-					colors.add(Util.proteinDomainsColorMap.get(domain));
+					colors.add(Util.proteinDomainsColorMap.get(domain.name));
 					index_domain++;
 				} else {
 					colors.add(domain.color);

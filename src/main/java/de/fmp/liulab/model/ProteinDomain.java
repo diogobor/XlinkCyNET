@@ -62,7 +62,7 @@ public class ProteinDomain implements Comparable<ProteinDomain> {
 	public boolean equals(Object o) {
 		if (o instanceof ProteinDomain) {
 			ProteinDomain p = (ProteinDomain) o;
-			return (this.name.equals(p.name) && this.startId == p.startId && this.endId == p.endId);
+			return this.name.equals(p.name);
 		}
 		return false;
 	}

@@ -92,9 +92,23 @@ public class Util {
 
 	// Map<Network name, Map<Protein - Node SUID, List<ProteinDomain>>
 	public static Map<String, Map<Long, List<ProteinDomain>>> proteinDomainsMap = new HashMap<String, Map<Long, List<ProteinDomain>>>();
-	public static Map<ProteinDomain, Color> proteinDomainsColorMap = new HashMap<ProteinDomain, Color>();
+	public static Map<String, Color> proteinDomainsColorMap = new HashMap<String, Color>();
 	public static List<java.awt.Color> available_domain_colors = new ArrayList<Color>();
 
+	/**
+	 * Method responsible for updating protein domains color Map
+	 * @param proteinDomains
+	 */
+	public static void updateProteinDomainsColorMap(List<ProteinDomain> proteinDomains) {
+
+		for (ProteinDomain ptnDomain : proteinDomains) {
+			if (!proteinDomainsColorMap.containsKey(ptnDomain.name)) {
+
+				proteinDomainsColorMap.put(ptnDomain.name,
+						available_domain_colors.get(proteinDomainsColorMap.size() % Util.available_domain_colors.size()));
+			}
+		}
+	}
 	
 	/**
 	 * Initialize protein domain colors map
