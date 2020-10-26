@@ -78,8 +78,8 @@ public class Util {
 	private final static float OFFSET = 2;
 	private static String edge_label_blank_spaces = "\n\n";
 
-	public static Color IntraLinksColor = Color.GRAY;
-	public static Color InterLinksColor = Color.GRAY;
+	public static Color IntraLinksColor = new Color(0, 153, 255);
+	public static Color InterLinksColor = new Color(102, 102, 0);
 	public static Color NodeBorderColor = new Color(315041);// Dark green
 	public static boolean showLinksLegend = false;
 	public static boolean showIntraLinks = true;
@@ -277,6 +277,9 @@ public class Util {
 					if (showInterLinks) {
 						plotInterLinks(myNetwork, nodeView, netView, handleFactory, bendFactory, style, node,
 								sourceNode, targetNode, lexicon, proteinLength, interLinks);
+					} else {
+						restoreEdgeStyle(myNetwork, node, netView, handleFactory, bendFactory, style, lexicon, edge,
+								sourceNode, targetNode, edge_name, proteinLength, IsIntraLink);
 					}
 				}
 
@@ -286,6 +289,9 @@ public class Util {
 				if (showInterLinks) {
 					updateInterLinkEdgesPosition(myNetwork, node, netView, handleFactory, bendFactory, style, lexicon,
 							edge, sourceNode, targetNode, edge_name, proteinLength);
+				} else {
+					restoreEdgeStyle(myNetwork, node, netView, handleFactory, bendFactory, style, lexicon, edge,
+							sourceNode, targetNode, edge_name, proteinLength, IsIntraLink);
 				}
 			}
 
@@ -599,13 +605,44 @@ public class Util {
 			HandleFactory handleFactory, BendFactory bendFactory, VisualStyle style, CyNode node, CyNode sourceNode,
 			CyNode targetNode, VisualLexicon lexicon, float proteinLength, ArrayList<CrossLink> interLinks) {
 
-		View<CyNode> sourceNodeView = netView.getNodeView(sourceNode);
-		View<CyNode> targetNodeView = netView.getNodeView(targetNode);
-
 		final String source_node_name = myNetwork.getDefaultNodeTable().getRow(sourceNode.getSUID())
 				.getRaw(CyNetwork.NAME).toString();
 		final String target_node_name = myNetwork.getDefaultNodeTable().getRow(targetNode.getSUID())
 				.getRaw(CyNetwork.NAME).toString();
+
+		List<CrossLink> current_inter_links = new ArrayList<CrossLink>(interLinks);
+
+		current_inter_links.removeIf(new Predicate<CrossLink>() {
+
+			public boolean test(CrossLink o) {
+				return !(o.protein_a.equals(source_node_name) && o.protein_b.equals(target_node_name)
+						|| o.protein_a.equals(target_node_name) && o.protein_b.equals(source_node_name));
+			}
+		});
+
+		int countEdge = -1;
+		List<CrossLink> updatedXLs = new ArrayList<CrossLink>(current_inter_links);
+		// Check if the edges has been added
+		for (CrossLink xl : updatedXLs) {
+			countEdge++;
+			if (!myNetwork.getDefaultNodeTable().getRow(targetNode.getSUID()).getRaw(CyNetwork.NAME).toString()
+					.equals(xl.protein_b)) {
+				current_inter_links.remove(xl);
+				continue;
+			}
+
+			final String egde_name_added_by_app = "[Source: " + xl.protein_a + " (" + xl.pos_site_a + ")] [Target: "
+					+ xl.protein_b + " (" + xl.pos_site_b + ")] - Edge" + countEdge;
+
+			CyEdge newEdge = getEdge(myNetwork, egde_name_added_by_app);
+			if (newEdge != null) {
+				current_inter_links.remove(xl);
+			}
+		}
+		updatedXLs.clear();
+
+		View<CyNode> sourceNodeView = netView.getNodeView(sourceNode);
+		View<CyNode> targetNodeView = netView.getNodeView(targetNode);
 
 		double x_or_y_Pos_source = 0;
 		double xl_pos_source = 0;
@@ -619,38 +656,30 @@ public class Util {
 		double initial_position_source_node = 0;
 		double initial_position_target_node = 0;
 
+		float other_node_width_or_height = 0;
+
 		Object length_other_protein_a;
 		Object length_other_protein_b;
 		CyRow other_node_row = null;
 
-		if (sourceNode.getSUID() == node.getSUID()) {
-			other_node_row = myNetwork.getRow(targetNode);
-		} else {
-			other_node_row = myNetwork.getRow(sourceNode);
-		}
-
-		length_other_protein_a = other_node_row.getRaw(PROTEIN_LENGTH_A);
-		length_other_protein_b = other_node_row.getRaw(PROTEIN_LENGTH_B);
-
-		if (length_other_protein_a == null) {
-			if (length_other_protein_b == null)
-				length_other_protein_a = 10;
-			else
-				length_other_protein_a = length_other_protein_b;
-		}
-
-		List<CrossLink> current_inter_links = new ArrayList<CrossLink>(interLinks);
-
-		current_inter_links.removeIf(new Predicate<CrossLink>() {
-
-			public boolean test(CrossLink o) {
-				return !(o.protein_a.equals(source_node_name) && o.protein_b.equals(target_node_name)
-						|| o.protein_a.equals(target_node_name) && o.protein_b.equals(source_node_name));
-			}
-		});
-
-		float other_node_width_or_height = 0;
 		if (current_inter_links.size() > 0) {
+
+			if (sourceNode.getSUID() == node.getSUID()) {
+				other_node_row = myNetwork.getRow(targetNode);
+			} else {
+				other_node_row = myNetwork.getRow(sourceNode);
+			}
+
+			length_other_protein_a = other_node_row.getRaw(PROTEIN_LENGTH_A);
+			length_other_protein_b = other_node_row.getRaw(PROTEIN_LENGTH_B);
+
+			if (length_other_protein_a == null) {
+				if (length_other_protein_b == null)
+					length_other_protein_a = 10;
+				else
+					length_other_protein_a = length_other_protein_b;
+			}
+
 			if (isProtein_expansion_horizontal) {
 
 				initial_position_source_node = getXPositionOf(sourceNodeView);
@@ -687,7 +716,7 @@ public class Util {
 			return;
 		}
 
-		for (int countEdge = 0; countEdge < current_inter_links.size(); countEdge++) {
+		for (countEdge = 0; countEdge < current_inter_links.size(); countEdge++) {
 
 			if (!myNetwork.getDefaultNodeTable().getRow(targetNode.getSUID()).getRaw(CyNetwork.NAME).toString()
 					.equals(current_inter_links.get(countEdge).protein_b))
@@ -1127,13 +1156,22 @@ public class Util {
 
 	/**
 	 * Check and update all edges of associated nodes
+	 * 
+	 * @param myNetwork
+	 * @param cyApplicationManager
+	 * @param netView
+	 * @param handleFactory
+	 * @param bendFactory
+	 * @param current_node
 	 */
 	public static void updateAllAssiciatedInterlinkNodes(CyNetwork myNetwork, CyApplicationManager cyApplicationManager,
 			CyNetworkView netView, HandleFactory handleFactory, BendFactory bendFactory, CyNode current_node) {
 
 		if (myNetwork == null) {
-			myNetwork = cyApplicationManager.getCurrentNetwork();
-			netView = cyApplicationManager.getCurrentNetworkView();
+			if (cyApplicationManager != null) {
+				myNetwork = cyApplicationManager.getCurrentNetwork();
+				netView = cyApplicationManager.getCurrentNetworkView();
+			}
 		}
 
 		Object length_other_protein_a;
@@ -1221,9 +1259,59 @@ public class Util {
 	}
 
 	/**
+	 * Method responsible for restoring edge style when
+	 * showInterlinks/showIntralinks is false
+	 * 
+	 * @param myNetwork
+	 * @param node
+	 * @param netView
+	 * @param handleFactory
+	 * @param bendFactory
+	 * @param style
+	 * @param lexicon
+	 * @param edge
+	 * @param sourceNode
+	 * @param targetNode
+	 * @param edge_name
+	 * @param proteinLength
+	 * @param IsIntraLink
+	 */
+	public static void restoreEdgeStyle(CyNetwork myNetwork, CyNode node, CyNetworkView netView,
+			HandleFactory handleFactory, BendFactory bendFactory, VisualStyle style, VisualLexicon lexicon, CyEdge edge,
+			CyNode sourceNode, CyNode targetNode, String edge_name, float proteinLength, boolean IsIntraLink) {
+
+		if (!edge_name.startsWith("[Source:")) {// original edges
+
+			if (IsIntraLink) {
+				View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
+				currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+			} else {
+				View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
+				currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+			}
+		} else { // created edges
+
+			if (IsIntraLink) {
+				View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
+				currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+
+			} else {
+				View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
+				currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+			}
+		}
+	}
+
+	/**
 	 * Method responsible for restoring edges style
 	 * 
 	 * @param taskMonitor
+	 * @param myNetwork
+	 * @param cyApplicationManager
+	 * @param netView
+	 * @param handleFactory
+	 * @param bendFactory
+	 * @param current_node
 	 */
 	public static void restoreEdgesStyle(final TaskMonitor taskMonitor, CyNetwork myNetwork,
 			CyApplicationManager cyApplicationManager, CyNetworkView netView, HandleFactory handleFactory,

@@ -117,7 +117,11 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		show_intra_link.setBackground(Color.WHITE);
 		show_intra_link.setSelected(Util.showIntraLinks);
 		show_intra_link.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		show_intra_link.setBounds(5, offset_y, 115, 20);
+		if (Util.isWindows())
+			show_intra_link.setBounds(5, offset_y, 115, 20);
+		else
+			show_intra_link.setBounds(5, offset_y, 130, 20);
+
 		if (Util.showIntraLinks) {
 			intraLinkColorButton.setEnabled(true);
 		} else {
@@ -143,7 +147,11 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		show_inter_link.setBackground(Color.WHITE);
 		show_inter_link.setSelected(Util.showInterLinks);
 		show_inter_link.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		show_inter_link.setBounds(5, offset_y, 115, 20);
+		if (Util.isWindows())
+			show_inter_link.setBounds(5, offset_y, 115, 20);
+		else
+			show_inter_link.setBounds(5, offset_y, 130, 20);
+
 		if (Util.showInterLinks) {
 			interLinkColorButton.setEnabled(true);
 		} else {
@@ -237,7 +245,9 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	 */
 	private void init_color_buttons() {
 
-		int offset_x = 125;
+		int offset_x = 135;
+		if (Util.isWindows())
+			offset_x = 125;
 		int offset_y = 25;
 
 		intraLinkColorButton = new JButton();
@@ -347,7 +357,9 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	 */
 	private void init_spinners() {
 
-		int offset_x = 125;
+		int offset_x = 135;
+		if (Util.isWindows())
+			offset_x = 125;
 		int offset_y = 50;
 
 		SpinnerModel model_link = new SpinnerNumberModel(Util.edge_label_font_size.intValue(), // initial value
