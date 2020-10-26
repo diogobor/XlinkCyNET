@@ -84,8 +84,6 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	public static VisualStyle style;
 	public static VisualLexicon lexicon;
 
-	private List<java.awt.Color> available_colors;
-
 	private static View<CyNode> nodeView;
 	private CyRow myCurrentRow;
 	private List<CyNode> nodes;
@@ -138,19 +136,9 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		this.handleFactory = handleFactory;
 		this.forcedWindowOpen = forcedWindowOpen;
 
-		available_colors = new ArrayList<Color>();
-		available_colors.add(new Color(0, 64, 128, 100));
-		available_colors.add(new Color(0, 128, 64, 100));
-		available_colors.add(new Color(255, 128, 0, 100));
-		available_colors.add(new Color(128, 128, 0, 100));
-		available_colors.add(new Color(128, 128, 128, 100));
-		available_colors.add(new Color(128, 64, 64, 100));
-		available_colors.add(new Color(0, 128, 192, 100));
-		available_colors.add(new Color(174, 0, 0, 100));
-		available_colors.add(new Color(255, 255, 0, 100));
-		available_colors.add(new Color(0, 64, 0, 100));
-		available_colors.add(new Color(204, 0, 0, 100));
-		available_colors.add(new Color(255, 198, 0, 100));
+		// Initialize protein domain colors map if LoadProteinDomainTask has not been
+		// initialized
+		Util.init_availableProteinDomainColorsMap();
 
 		if (mainFrame == null)
 			mainFrame = new JFrame("XlinkCyNET - Single Node");
@@ -225,7 +213,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		getNodeInformation();
 
-		if (intraLinks.size() == 0 && interLinks.size() == 0)//It's a intralink_single_node
+		if (intraLinks.size() == 0 && interLinks.size() == 0)// It's a intralink_single_node
 			return;
 
 		if (forcedWindowOpen) {// Action comes from Context Menu item
@@ -963,7 +951,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 				}
 				colors.add(new Color(255, 255, 255, 100));
 				if (domain.color == null) {
-					colors.add(available_colors.get(index_domain % 12));
+					colors.add(Util.proteinDomainsColorMap.get(domain));
 				} else {
 					colors.add(domain.color);
 				}
@@ -979,7 +967,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 				}
 
 				if (domain.color == null) {
-					colors.add(available_colors.get(index_domain % 12));
+					colors.add(Util.proteinDomainsColorMap.get(domain));
 					index_domain++;
 				} else {
 					colors.add(domain.color);

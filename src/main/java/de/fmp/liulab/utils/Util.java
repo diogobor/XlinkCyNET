@@ -75,7 +75,7 @@ public class Util {
 	private static String PROTEIN_B = "protein_b";
 
 	private static String OS = System.getProperty("os.name").toLowerCase();
-	private final static float OFFSET = 2;
+	private final static float OFFSET_BEND = 2;
 	private static String edge_label_blank_spaces = "\n\n";
 
 	public static Color IntraLinksColor = new Color(0, 153, 255);
@@ -89,9 +89,57 @@ public class Util {
 	public static Integer edge_label_opacity = 120;
 	public static Integer edge_link_opacity = 120;
 	public static boolean isProtein_expansion_horizontal = true;
+
 	// Map<Network name, Map<Protein - Node SUID, List<ProteinDomain>>
 	public static Map<String, Map<Long, List<ProteinDomain>>> proteinDomainsMap = new HashMap<String, Map<Long, List<ProteinDomain>>>();
+	public static Map<ProteinDomain, Color> proteinDomainsColorMap = new HashMap<ProteinDomain, Color>();
+	public static List<java.awt.Color> available_domain_colors = new ArrayList<Color>();
 
+	
+	/**
+	 * Initialize protein domain colors map
+	 */
+	public static void init_availableProteinDomainColorsMap() {
+		if (Util.available_domain_colors.size() == 0) {
+			Util.available_domain_colors.add(new Color(0, 64, 128, 100));
+			Util.available_domain_colors.add(new Color(0, 128, 64, 100));
+			Util.available_domain_colors.add(new Color(255, 128, 0, 100));
+			Util.available_domain_colors.add(new Color(128, 128, 0, 100));
+			Util.available_domain_colors.add(new Color(128, 128, 128, 100));
+			Util.available_domain_colors.add(new Color(128, 64, 64, 100));
+			Util.available_domain_colors.add(new Color(0, 128, 192, 100));
+			Util.available_domain_colors.add(new Color(174, 0, 0, 100));
+			Util.available_domain_colors.add(new Color(255, 255, 0, 100));
+			Util.available_domain_colors.add(new Color(0, 64, 0, 100));
+			Util.available_domain_colors.add(new Color(204, 0, 0, 100));
+			Util.available_domain_colors.add(new Color(255, 198, 0, 100));
+			Util.available_domain_colors.add(new Color(10, 60, 128, 100));
+			Util.available_domain_colors.add(new Color(20, 118, 60, 100));
+			Util.available_domain_colors.add(new Color(155, 158, 0, 100));
+			Util.available_domain_colors.add(new Color(28, 148, 0, 100));
+			Util.available_domain_colors.add(new Color(155, 100, 128, 100));
+			Util.available_domain_colors.add(new Color(100, 64, 64, 100));
+			Util.available_domain_colors.add(new Color(100, 128, 192, 100));
+			Util.available_domain_colors.add(new Color(254, 20, 0, 100));
+			Util.available_domain_colors.add(new Color(255, 255, 100, 100));
+			Util.available_domain_colors.add(new Color(0, 64, 100, 100));
+			Util.available_domain_colors.add(new Color(204, 100, 250, 100));
+			Util.available_domain_colors.add(new Color(255, 208, 100, 100));
+			Util.available_domain_colors.add(Color.BLACK);
+			Util.available_domain_colors.add(Color.BLUE);
+			Util.available_domain_colors.add(Color.CYAN);
+			Util.available_domain_colors.add(Color.DARK_GRAY);
+			Util.available_domain_colors.add(Color.GRAY);
+			Util.available_domain_colors.add(Color.GREEN);
+			Util.available_domain_colors.add(Color.LIGHT_GRAY);
+			Util.available_domain_colors.add(Color.MAGENTA);
+			Util.available_domain_colors.add(Color.ORANGE);
+			Util.available_domain_colors.add(Color.PINK);
+			Util.available_domain_colors.add(Color.RED);
+			Util.available_domain_colors.add(Color.YELLOW);
+		}
+	}
+	
 	/**
 	 * Check if a specific edge has been modified
 	 * 
@@ -827,16 +875,16 @@ public class Util {
 
 					if (isProtein_expansion_horizontal) {
 
-						h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_source - OFFSET,
+						h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_source - OFFSET_BEND,
 								getYPositionOf(sourceNodeView));
-						h2 = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_target - OFFSET,
+						h2 = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_target - OFFSET_BEND,
 								getYPositionOf(targetNodeView));
 					} else {
 						// modified
 						h = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(sourceNodeView),
-								x_or_y_Pos_source - OFFSET);
+								x_or_y_Pos_source - OFFSET_BEND);
 						h2 = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(targetNodeView),
-								x_or_y_Pos_target - OFFSET);
+								x_or_y_Pos_target - OFFSET_BEND);
 					}
 
 					bend.insertHandleAt(0, h);
@@ -846,19 +894,19 @@ public class Util {
 
 					if (isProtein_expansion_horizontal) {
 						if (sourceNode.getSUID() == node.getSUID()) {
-							h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_source - OFFSET,
+							h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_source - OFFSET_BEND,
 									getYPositionOf(sourceNodeView));
 						} else {
-							h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_target - OFFSET,
+							h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_target - OFFSET_BEND,
 									getYPositionOf(targetNodeView));
 						}
 					} else {
 						if (sourceNode.getSUID() == node.getSUID()) {
 							h = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(sourceNodeView),
-									x_or_y_Pos_source - OFFSET);
+									x_or_y_Pos_source - OFFSET_BEND);
 						} else {
 							h = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(targetNodeView),
-									x_or_y_Pos_target - OFFSET);
+									x_or_y_Pos_target - OFFSET_BEND);
 						}
 					}
 
@@ -1002,15 +1050,15 @@ public class Util {
 																							// been modified
 
 			if (isProtein_expansion_horizontal) {
-				h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_source - OFFSET,
+				h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_source - OFFSET_BEND,
 						getYPositionOf(sourceNodeView));
-				h2 = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_target - OFFSET,
+				h2 = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_target - OFFSET_BEND,
 						getYPositionOf(targetNodeView));
 			} else {
 				h = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(sourceNodeView),
-						x_or_y_Pos_source - OFFSET);
+						x_or_y_Pos_source - OFFSET_BEND);
 				h2 = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(targetNodeView),
-						x_or_y_Pos_target - OFFSET);
+						x_or_y_Pos_target - OFFSET_BEND);
 			}
 
 			bend.insertHandleAt(0, h);
@@ -1020,19 +1068,19 @@ public class Util {
 
 			if (isProtein_expansion_horizontal) {
 				if (sourceNode.getSUID() == node.getSUID()) {
-					h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_source - OFFSET,
+					h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_source - OFFSET_BEND,
 							getYPositionOf(sourceNodeView));
 				} else {
-					h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_target - OFFSET,
+					h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_target - OFFSET_BEND,
 							getYPositionOf(targetNodeView));
 				}
 			} else {
 				if (sourceNode.getSUID() == node.getSUID()) {
 					h = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(sourceNodeView),
-							x_or_y_Pos_source - OFFSET);
+							x_or_y_Pos_source - OFFSET_BEND);
 				} else {
 					h = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(targetNodeView),
-							x_or_y_Pos_target - OFFSET);
+							x_or_y_Pos_target - OFFSET_BEND);
 				}
 			}
 

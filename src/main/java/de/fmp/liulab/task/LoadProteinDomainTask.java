@@ -101,8 +101,6 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	private Thread pfamThread;
 	private JButton pFamButton;
 
-	private List<java.awt.Color> available_colors;
-
 	public static boolean isPlotDone = false;
 
 	/**
@@ -121,19 +119,6 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		this.style = vmmServiceRef.getCurrentVisualStyle();
 		// Get the current Visual Lexicon
 		this.lexicon = cyApplicationManager.getCurrentRenderingEngine().getVisualLexicon();
-
-		available_colors = new ArrayList<Color>();
-		available_colors.add(new Color(0, 64, 128, 100));
-		available_colors.add(new Color(0, 128, 64, 100));
-		available_colors.add(new Color(255, 128, 0, 100));
-		available_colors.add(new Color(128, 128, 0, 100));
-		available_colors.add(new Color(128, 128, 128, 100));
-		available_colors.add(new Color(128, 64, 64, 100));
-		available_colors.add(new Color(0, 128, 192, 100));
-		available_colors.add(new Color(174, 0, 0, 100));
-		available_colors.add(new Color(255, 255, 0, 100));
-		available_colors.add(new Color(0, 64, 0, 100));
-		available_colors.add(new Color(204, 0, 0, 100));
 
 		if (mainFrame == null)
 			mainFrame = new JFrame("XlinkCyNET - Load protein domains");
@@ -578,6 +563,11 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	 * @throws Exception
 	 */
 	private void setNodesInformation(final TaskMonitor taskMonitor) throws Exception {
+
+		// Initialize protein domain colors map if MainSingleNodeTask has not been
+		// initialized
+		Util.init_availableProteinDomainColorsMap();
+
 		for (final GeneDomain geneDomain : geneListFromTable) {
 
 			CyNode currentNode = null;
@@ -605,7 +595,6 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		}
 
 	}
-
 	/**
 	 * Method responsible for update Protein domains map
 	 * 
@@ -625,6 +614,20 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 			proteinDomains.put(node.getSUID(), myProteinDomains);
 			Util.proteinDomainsMap.put(network_name, proteinDomains);
 		}
+		updateProteinDomainsColorMap(myProteinDomains);
+
+	}
+
+	private void updateProteinDomainsColorMap(List<ProteinDomain> proteinDomains) {
+
+		for (ProteinDomain ptnDomain : proteinDomains) {
+			if (!Util.proteinDomainsColorMap.containsKey(ptnDomain)) {
+
+				Util.proteinDomainsColorMap.put(ptnDomain,
+						Util.available_domain_colors.get(proteinDomains.indexOf(ptnDomain) % Util.available_domain_colors.size()));
+			}
+		}
+
 	}
 
 	/**
