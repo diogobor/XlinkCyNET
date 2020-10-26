@@ -163,6 +163,11 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 			if (!LoadProteinDomainTask.isPlotDone)
 				return;
 
+			myNetwork = cyApplicationManager.getCurrentNetwork();
+			netView = cyApplicationManager.getCurrentNetworkView();
+
+			List<CyNode> nodes = CyTableUtil.getNodesInState(myNetwork, CyNetwork.SELECTED, true);
+
 			Set<CyNode> nodeSuidList = new HashSet<CyNode>();
 
 			for (ViewChangeRecord<?> record : e.getPayloadCollection()) {
@@ -172,70 +177,87 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 				}
 			}
 
+			if (nodeSuidList.size() == 0)//It means no CyNode has been selected
+				return;
+
+			//Check if all selected nodes have been modified
+			for (final CyNode _node : nodes) {
+				// Check if the node exists in the network
+				Optional<CyNode> isNodePresent = nodeSuidList.stream().filter(new Predicate<CyNode>() {
+					public boolean test(CyNode o) {
+						return o.getSUID() == _node.getSUID();
+					}
+				}).findFirst();
+				if (!isNodePresent.isPresent()) {
+					return;
+				}
+			}
+
 			// Iterating over hash set items
-			Iterator<CyNode> _iterator_CyNode = nodeSuidList.iterator();
+//			Iterator<CyNode> _iterator_CyNode = nodeSuidList.iterator();
+			Iterator<CyNode> _iterator_CyNode = nodes.iterator();
 			while (_iterator_CyNode.hasNext()) {
 
 				final CyNode current_node = _iterator_CyNode.next();
 
-				myNetwork = cyApplicationManager.getCurrentNetwork();
-				netView = cyApplicationManager.getCurrentNetworkView();
-
-				List<CyNode> nodes = CyTableUtil.getNodesInState(myNetwork, CyNetwork.SELECTED, true);
+//				myNetwork = cyApplicationManager.getCurrentNetwork();
+//				netView = cyApplicationManager.getCurrentNetworkView();
+//
+//				List<CyNode> nodes = CyTableUtil.getNodesInState(myNetwork, CyNetwork.SELECTED, true);
 
 				// Check if the node exists in the network
-				Optional<CyNode> isNodePresent = nodes.stream().filter(new Predicate<CyNode>() {
-					public boolean test(CyNode o) {
-						return o.getSUID() == current_node.getSUID();
-					}
-				}).findFirst();
+//				Optional<CyNode> isNodePresent = nodes.stream().filter(new Predicate<CyNode>() {
+//					public boolean test(CyNode o) {
+//						return o.getSUID() == current_node.getSUID();
+//					}
+//				}).findFirst();
 
-				if (isNodePresent.isPresent()) {
+//				if (isNodePresent.isPresent()) {
 
-					Tuple2 inter_and_intralinks = Util.getAllLinksFromAdjacentEdgesNode(current_node, myNetwork);
-					MainSingleNodeTask.interLinks = (ArrayList<CrossLink>) inter_and_intralinks.getFirst();
-					MainSingleNodeTask.intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
-					View<CyNode> nodeView = netView.getNodeView(current_node);
+				Tuple2 inter_and_intralinks = Util.getAllLinksFromAdjacentEdgesNode(current_node, myNetwork);
+				MainSingleNodeTask.interLinks = (ArrayList<CrossLink>) inter_and_intralinks.getFirst();
+				MainSingleNodeTask.intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
+				View<CyNode> nodeView = netView.getNodeView(current_node);
 
-					CyRow proteinA_node_row = myNetwork.getRow(current_node);
-					Object length_other_protein_a = proteinA_node_row.getRaw("length_protein_a");
-					Object length_other_protein_b = proteinA_node_row.getRaw("length_protein_b");
+				CyRow proteinA_node_row = myNetwork.getRow(current_node);
+				Object length_other_protein_a = proteinA_node_row.getRaw("length_protein_a");
+				Object length_other_protein_b = proteinA_node_row.getRaw("length_protein_b");
 
-					if (length_other_protein_a == null) {
-						if (length_other_protein_b == null)
-							length_other_protein_a = 10;
-						else
-							length_other_protein_a = length_other_protein_b;
-					}
-
-					VisualStyle style = MainSingleNodeTask.style;
-					if (style == null)
-						style = LoadProteinDomainTask.style;
-					if (style == null)
-						return;
-
-					VisualLexicon lexicon = MainSingleNodeTask.lexicon;
-					if (lexicon == null)
-						lexicon = LoadProteinDomainTask.lexicon;
-					if (lexicon == null)
-						return;
-
-					if (MainSingleNodeTask.interLinks.size() > 0) { // The selectedNode has interlinks
-						IsIntraLink = false;
-					} else {
-						IsIntraLink = true;
-					}
-
-					if (Util.IsNodeModified(myNetwork, netView, current_node)) {
-						Util.addOrUpdateEdgesToNetwork(myNetwork, current_node, style, netView, nodeView, handleFactory,
-								bendFactory, lexicon, ((Number) length_other_protein_a).floatValue(),
-								MainSingleNodeTask.intraLinks, MainSingleNodeTask.interLinks, null);
-					} else if (!IsIntraLink) {
-						Util.updateAllAssiciatedInterlinkNodes(myNetwork, cyApplicationManager, netView, handleFactory,
-								bendFactory, current_node);// Check if all associated nodes are
-															// unmodified
-					}
+				if (length_other_protein_a == null) {
+					if (length_other_protein_b == null)
+						length_other_protein_a = 10;
+					else
+						length_other_protein_a = length_other_protein_b;
 				}
+
+				VisualStyle style = MainSingleNodeTask.style;
+				if (style == null)
+					style = LoadProteinDomainTask.style;
+				if (style == null)
+					return;
+
+				VisualLexicon lexicon = MainSingleNodeTask.lexicon;
+				if (lexicon == null)
+					lexicon = LoadProteinDomainTask.lexicon;
+				if (lexicon == null)
+					return;
+
+				if (MainSingleNodeTask.interLinks.size() > 0) { // The selectedNode has interlinks
+					IsIntraLink = false;
+				} else {
+					IsIntraLink = true;
+				}
+
+				if (Util.IsNodeModified(myNetwork, netView, current_node)) {
+					Util.addOrUpdateEdgesToNetwork(myNetwork, current_node, style, netView, nodeView, handleFactory,
+							bendFactory, lexicon, ((Number) length_other_protein_a).floatValue(),
+							MainSingleNodeTask.intraLinks, MainSingleNodeTask.interLinks, null);
+				} else if (!IsIntraLink) {
+					Util.updateAllAssiciatedInterlinkNodes(myNetwork, cyApplicationManager, netView, handleFactory,
+							bendFactory, current_node);// Check if all associated nodes are
+														// unmodified
+				}
+//				}
 			}
 		} catch (Exception exception) {
 		}

@@ -93,6 +93,35 @@ public class Util {
 	public static Map<String, Map<Long, List<ProteinDomain>>> proteinDomainsMap = new HashMap<String, Map<Long, List<ProteinDomain>>>();
 
 	/**
+	 * Check if a specific edge has been modified
+	 * 
+	 * @param myNetwork
+	 * @param netView
+	 * @param edge
+	 * @return
+	 */
+	public static boolean isEdgeModified(CyNetwork myNetwork, CyNetworkView netView, CyEdge edge) {
+
+		if (myNetwork == null || netView == null || edge == null)
+			return false;
+
+		VisualStyle style = MainSingleNodeTask.style;
+		if (style == null)
+			style = LoadProteinDomainTask.style;
+
+		View<CyEdge> edgeView = netView.getEdgeView(edge);
+		if (!edgeView.getVisualProperty(BasicVisualLexicon.EDGE_TOOLTIP)
+				.equals(style.getDefaultValue(BasicVisualLexicon.EDGE_TOOLTIP))
+				&& !edgeView.getVisualProperty(BasicVisualLexicon.EDGE_LINE_TYPE)
+						.equals(style.getDefaultValue(BasicVisualLexicon.EDGE_LINE_TYPE))
+				&& !edgeView.getVisualProperty(BasicVisualLexicon.EDGE_TRANSPARENCY)
+						.equals(style.getDefaultValue(BasicVisualLexicon.EDGE_TRANSPARENCY))) {
+			return true;
+		} else
+			return false;
+	}
+
+	/**
 	 * Check if a specific node has been modified
 	 * 
 	 * @param myNetwork
@@ -249,49 +278,57 @@ public class Util {
 				IsIntraLink = false;
 			}
 
+			View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
+			while (currentEdgeView == null) {
+				netView.updateView();
+				try {
+					Thread.sleep(200);
+				} catch (InterruptedException e1) {
+					e1.printStackTrace();
+				}
+				currentEdgeView = netView.getEdgeView(edge);
+			}
+
 			if (!edge_name.startsWith("[Source:")) {// New edges
 				HasAdjacentEdges = true;
 
-				View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
-				while (currentEdgeView == null) {
-					// Apply the change to the view
-					style.apply(netView);
-					netView.updateView();
-					try {
-						Thread.sleep(200);
-					} catch (InterruptedException e1) {
-						e1.printStackTrace();
-					}
-					currentEdgeView = netView.getEdgeView(edge);
-				}
-
-				currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
-
 				if (IsIntraLink) {
 					ContainsIntraLink = true;
+					currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+
 					plotIntraLinks(myNetwork, nodeView, netView, handleFactory, bendFactory, style, proteinLength,
 							intraLinks);// Add or update intralinks
 
 				} else {
 					ContainsInterLink = true;
+
+					if (isEdgeModified(myNetwork, netView, edge)) {
+						restoreEdgeStyle(myNetwork, node, netView, handleFactory, bendFactory, style, lexicon, edge,
+								sourceNode, targetNode, edge_name, proteinLength, IsIntraLink);
+					} else {// keep the original edge
+						currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+					}
+
 					if (showInterLinks) {
 						plotInterLinks(myNetwork, nodeView, netView, handleFactory, bendFactory, style, node,
 								sourceNode, targetNode, lexicon, proteinLength, interLinks);
-					} else {
-						restoreEdgeStyle(myNetwork, node, netView, handleFactory, bendFactory, style, lexicon, edge,
-								sourceNode, targetNode, edge_name, proteinLength, IsIntraLink);
+						currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
 					}
 				}
 
 			} else { // Update all sites of the current selected node
 				HasAdjacentEdges = true;
 
+				if (isEdgeModified(myNetwork, netView, edge)) {
+					restoreEdgeStyle(myNetwork, node, netView, handleFactory, bendFactory, style, lexicon, edge,
+							sourceNode, targetNode, edge_name, proteinLength, IsIntraLink);
+				} else {// Hide de modified edge (interlink)
+					currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+				}
+
 				if (showInterLinks) {
 					updateInterLinkEdgesPosition(myNetwork, node, netView, handleFactory, bendFactory, style, lexicon,
 							edge, sourceNode, targetNode, edge_name, proteinLength);
-				} else {
-					restoreEdgeStyle(myNetwork, node, netView, handleFactory, bendFactory, style, lexicon, edge,
-							sourceNode, targetNode, edge_name, proteinLength, IsIntraLink);
 				}
 			}
 
@@ -315,10 +352,7 @@ public class Util {
 				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting styles on the intra link edges: 98%");
 			}
 
-			if (showIntraLinks) {
-				plotIntraLinks(myNetwork, nodeView, netView, handleFactory, bendFactory, style, proteinLength,
-						intraLinks);
-			}
+			plotIntraLinks(myNetwork, nodeView, netView, handleFactory, bendFactory, style, proteinLength, intraLinks);
 		}
 
 		UpdateViewListener.isNodeModified = true;
@@ -376,8 +410,6 @@ public class Util {
 
 					View<CyEdge> newEdgeView = netView.getEdgeView(newEdge);
 					while (newEdgeView == null) {
-						// Apply the change to the view
-						style.apply(netView);
 						netView.updateView();
 						try {
 							Thread.sleep(200);
@@ -620,27 +652,6 @@ public class Util {
 			}
 		});
 
-		int countEdge = -1;
-		List<CrossLink> updatedXLs = new ArrayList<CrossLink>(current_inter_links);
-		// Check if the edges has been added
-		for (CrossLink xl : updatedXLs) {
-			countEdge++;
-			if (!myNetwork.getDefaultNodeTable().getRow(targetNode.getSUID()).getRaw(CyNetwork.NAME).toString()
-					.equals(xl.protein_b)) {
-				current_inter_links.remove(xl);
-				continue;
-			}
-
-			final String egde_name_added_by_app = "[Source: " + xl.protein_a + " (" + xl.pos_site_a + ")] [Target: "
-					+ xl.protein_b + " (" + xl.pos_site_b + ")] - Edge" + countEdge;
-
-			CyEdge newEdge = getEdge(myNetwork, egde_name_added_by_app);
-			if (newEdge != null) {
-				current_inter_links.remove(xl);
-			}
-		}
-		updatedXLs.clear();
-
 		View<CyNode> sourceNodeView = netView.getNodeView(sourceNode);
 		View<CyNode> targetNodeView = netView.getNodeView(targetNode);
 
@@ -716,7 +727,7 @@ public class Util {
 			return;
 		}
 
-		for (countEdge = 0; countEdge < current_inter_links.size(); countEdge++) {
+		for (int countEdge = 0; countEdge < current_inter_links.size(); countEdge++) {
 
 			if (!myNetwork.getDefaultNodeTable().getRow(targetNode.getSUID()).getRaw(CyNetwork.NAME).toString()
 					.equals(current_inter_links.get(countEdge).protein_b))
@@ -735,8 +746,6 @@ public class Util {
 
 				View<CyEdge> newEdgeView = netView.getEdgeView(newEdge);
 				while (newEdgeView == null) {
-					// Apply the change to the view
-					style.apply(netView);
 					netView.updateView();
 					try {
 						Thread.sleep(200);
@@ -881,8 +890,6 @@ public class Util {
 
 		View<CyEdge> newEdgeView = netView.getEdgeView(edge);
 		while (newEdgeView == null) {
-			// Apply the change to the view
-			style.apply(netView);
 			netView.updateView();
 			try {
 				Thread.sleep(200);
@@ -1403,8 +1410,6 @@ public class Util {
 		CyNode current_node_target = null;
 		CyEdge current_edge_intra = null;
 
-//		Set<CyNode> removeNodes = new HashSet<CyNode>();
-//		Set<CyEdge> removeEdges = new HashSet<CyEdge>();
 		for (int countEdge = 0; countEdge < MainSingleNodeTask.intraLinks.size(); countEdge++) {
 
 			final String egde_name_added_by_app = "Edge" + countEdge + " [Source: "
@@ -1417,7 +1422,6 @@ public class Util {
 			if (current_edge_intra != null) {
 				View<CyEdge> currentEdgeView = netView.getEdgeView(current_edge_intra);
 				currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
-//				removeEdges.add(current_edge_intra);
 			}
 
 			final String node_name_source = MainSingleNodeTask.intraLinks.get(countEdge).protein_a + " ["
@@ -1428,7 +1432,6 @@ public class Util {
 			if (current_node_source != null) {
 				View<CyNode> currentNodeView = netView.getNodeView(current_node_source);
 				currentNodeView.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, false);
-//				removeNodes.add(current_node_source);
 			}
 
 			final String node_name_target = MainSingleNodeTask.intraLinks.get(countEdge).protein_a + " ["
@@ -1439,12 +1442,8 @@ public class Util {
 			if (current_node_target != null) {
 				View<CyNode> currentNodeView = netView.getNodeView(current_node_target);
 				currentNodeView.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, false);
-//				removeNodes.add(current_node_target);
 			}
 		}
-
-//		myNetwork.removeNodes(removeNodes);
-//		myNetwork.removeEdges(removeEdges);
 	}
 
 	/**
