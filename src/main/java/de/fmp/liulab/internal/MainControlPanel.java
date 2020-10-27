@@ -400,6 +400,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 				Util.edge_label_opacity = (Integer) spinner_opacity_edge_label.getValue();
 			}
 		});
+		spinner_opacity_edge_label.setToolTipText("Set a value between 0 (transparent) and 255 (opaque).");
 		link_legend_panel.add(spinner_opacity_edge_label);
 
 		offset_y = 20;
@@ -441,6 +442,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 				Util.edge_link_opacity = (Integer) spinner_opacity_edge_link.getValue();
 			}
 		});
+		spinner_opacity_edge_link.setToolTipText("Set a value between 0 (transparent) and 255 (opaque).");
 		other_panel.add(spinner_opacity_edge_link);
 	}
 
