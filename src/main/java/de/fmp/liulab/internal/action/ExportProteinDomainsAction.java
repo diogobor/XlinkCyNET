@@ -76,7 +76,7 @@ public class ExportProteinDomainsAction extends AbstractCyAction {
 			File fileToSave = getSelectedFileWithExtension(fileChooser);
 			String full_fileName = fileToSave.getAbsolutePath();
 			if (!full_fileName.toLowerCase().endsWith(".csv")) {
-				full_fileName += full_fileName + ".csv";
+				full_fileName += ".csv";
 			}
 			this.createProteinDomainsFile(full_fileName);
 		}
