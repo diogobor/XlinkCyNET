@@ -151,7 +151,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	@Override
 	public void run(TaskMonitor taskMonitor) throws Exception {
 
-		taskMonitor.setTitle("XlinkCyNET - Set of nodes task");
+		taskMonitor.setTitle("XlinkCyNET - Load protein domains task");
 
 		if (cyApplicationManager.getCurrentNetwork() == null) {
 			throw new Exception("ERROR: No networks has been loaded.");

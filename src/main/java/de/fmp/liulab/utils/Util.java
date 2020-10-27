@@ -88,6 +88,9 @@ public class Util {
 	public static Integer node_label_font_size = 12;
 	public static Integer edge_label_opacity = 120;
 	public static Integer edge_link_opacity = 120;
+	public static Integer node_border_opacity = 200;
+	public static double edge_link_width = 2;
+	public static double node_border_width = 1.5;
 	public static boolean isProtein_expansion_horizontal = true;
 
 	// Map<Network name, Map<Protein - Node SUID, List<ProteinDomain>>
@@ -496,7 +499,7 @@ public class Util {
 					} else {
 						newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, 0);
 					}
-					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_WIDTH, 2.0);
+					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_WIDTH, edge_link_width);
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TARGET_ARROW_SHAPE,
 							ArrowShapeVisualProperty.NONE);
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_SOURCE_ARROW_SHAPE,
@@ -818,7 +821,7 @@ public class Util {
 				}
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_PAINT, InterLinksColor);
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TRANSPARENCY, edge_link_opacity);
-				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_WIDTH, 2.0);
+				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_WIDTH, edge_link_width);
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TARGET_ARROW_SHAPE, ArrowShapeVisualProperty.NONE);
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_SOURCE_ARROW_SHAPE, ArrowShapeVisualProperty.NONE);
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LINE_TYPE, LineTypeVisualProperty.SOLID);
@@ -1113,9 +1116,10 @@ public class Util {
 
 		newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
 
-		// #### UPDATE EDGE COLOR ####
+		// #### UPDATE EDGE STYLE ####
 		newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_PAINT, InterLinksColor);
 		newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TRANSPARENCY, edge_link_opacity);
+		newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_WIDTH, edge_link_width);
 		// ###########################
 
 		// ### DISPLAY LINK LEGEND ###
@@ -1208,9 +1212,10 @@ public class Util {
 			new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_BORDER_PAINT, Color.WHITE);
 		}
 
-		// #### UPDATE EDGE COLOR ####
+		// #### UPDATE EDGE STYLE ####
 		edgeView.setLockedValue(BasicVisualLexicon.EDGE_PAINT, IntraLinksColor);
 		edgeView.setLockedValue(BasicVisualLexicon.EDGE_TRANSPARENCY, edge_link_opacity);
+		edgeView.setLockedValue(BasicVisualLexicon.EDGE_WIDTH, edge_link_width);
 		// ###########################
 
 		// ### DISPLAY LINK LEGEND ###

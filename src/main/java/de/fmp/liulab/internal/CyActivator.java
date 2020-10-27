@@ -28,12 +28,16 @@ import de.fmp.liulab.internal.action.ControlURLAction;
 import de.fmp.liulab.internal.action.ExportProteinDomainsAction;
 import de.fmp.liulab.internal.action.LoadProteinDomainsAction;
 import de.fmp.liulab.internal.action.MainPanelAction;
+import de.fmp.liulab.internal.action.SetDomainColorAction;
 import de.fmp.liulab.internal.action.ShortcutSingleNodeExecuteAction;
 import de.fmp.liulab.task.LoadProteinDomainsTaskFactory;
 import de.fmp.liulab.task.MainSingleNodeTaskFactory;
+import de.fmp.liulab.task.SetDomainColorTask;
+import de.fmp.liulab.task.SetDomainColorTaskFactory;
 
 /**
  * Class responsible for initializing cytoscape methods
+ * 
  * @author diogobor
  *
  */
@@ -82,6 +86,15 @@ public class CyActivator extends AbstractCyActivator {
 
 		// ###################
 
+		// ### 3.2 - LOAD ####
+		TaskFactory mySetProteinDomainsColorFactory = new SetDomainColorTaskFactory(cyApplicationManager,
+				vmmServiceRef, customChartListener);
+		
+		SetDomainColorAction mySetProteinDomainsAction = new SetDomainColorAction(dialogTaskManager,
+				mySetProteinDomainsColorFactory);
+
+		// ###################
+
 		// ##############################
 
 		// #### 4 - EXECUTE SINGLE NODE ####
@@ -125,6 +138,7 @@ public class CyActivator extends AbstractCyActivator {
 		registerService(bc, myShortcutSingleNodeAction, CyAction.class, new Properties());
 		registerService(bc, myLoadProteinDomainsAction, CyAction.class, new Properties());
 		registerService(bc, myExportProteinDomainsAction, CyAction.class, new Properties());
+		registerService(bc, mySetProteinDomainsAction, CyAction.class, new Properties());
 
 		registerService(bc, mainControlPanel, CytoPanelComponent.class, new Properties());
 		registerService(bc, panelAction, CyAction.class, new Properties());

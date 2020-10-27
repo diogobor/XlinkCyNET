@@ -1031,11 +1031,12 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		}
 
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_TRANSPARENCY, 200);
+		nodeView.setLockedValue(BasicVisualLexicon.NODE_BORDER_TRANSPARENCY, Util.node_border_opacity);
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_PAINT, Color.WHITE);
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_LABEL_COLOR, Color.GRAY);
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_LABEL_FONT_SIZE, Util.node_label_font_size);
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_SELECTED_PAINT, new Color(255, 255, 255, 165));
-		nodeView.setLockedValue(BasicVisualLexicon.NODE_BORDER_WIDTH, 1.5d);
+		nodeView.setLockedValue(BasicVisualLexicon.NODE_BORDER_WIDTH, Util.node_border_width);
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_BORDER_PAINT, Util.NodeBorderColor);
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_SHAPE, NodeShapeVisualProperty.ROUND_RECTANGLE);
 

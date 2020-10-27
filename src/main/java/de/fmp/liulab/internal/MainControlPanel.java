@@ -67,7 +67,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	private void setFrameObjects() {
 
 		// use the border layout for this CytoPanel
-		setLayout(new GridLayout(5, 1));
+		setLayout(new GridLayout(4, 1));
 
 		setSize(250, 120);
 		init_group_panels();
@@ -101,7 +101,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		other_panel = new JPanel();
 		other_panel.setBackground(Color.WHITE);
 		other_panel.setBorder(BorderFactory.createTitledBorder("Other"));
-		other_panel.setBounds(10, 270, 250, 90);
+		other_panel.setBounds(10, 270, 250, 150);
 		other_panel.setLayout(null);
 		this.add(other_panel);
 
@@ -228,16 +228,36 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		link_legend_panel.add(opacity_edge_label);
 
 		offset_y = -20;
-		JLabel font_size_node = new JLabel("Font size (node):");
-		font_size_node.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		font_size_node.setBounds(10, offset_y, 450, 100);
-		other_panel.add(font_size_node);
-		offset_y += 30;
 
 		JLabel opacity_edge_link = new JLabel("Opacity (link):");
 		opacity_edge_link.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		opacity_edge_link.setBounds(10, offset_y, 450, 100);
 		other_panel.add(opacity_edge_link);
+		offset_y += 30;
+
+		JLabel width_edge_link = new JLabel("Width (link):");
+		width_edge_link.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
+		width_edge_link.setBounds(10, offset_y, 450, 100);
+		other_panel.add(width_edge_link);
+		offset_y += 30;
+
+		JLabel opacity_node_border = new JLabel("Opacity (node border):");
+		opacity_node_border.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
+		opacity_node_border.setBounds(10, offset_y, 450, 100);
+		other_panel.add(opacity_node_border);
+		offset_y += 30;
+
+		JLabel width_node_border = new JLabel("Width (node border):");
+		width_node_border.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
+		width_node_border.setBounds(10, offset_y, 450, 100);
+		other_panel.add(width_node_border);
+		offset_y += 30;
+
+		JLabel font_size_node = new JLabel("Font size (node):");
+		font_size_node.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
+		font_size_node.setBounds(10, offset_y, 450, 100);
+		other_panel.add(font_size_node);
+
 	}
 
 	/**
@@ -404,28 +424,9 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		link_legend_panel.add(spinner_opacity_edge_label);
 
 		offset_y = 20;
-		SpinnerModel model_node = new SpinnerNumberModel(Util.node_label_font_size.intValue(), // initial value
-				0, // min
-				30, // max
-				1); // step
-		final JSpinner spinner_node = new JSpinner(model_node);
-		spinner_node.setBounds(offset_x, offset_y, 60, 20);
-		JComponent comp_node = spinner_node.getEditor();
-		JFormattedTextField field_node = (JFormattedTextField) comp_node.getComponent(0);
-		DefaultFormatter formatter_node = (DefaultFormatter) field_node.getFormatter();
-		formatter_node.setCommitsOnValidEdit(true);
-		spinner_node.addChangeListener(new ChangeListener() {
-
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				Util.node_label_font_size = (Integer) spinner_node.getValue();
-			}
-		});
-		other_panel.add(spinner_node);
-		offset_y += 30;
 
 		SpinnerModel model_opacity_edge_link = new SpinnerNumberModel(Util.edge_link_opacity.intValue(), // initial
-																											// value
+				// value
 				0, // min
 				255, // max
 				1); // step
@@ -444,6 +445,92 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		});
 		spinner_opacity_edge_link.setToolTipText("Set a value between 0 (transparent) and 255 (opaque).");
 		other_panel.add(spinner_opacity_edge_link);
+		offset_y += 30;
+
+		SpinnerModel width_edge_link = new SpinnerNumberModel(Util.edge_link_width, // initial
+				// value
+				1, // min
+				10, // max
+				0.1); // step
+		final JSpinner spinner_width_edge_link = new JSpinner(width_edge_link);
+		spinner_width_edge_link.setBounds(offset_x, offset_y, 60, 20);
+		JComponent comp_width_edge_link = spinner_width_edge_link.getEditor();
+		JFormattedTextField field_width_edge_link = (JFormattedTextField) comp_width_edge_link.getComponent(0);
+		DefaultFormatter formatter_width_edge_link = (DefaultFormatter) field_width_edge_link.getFormatter();
+		formatter_width_edge_link.setCommitsOnValidEdit(true);
+		spinner_width_edge_link.addChangeListener(new ChangeListener() {
+
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				Util.edge_link_width = (double) spinner_width_edge_link.getValue();
+			}
+		});
+		spinner_width_edge_link.setToolTipText("Set a value between 1 and 10.");
+		other_panel.add(spinner_width_edge_link);
+		offset_y += 30;
+
+		SpinnerModel model_opacity_node_border = new SpinnerNumberModel(Util.node_border_opacity.intValue(), // initial
+				// value
+				0, // min
+				255, // max
+				1); // step
+		final JSpinner spinner_opacity_node_border = new JSpinner(model_opacity_node_border);
+		spinner_opacity_node_border.setBounds(offset_x, offset_y, 60, 20);
+		JComponent comp_opacitiy_node_border = spinner_opacity_node_border.getEditor();
+		JFormattedTextField field_opacity_node_border = (JFormattedTextField) comp_opacitiy_node_border.getComponent(0);
+		DefaultFormatter formatter_opacity_node_border = (DefaultFormatter) field_opacity_node_border.getFormatter();
+		formatter_opacity_node_border.setCommitsOnValidEdit(true);
+		spinner_opacity_node_border.addChangeListener(new ChangeListener() {
+
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				Util.node_border_opacity = (Integer) spinner_opacity_node_border.getValue();
+			}
+		});
+		spinner_opacity_node_border.setToolTipText("Set a value between 0 (transparent) and 255 (opaque).");
+		other_panel.add(spinner_opacity_node_border);
+		offset_y += 30;
+
+		SpinnerModel width_node_border = new SpinnerNumberModel(Util.node_border_width, // initial
+				// value
+				1, // min
+				10, // max
+				0.1); // step
+		final JSpinner spinner_width_node_border = new JSpinner(width_node_border);
+		spinner_width_node_border.setBounds(offset_x, offset_y, 60, 20);
+		JComponent comp_width_node_border = spinner_width_node_border.getEditor();
+		JFormattedTextField field_width_node_border = (JFormattedTextField) comp_width_node_border.getComponent(0);
+		DefaultFormatter formatter_width_node_border = (DefaultFormatter) field_width_node_border.getFormatter();
+		formatter_width_node_border.setCommitsOnValidEdit(true);
+		spinner_width_node_border.addChangeListener(new ChangeListener() {
+
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				Util.node_border_width = (double) spinner_width_node_border.getValue();
+			}
+		});
+		spinner_width_node_border.setToolTipText("Set a value between 1 and 10.");
+		other_panel.add(spinner_width_node_border);
+		offset_y += 30;
+
+		SpinnerModel model_node = new SpinnerNumberModel(Util.node_label_font_size.intValue(), // initial value
+				0, // min
+				30, // max
+				1); // step
+		final JSpinner spinner_node = new JSpinner(model_node);
+		spinner_node.setBounds(offset_x, offset_y, 60, 20);
+		JComponent comp_node = spinner_node.getEditor();
+		JFormattedTextField field_node = (JFormattedTextField) comp_node.getComponent(0);
+		DefaultFormatter formatter_node = (DefaultFormatter) field_node.getFormatter();
+		formatter_node.setCommitsOnValidEdit(true);
+		spinner_node.addChangeListener(new ChangeListener() {
+
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				Util.node_label_font_size = (Integer) spinner_node.getValue();
+			}
+		});
+		other_panel.add(spinner_node);
 	}
 
 	/**
