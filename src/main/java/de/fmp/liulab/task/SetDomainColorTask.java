@@ -3,16 +3,11 @@ package de.fmp.liulab.task;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
 import java.util.Map.Entry;
 
 import javax.swing.BorderFactory;
@@ -31,7 +26,6 @@ import javax.swing.table.DefaultTableModel;
 
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.model.CyNetwork;
-import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.presentation.customgraphics.CyCustomGraphics2Factory;
 import org.cytoscape.view.vizmap.VisualMappingManager;
 import org.cytoscape.work.AbstractTask;
@@ -44,7 +38,6 @@ public class SetDomainColorTask extends AbstractTask implements ActionListener {
 
 	private CyApplicationManager cyApplicationManager;
 	private CyNetwork myNetwork;
-	private CyNetworkView netView;
 	private CyCustomGraphics2Factory vgFactory;
 
 	// Window
@@ -70,7 +63,6 @@ public class SetDomainColorTask extends AbstractTask implements ActionListener {
 	public SetDomainColorTask(CyApplicationManager cyApplicationManager, final VisualMappingManager vmmServiceRef,
 			CyCustomGraphics2Factory vgFactory) {
 		this.cyApplicationManager = cyApplicationManager;
-		this.netView = cyApplicationManager.getCurrentNetworkView();
 		this.myNetwork = cyApplicationManager.getCurrentNetwork();
 		this.vgFactory = vgFactory;
 

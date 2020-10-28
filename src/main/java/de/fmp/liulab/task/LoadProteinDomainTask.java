@@ -48,7 +48,6 @@ import org.cytoscape.model.CyIdentifiable;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyRow;
-import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.VisualLexicon;
 import org.cytoscape.view.presentation.customgraphics.CyCustomGraphics2Factory;
 import org.cytoscape.view.vizmap.VisualMappingManager;
@@ -72,7 +71,6 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 	private CyApplicationManager cyApplicationManager;
 	private CyNetwork myNetwork;
-	private CyNetworkView netView;
 	private CyCustomGraphics2Factory vgFactory;
 
 	public static VisualLexicon lexicon;
@@ -83,6 +81,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	private JPanel mainPanel;
 	private JLabel textLabel_status_result;
 	private MenuBar menuBar = new MenuBar();
+	private JPanel information_panel;
 
 	// Table
 	private static JTable mainProteinDomainTable;
@@ -113,7 +112,6 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	public LoadProteinDomainTask(CyApplicationManager cyApplicationManager, final VisualMappingManager vmmServiceRef,
 			CyCustomGraphics2Factory vgFactory) {
 		this.cyApplicationManager = cyApplicationManager;
-		this.netView = cyApplicationManager.getCurrentNetworkView();
 		this.myNetwork = cyApplicationManager.getCurrentNetwork();
 		this.vgFactory = vgFactory;
 		this.style = vmmServiceRef.getCurrentVisualStyle();
@@ -166,62 +164,58 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	}
 
 	/**
-	 * Method responsible for cropping image
-	 * 
-	 * @param srcImg
-	 * @param w
-	 * @param h
-	 * @return cropped image
-	 */
-	private Image getScaledImage(Image srcImg, int w, int h) {
-		BufferedImage resizedImg = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-		Graphics2D g2 = resizedImg.createGraphics();
-
-		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-		g2.drawImage(srcImg, 0, 0, w, h, null);
-		g2.dispose();
-
-		return resizedImg;
-	}
-
-	/**
 	 * Set all labels in XLinkCyNET window / frame
 	 */
 	private void initFrameLabels() {
 
+		int offset_y = -35;
+
+		information_panel = new JPanel();
+		information_panel.setBorder(BorderFactory.createTitledBorder(""));
+		information_panel.setBounds(10, 8, 355, 116);
+		information_panel.setLayout(null);
+		mainPanel.add(information_panel);
+
 		JLabel textLabel_Protein_lbl_1 = new JLabel(
 				"Fill in the table below to indicate what proteins will have their");
 		textLabel_Protein_lbl_1.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_Protein_lbl_1.setBounds(10, -20, 450, 100);
-		mainPanel.add(textLabel_Protein_lbl_1);
+		textLabel_Protein_lbl_1.setBounds(10, offset_y, 450, 100);
+		information_panel.add(textLabel_Protein_lbl_1);
+		offset_y += 20;
 
 		JLabel textLabel_Protein_lbl_2 = new JLabel("domains loaded.");
 		textLabel_Protein_lbl_2.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_Protein_lbl_2.setBounds(10, 0, 300, 100);
-		mainPanel.add(textLabel_Protein_lbl_2);
+		textLabel_Protein_lbl_2.setBounds(10, offset_y, 300, 100);
+		information_panel.add(textLabel_Protein_lbl_2);
+		offset_y += 30;
 
 		JLabel textLabel_Pfam = new JLabel("Search for domains in Pfam database:");
 		textLabel_Pfam.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_Pfam.setBounds(10, 30, 300, 100);
-		mainPanel.add(textLabel_Pfam);
+		textLabel_Pfam.setBounds(10, offset_y, 300, 100);
+		information_panel.add(textLabel_Pfam);
+		offset_y += 30;
 
 		textLabel_status_result = new JLabel("");
 		textLabel_status_result.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		textLabel_status_result.setForeground(new Color(159, 17, 17));
-		textLabel_status_result.setBounds(55, 60, 350, 100);
+		textLabel_status_result.setBounds(55, offset_y, 350, 100);
 
-		ImageIcon imgIcon = new ImageIcon(getClass().getResource("/images/logo.png"));
-		imgIcon.setImage(getScaledImage(imgIcon.getImage(), 100, 85));
+		JPanel logo_panel = new JPanel();
+		logo_panel.setBorder(BorderFactory.createTitledBorder(""));
+		logo_panel.setBounds(370, 8, 140, 116);
+		logo_panel.setLayout(null);
+		mainPanel.add(logo_panel);
+
 		JLabel jLabelIcon = new JLabel();
-		jLabelIcon.setBounds(380, 20, 100, 100);
-		jLabelIcon.setIcon(imgIcon);
-		mainPanel.add(jLabelIcon);
+		jLabelIcon.setBounds(13, -95, 300, 300);
+		jLabelIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/logo.png")));
+		logo_panel.add(jLabelIcon);
 
 		JLabel textLabel_status = new JLabel("Status:");
 		textLabel_status.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_status.setBounds(10, 60, 50, 100);
-		mainPanel.add(textLabel_status);
-		mainPanel.add(textLabel_status_result);
+		textLabel_status.setBounds(10, offset_y, 50, 100);
+		information_panel.add(textLabel_status);
+		information_panel.add(textLabel_status_result);
 	}
 
 	/**
@@ -372,7 +366,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 		Icon iconBtn = new ImageIcon(getClass().getResource("/images/browse_Icon.png"));
 		pFamButton = new JButton(iconBtn);
-		pFamButton.setBounds(220, 65, 30, 30);
+		pFamButton.setBounds(220, 50, 30, 30);
 		pFamButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
 				taskMonitor.setTitle("XL interactions");
@@ -418,7 +412,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 				}
 			}
 		});
-		mainPanel.add(pFamButton);
+		information_panel.add(pFamButton);
 
 		Icon iconBtnOk = new ImageIcon(getClass().getResource("/images/okBtn.png"));
 		JButton okButton = new JButton(iconBtnOk);
@@ -595,6 +589,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		}
 
 	}
+
 	/**
 	 * Method responsible for update Protein domains map
 	 * 
@@ -617,8 +612,6 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		Util.updateProteinDomainsColorMap(myProteinDomains);
 
 	}
-
-	
 
 	/**
 	 * Get all nodes filled out in JTable
