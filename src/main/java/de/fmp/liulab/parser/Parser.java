@@ -16,7 +16,7 @@ public class Parser {
 
 	private ReaderWriterTextFile parserFile;
 	private List<String> qtdParser = new ArrayList<String>();
-	private String[] columnNames = { "Gene", "Domain(s)" };
+	private String[] columnNames = { "Node Name", "Domain(s)" };
 
 	/**
 	 * UNIPROT lines
