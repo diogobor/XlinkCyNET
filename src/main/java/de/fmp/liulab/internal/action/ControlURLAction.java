@@ -33,6 +33,6 @@ public class ControlURLAction extends AbstractCyAction {
 	 * Method responsible for activating action.
 	 */
 	public void actionPerformed(ActionEvent e) {
-		openBrowser.openURL("http://diogobor.droppages.com/xlinkcynet_protocol_exchange.png");
+		openBrowser.openURL("https://www.theliulab.com/software/XlinkCyNET");
 	}
 }
