@@ -438,8 +438,6 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	private void init_spinners() {
 
 		int offset_x = 125;
-		if (Util.isWindows())
-			offset_x = 115;
 		int offset_y = 50;
 
 		SpinnerModel model_link = new SpinnerNumberModel(Util.edge_label_font_size.intValue(), // initial value

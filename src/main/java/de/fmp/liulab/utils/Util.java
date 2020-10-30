@@ -767,7 +767,8 @@ public class Util {
 		Object length_other_protein_a;
 		Object length_other_protein_b;
 		CyRow other_node_row = null;
-		double current_factor_scaling_length_protein = 1;
+
+		double target_factor_scaling_length_protein = 1;
 
 		if (current_inter_links.size() > 0) {
 
@@ -777,6 +778,9 @@ public class Util {
 				other_node_row = myNetwork.getRow(sourceNode);
 			}
 
+			target_factor_scaling_length_protein = other_node_row.get(PROTEIN_SCALING_FACTOR_COLUMN_NAME,
+					Double.class);
+			
 			length_other_protein_a = other_node_row.getRaw(PROTEIN_LENGTH_A);
 			length_other_protein_b = other_node_row.getRaw(PROTEIN_LENGTH_B);
 
@@ -787,40 +791,38 @@ public class Util {
 					length_other_protein_a = length_other_protein_b;
 			}
 
-			current_factor_scaling_length_protein = other_node_row.get(PROTEIN_SCALING_FACTOR_COLUMN_NAME,
-					Double.class);
-
 			if (isProtein_expansion_horizontal) {
+				other_node_width_or_height = ((Number) targetNodeView.getVisualProperty(BasicVisualLexicon.NODE_WIDTH))
+						.floatValue();
+
+				if ((Math.round(other_node_width_or_height * 100.0)
+						/ 100.0) == (Math.round((proteinLength * Util.node_label_factor_size) * 100.0) / 100.0))
+					other_node_width_or_height = ((Number) sourceNodeView
+							.getVisualProperty(BasicVisualLexicon.NODE_WIDTH)).floatValue();
 
 				initial_position_source_node = getXPositionOf(sourceNodeView);
 				initial_position_target_node = getXPositionOf(targetNodeView);
 
-				other_node_width_or_height = ((Number) targetNodeView.getVisualProperty(BasicVisualLexicon.NODE_WIDTH))
-						.floatValue();
-
-				if (other_node_width_or_height == proteinLength * current_factor_scaling_length_protein)
-					other_node_width_or_height = ((Number) sourceNodeView
-							.getVisualProperty(BasicVisualLexicon.NODE_WIDTH)).floatValue();
 			} else {
-
-				initial_position_source_node = getYPositionOf(sourceNodeView);
-				initial_position_target_node = getYPositionOf(targetNodeView);
-
 				other_node_width_or_height = ((Number) targetNodeView.getVisualProperty(BasicVisualLexicon.NODE_HEIGHT))
 						.floatValue();
 
-				if (other_node_width_or_height == proteinLength)
+				if ((Math.round(other_node_width_or_height * 100.0)
+						/ 100.0) == (Math.round((proteinLength * Util.node_label_factor_size) * 100.0) / 100.0))
 					other_node_width_or_height = ((Number) sourceNodeView
 							.getVisualProperty(BasicVisualLexicon.NODE_HEIGHT)).floatValue();
+
+				initial_position_source_node = getYPositionOf(sourceNodeView);
+				initial_position_target_node = getYPositionOf(targetNodeView);
 			}
 
 			if (sourceNode.getSUID() == node.getSUID()) {
-				center_position_source_node = proteinLength * Util.node_label_factor_size / 2.0;
-				center_position_target_node = other_node_width_or_height / 2.0;
+				center_position_source_node = (proteinLength * Util.node_label_factor_size) / 2.0;
+				center_position_target_node = (other_node_width_or_height) / 2.0;
 
 			} else {
-				center_position_source_node = other_node_width_or_height / 2.0;
-				center_position_target_node = proteinLength * Util.node_label_factor_size / 2.0;
+				center_position_source_node = (other_node_width_or_height) / 2.0;
+				center_position_target_node = (proteinLength * Util.node_label_factor_size) / 2.0;
 			}
 		} else {
 			return;
@@ -897,8 +899,15 @@ public class Util {
 
 				// #########################
 
-				xl_pos_source = current_inter_links.get(countEdge).pos_site_a;
-				xl_pos_target = current_inter_links.get(countEdge).pos_site_b;
+				if (sourceNode.getSUID() == node.getSUID()) {
+					xl_pos_source = current_inter_links.get(countEdge).pos_site_a * Util.node_label_factor_size;
+					xl_pos_target = current_inter_links.get(countEdge).pos_site_b
+							* target_factor_scaling_length_protein;
+				} else {
+					xl_pos_source = current_inter_links.get(countEdge).pos_site_a
+							* target_factor_scaling_length_protein;
+					xl_pos_target = current_inter_links.get(countEdge).pos_site_b * Util.node_label_factor_size;
+				}
 
 				if (xl_pos_source <= center_position_source_node) { // [-protein_length/2, 0]
 					x_or_y_Pos_source = (-center_position_source_node) + xl_pos_source;
@@ -920,9 +929,9 @@ public class Util {
 				Handle h = null;
 				Handle h2 = null;
 
-				float scaling_protein_size = (float) (((Number) length_other_protein_a).floatValue()
-						* current_factor_scaling_length_protein);
-				if (scaling_protein_size == other_node_width_or_height) {// Target node has already been modified
+				if ((Math.round(other_node_width_or_height * 100.0) / 100.0) == (Math.round(
+						(((Number) length_other_protein_a).floatValue() * target_factor_scaling_length_protein) * 100.0)
+						/ 100.0)) {// Target node has already been modified
 
 					if (isProtein_expansion_horizontal) {
 
@@ -1045,6 +1054,7 @@ public class Util {
 
 			initial_position_source_node = getXPositionOf(sourceNodeView);
 			initial_position_target_node = getXPositionOf(targetNodeView);
+
 		} else {
 			other_node_width_or_height = ((Number) targetNodeView.getVisualProperty(BasicVisualLexicon.NODE_HEIGHT))
 					.floatValue();
@@ -1059,19 +1069,6 @@ public class Util {
 
 		double center_position_source_node = 0;
 		double center_position_target_node = 0;
-
-		double target_factor_scaling_length_protein = other_node_row.get(PROTEIN_SCALING_FACTOR_COLUMN_NAME,
-				Double.class);
-
-		if (sourceNode.getSUID() == node.getSUID()) {
-			center_position_source_node = (proteinLength * Util.node_label_factor_size) / 2.0;
-			center_position_target_node = (other_node_width_or_height * target_factor_scaling_length_protein) / 2.0;
-
-		} else {
-			center_position_source_node = (other_node_width_or_height * target_factor_scaling_length_protein) / 2.0;
-			center_position_target_node = (proteinLength * Util.node_label_factor_size) / 2.0;
-		}
-
 		double x_or_y_Pos_source = 0;
 		double xl_pos_source = 0;
 
@@ -1079,26 +1076,39 @@ public class Util {
 		double xl_pos_target = 0;
 
 		String[] edgeNameArr = edge_name.split("\\[|\\]");
-
 		String[] position1 = edgeNameArr[1].split("\\(|\\)");
 		String[] position2 = edgeNameArr[3].split("\\(|\\)");
-		xl_pos_source = Double.parseDouble(position1[1]) * Util.node_label_factor_size;
 
-		xl_pos_target = Double.parseDouble(position2[1]) * target_factor_scaling_length_protein;
+		double target_factor_scaling_length_protein = other_node_row.get(PROTEIN_SCALING_FACTOR_COLUMN_NAME,
+				Double.class);
+
+		if (sourceNode.getSUID() == node.getSUID()) {
+			center_position_source_node = (proteinLength * Util.node_label_factor_size) / 2.0;
+			center_position_target_node = (other_node_width_or_height) / 2.0;
+
+			xl_pos_source = Double.parseDouble(position1[1]) * Util.node_label_factor_size;
+			xl_pos_target = Double.parseDouble(position2[1]) * target_factor_scaling_length_protein;
+		} else {
+			center_position_source_node = (other_node_width_or_height) / 2.0;
+			center_position_target_node = (proteinLength * Util.node_label_factor_size) / 2.0;
+
+			xl_pos_source = Double.parseDouble(position1[1]) * target_factor_scaling_length_protein;
+			xl_pos_target = Double.parseDouble(position2[1]) * Util.node_label_factor_size;
+		}
 
 		if (xl_pos_source <= center_position_source_node) { // [-protein_length/2, 0]
 			x_or_y_Pos_source = (-center_position_source_node) + xl_pos_source;
 		} else { // [0, protein_length/2]
 			x_or_y_Pos_source = xl_pos_source - center_position_source_node;
 		}
-		x_or_y_Pos_source += (initial_position_source_node * Util.node_label_factor_size);
+		x_or_y_Pos_source += initial_position_source_node;
 
 		if (xl_pos_target <= center_position_target_node) { // [-protein_length/2, 0]
 			x_or_y_Pos_target = (-center_position_target_node) + xl_pos_target;
 		} else { // [0, protein_length/2]
 			x_or_y_Pos_target = xl_pos_target - center_position_target_node;
 		}
-		x_or_y_Pos_target += (initial_position_target_node * target_factor_scaling_length_protein);
+		x_or_y_Pos_target += initial_position_target_node;
 
 		// BLEND
 
@@ -1109,8 +1119,9 @@ public class Util {
 		Handle h = null;
 		Handle h2 = null;
 
-		if (other_node_width_or_height == ((Number) length_other_protein_a).floatValue()) {// Target node has already
-																							// been modified
+		if ((Math.round(other_node_width_or_height * 100.0) / 100.0) == (Math
+				.round((((Number) length_other_protein_a).floatValue() * target_factor_scaling_length_protein) * 100.0)
+				/ 100.0)) {// Target node has already been modified
 
 			if (isProtein_expansion_horizontal) {
 				h = handleFactory.createHandle(netView, newEdgeView, (x_or_y_Pos_source - OFFSET_BEND),
