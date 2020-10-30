@@ -39,6 +39,7 @@ import org.cytoscape.view.model.VisualProperty;
 import org.cytoscape.view.presentation.property.ArrowShapeVisualProperty;
 import org.cytoscape.view.presentation.property.BasicVisualLexicon;
 import org.cytoscape.view.presentation.property.LineTypeVisualProperty;
+import org.cytoscape.view.presentation.property.NodeShapeVisualProperty;
 import org.cytoscape.view.presentation.property.values.Bend;
 import org.cytoscape.view.presentation.property.values.BendFactory;
 import org.cytoscape.view.presentation.property.values.Handle;
@@ -66,6 +67,7 @@ import de.fmp.liulab.task.MainSingleNodeTask;
  */
 public class Util {
 
+	public static String PROTEIN_SCALING_FACTOR_COLUMN_NAME = "scaling_factor";
 	public static String PROTEIN_LENGTH_A = "length_protein_a";
 	public static String PROTEIN_LENGTH_B = "length_protein_b";
 	public static String NODE_LABEL_POSITION = "NODE_LABEL_POSITION";
@@ -86,6 +88,7 @@ public class Util {
 	public static boolean showInterLinks = true;
 	public static Integer edge_label_font_size = 12;
 	public static Integer node_label_font_size = 12;
+	public static double node_label_factor_size = 1;
 	public static Integer edge_label_opacity = 120;
 	public static Integer edge_link_opacity = 120;
 	public static Integer node_border_opacity = 200;
@@ -98,8 +101,23 @@ public class Util {
 	public static Map<String, Color> proteinDomainsColorMap = new HashMap<String, Color>();
 	public static List<java.awt.Color> available_domain_colors = new ArrayList<Color>();
 
+	private static float proteinLength;
+
+	public static void setProteinLength(float value) {
+		proteinLength = value;
+	}
+
+	public static float getProteinLengthScalingFactor() {
+		return (float) (proteinLength * node_label_factor_size);
+	}
+
+	public static float getProteinLength() {
+		return (float) (proteinLength);
+	}
+
 	/**
 	 * Method responsible for updating protein domains color Map
+	 * 
 	 * @param proteinDomains
 	 */
 	public static void updateProteinDomainsColorMap(List<ProteinDomain> proteinDomains) {
@@ -107,12 +125,12 @@ public class Util {
 		for (ProteinDomain ptnDomain : proteinDomains) {
 			if (!proteinDomainsColorMap.containsKey(ptnDomain.name)) {
 
-				proteinDomainsColorMap.put(ptnDomain.name,
-						available_domain_colors.get(proteinDomainsColorMap.size() % Util.available_domain_colors.size()));
+				proteinDomainsColorMap.put(ptnDomain.name, available_domain_colors
+						.get(proteinDomainsColorMap.size() % Util.available_domain_colors.size()));
 			}
 		}
 	}
-	
+
 	/**
 	 * Initialize protein domain colors map
 	 */
@@ -156,7 +174,7 @@ public class Util {
 			Util.available_domain_colors.add(Color.YELLOW);
 		}
 	}
-	
+
 	/**
 	 * Check if a specific edge has been modified
 	 * 
@@ -218,7 +236,12 @@ public class Util {
 		float proteinA_node_width = ((Number) proteinA_nodeView.getVisualProperty(BasicVisualLexicon.NODE_WIDTH))
 				.floatValue();
 
-		if (((Number) length_other_protein_a).floatValue() == proteinA_node_width) {// Expansion - horizontal
+		double current_factor_scaling_length_protein = myNetwork.getRow(node).get(PROTEIN_SCALING_FACTOR_COLUMN_NAME,
+				Double.class);
+
+		float scaling_protein_size = (float) (((Number) length_other_protein_a).floatValue()
+				* current_factor_scaling_length_protein);
+		if (scaling_protein_size == proteinA_node_width) {// Expansion - horizontal
 			return checkModifiedNode(myNetwork, netView, node);
 
 		} else {// Expansion - vertical
@@ -226,7 +249,7 @@ public class Util {
 			float proteinA_node_height = ((Number) proteinA_nodeView.getVisualProperty(BasicVisualLexicon.NODE_HEIGHT))
 					.floatValue();
 
-			if (((Number) length_other_protein_a).floatValue() == proteinA_node_height) {
+			if (scaling_protein_size == proteinA_node_height) {
 				return checkModifiedNode(myNetwork, netView, node);
 			}
 			return false;
@@ -268,7 +291,9 @@ public class Util {
 
 			int ptn_label_length = myNetwork.getDefaultNodeTable().getRow(node.getSUID()).getRaw(CyNetwork.NAME)
 					.toString().length();
-			ptn_label_length *= 9;
+
+			float current_node_font_size = nodeView.getVisualProperty(BasicVisualLexicon.NODE_LABEL_FONT_SIZE);
+			ptn_label_length *= (current_node_font_size - 3);
 			ObjectPosition position = (ObjectPosition) vp_label_position
 					.parseSerializableString("W,W,c,-" + ptn_label_length + ".00,0.00");
 
@@ -533,11 +558,13 @@ public class Util {
 					View<CyNode> new_node_source_view = netView.getNodeView(new_node_source);
 
 					if (isProtein_expansion_horizontal) {
-						new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, x_or_y_Pos_source);
+						new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION,
+								(x_or_y_Pos_source) * Util.node_label_factor_size);
 						new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, initial_positionY_node);
 					} else {
 						new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, initial_positionX_node);
-						new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, x_or_y_Pos_source);
+						new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION,
+								(x_or_y_Pos_source) * Util.node_label_factor_size);
 					}
 
 					new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_WIDTH, 0.01);
@@ -549,11 +576,13 @@ public class Util {
 
 					View<CyNode> new_node_target_view = netView.getNodeView(new_node_target);
 					if (isProtein_expansion_horizontal) {
-						new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, x_or_y_Pos_target);
+						new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION,
+								(x_or_y_Pos_target) * Util.node_label_factor_size);
 						new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, initial_positionY_node);
 					} else {
 						new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, initial_positionX_node);
-						new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, x_or_y_Pos_target);
+						new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION,
+								(x_or_y_Pos_target) * Util.node_label_factor_size);
 					}
 
 					new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_WIDTH, 0.01);
@@ -582,10 +611,11 @@ public class Util {
 					Handle h = null;
 					if (isProtein_expansion_horizontal) {
 						h = handleFactory.createHandle(netView, newEdgeView,
-								(x_or_y_Pos_source + x_or_y_Pos_target) / 2, x_or_y_Pos);
+								((x_or_y_Pos_source + x_or_y_Pos_target) * Util.node_label_factor_size) / 2,
+								(x_or_y_Pos) * Util.node_label_factor_size);
 					} else {
-						h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos,
-								(x_or_y_Pos_source + x_or_y_Pos_target) / 2);
+						h = handleFactory.createHandle(netView, newEdgeView, (x_or_y_Pos) * Util.node_label_factor_size,
+								((x_or_y_Pos_source + x_or_y_Pos_target) * Util.node_label_factor_size) / 2);
 					}
 
 					bend.insertHandleAt(0, h);
@@ -737,6 +767,7 @@ public class Util {
 		Object length_other_protein_a;
 		Object length_other_protein_b;
 		CyRow other_node_row = null;
+		double current_factor_scaling_length_protein = 1;
 
 		if (current_inter_links.size() > 0) {
 
@@ -756,6 +787,9 @@ public class Util {
 					length_other_protein_a = length_other_protein_b;
 			}
 
+			current_factor_scaling_length_protein = other_node_row.get(PROTEIN_SCALING_FACTOR_COLUMN_NAME,
+					Double.class);
+
 			if (isProtein_expansion_horizontal) {
 
 				initial_position_source_node = getXPositionOf(sourceNodeView);
@@ -764,7 +798,7 @@ public class Util {
 				other_node_width_or_height = ((Number) targetNodeView.getVisualProperty(BasicVisualLexicon.NODE_WIDTH))
 						.floatValue();
 
-				if (other_node_width_or_height == proteinLength)
+				if (other_node_width_or_height == proteinLength * current_factor_scaling_length_protein)
 					other_node_width_or_height = ((Number) sourceNodeView
 							.getVisualProperty(BasicVisualLexicon.NODE_WIDTH)).floatValue();
 			} else {
@@ -781,12 +815,12 @@ public class Util {
 			}
 
 			if (sourceNode.getSUID() == node.getSUID()) {
-				center_position_source_node = proteinLength / 2.0;
+				center_position_source_node = proteinLength * Util.node_label_factor_size / 2.0;
 				center_position_target_node = other_node_width_or_height / 2.0;
 
 			} else {
 				center_position_source_node = other_node_width_or_height / 2.0;
-				center_position_target_node = proteinLength / 2.0;
+				center_position_target_node = proteinLength * Util.node_label_factor_size / 2.0;
 			}
 		} else {
 			return;
@@ -886,22 +920,24 @@ public class Util {
 				Handle h = null;
 				Handle h2 = null;
 
-				if (other_node_width_or_height == ((Number) length_other_protein_a).floatValue()) {// Target node has
-																									// already been
-																									// modified
+				float scaling_protein_size = (float) (((Number) length_other_protein_a).floatValue()
+						* current_factor_scaling_length_protein);
+				if (scaling_protein_size == other_node_width_or_height) {// Target node has already been modified
 
 					if (isProtein_expansion_horizontal) {
 
-						h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_source - OFFSET_BEND,
+						h = handleFactory.createHandle(netView, newEdgeView,
+								(x_or_y_Pos_source - OFFSET_BEND) * Util.node_label_factor_size,
 								getYPositionOf(sourceNodeView));
-						h2 = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_target - OFFSET_BEND,
+						h2 = handleFactory.createHandle(netView, newEdgeView,
+								(x_or_y_Pos_target - OFFSET_BEND) * Util.node_label_factor_size,
 								getYPositionOf(targetNodeView));
 					} else {
 						// modified
 						h = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(sourceNodeView),
-								x_or_y_Pos_source - OFFSET_BEND);
+								(x_or_y_Pos_source - OFFSET_BEND) * Util.node_label_factor_size);
 						h2 = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(targetNodeView),
-								x_or_y_Pos_target - OFFSET_BEND);
+								(x_or_y_Pos_target - OFFSET_BEND) * Util.node_label_factor_size);
 					}
 
 					bend.insertHandleAt(0, h);
@@ -911,19 +947,21 @@ public class Util {
 
 					if (isProtein_expansion_horizontal) {
 						if (sourceNode.getSUID() == node.getSUID()) {
-							h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_source - OFFSET_BEND,
+							h = handleFactory.createHandle(netView, newEdgeView,
+									(x_or_y_Pos_source - OFFSET_BEND) * Util.node_label_factor_size,
 									getYPositionOf(sourceNodeView));
 						} else {
-							h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_target - OFFSET_BEND,
+							h = handleFactory.createHandle(netView, newEdgeView,
+									(x_or_y_Pos_target - OFFSET_BEND) * Util.node_label_factor_size,
 									getYPositionOf(targetNodeView));
 						}
 					} else {
 						if (sourceNode.getSUID() == node.getSUID()) {
 							h = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(sourceNodeView),
-									x_or_y_Pos_source - OFFSET_BEND);
+									(x_or_y_Pos_source - OFFSET_BEND) * Util.node_label_factor_size);
 						} else {
 							h = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(targetNodeView),
-									x_or_y_Pos_target - OFFSET_BEND);
+									(x_or_y_Pos_target - OFFSET_BEND) * Util.node_label_factor_size);
 						}
 					}
 
@@ -999,7 +1037,9 @@ public class Util {
 		if (isProtein_expansion_horizontal) {
 			other_node_width_or_height = ((Number) targetNodeView.getVisualProperty(BasicVisualLexicon.NODE_WIDTH))
 					.floatValue();
-			if (other_node_width_or_height == proteinLength)
+
+			if ((Math.round(other_node_width_or_height * 100.0)
+					/ 100.0) == (Math.round((proteinLength * Util.node_label_factor_size) * 100.0) / 100.0))
 				other_node_width_or_height = ((Number) sourceNodeView.getVisualProperty(BasicVisualLexicon.NODE_WIDTH))
 						.floatValue();
 
@@ -1008,7 +1048,8 @@ public class Util {
 		} else {
 			other_node_width_or_height = ((Number) targetNodeView.getVisualProperty(BasicVisualLexicon.NODE_HEIGHT))
 					.floatValue();
-			if (other_node_width_or_height == proteinLength)
+			if ((Math.round(other_node_width_or_height * 100.0)
+					/ 100.0) == (Math.round((proteinLength * Util.node_label_factor_size) * 100.0) / 100.0))
 				other_node_width_or_height = ((Number) sourceNodeView.getVisualProperty(BasicVisualLexicon.NODE_HEIGHT))
 						.floatValue();
 
@@ -1019,13 +1060,16 @@ public class Util {
 		double center_position_source_node = 0;
 		double center_position_target_node = 0;
 
+		double target_factor_scaling_length_protein = other_node_row.get(PROTEIN_SCALING_FACTOR_COLUMN_NAME,
+				Double.class);
+
 		if (sourceNode.getSUID() == node.getSUID()) {
-			center_position_source_node = proteinLength / 2.0;
-			center_position_target_node = other_node_width_or_height / 2.0;
+			center_position_source_node = (proteinLength * Util.node_label_factor_size) / 2.0;
+			center_position_target_node = (other_node_width_or_height * target_factor_scaling_length_protein) / 2.0;
 
 		} else {
-			center_position_source_node = other_node_width_or_height / 2.0;
-			center_position_target_node = proteinLength / 2.0;
+			center_position_source_node = (other_node_width_or_height * target_factor_scaling_length_protein) / 2.0;
+			center_position_target_node = (proteinLength * Util.node_label_factor_size) / 2.0;
 		}
 
 		double x_or_y_Pos_source = 0;
@@ -1038,21 +1082,23 @@ public class Util {
 
 		String[] position1 = edgeNameArr[1].split("\\(|\\)");
 		String[] position2 = edgeNameArr[3].split("\\(|\\)");
-		xl_pos_source = Double.parseDouble(position1[1]);
-		xl_pos_target = Double.parseDouble(position2[1]);
+		xl_pos_source = Double.parseDouble(position1[1]) * Util.node_label_factor_size;
+
+		xl_pos_target = Double.parseDouble(position2[1]) * target_factor_scaling_length_protein;
 
 		if (xl_pos_source <= center_position_source_node) { // [-protein_length/2, 0]
 			x_or_y_Pos_source = (-center_position_source_node) + xl_pos_source;
 		} else { // [0, protein_length/2]
 			x_or_y_Pos_source = xl_pos_source - center_position_source_node;
 		}
-		x_or_y_Pos_source += initial_position_source_node;
+		x_or_y_Pos_source += (initial_position_source_node * Util.node_label_factor_size);
+
 		if (xl_pos_target <= center_position_target_node) { // [-protein_length/2, 0]
 			x_or_y_Pos_target = (-center_position_target_node) + xl_pos_target;
 		} else { // [0, protein_length/2]
 			x_or_y_Pos_target = xl_pos_target - center_position_target_node;
 		}
-		x_or_y_Pos_target += initial_position_target_node;
+		x_or_y_Pos_target += (initial_position_target_node * target_factor_scaling_length_protein);
 
 		// BLEND
 
@@ -1067,15 +1113,15 @@ public class Util {
 																							// been modified
 
 			if (isProtein_expansion_horizontal) {
-				h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_source - OFFSET_BEND,
+				h = handleFactory.createHandle(netView, newEdgeView, (x_or_y_Pos_source - OFFSET_BEND),
 						getYPositionOf(sourceNodeView));
-				h2 = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_target - OFFSET_BEND,
+				h2 = handleFactory.createHandle(netView, newEdgeView, (x_or_y_Pos_target - OFFSET_BEND),
 						getYPositionOf(targetNodeView));
 			} else {
 				h = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(sourceNodeView),
-						x_or_y_Pos_source - OFFSET_BEND);
+						(x_or_y_Pos_source - OFFSET_BEND));
 				h2 = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(targetNodeView),
-						x_or_y_Pos_target - OFFSET_BEND);
+						(x_or_y_Pos_target - OFFSET_BEND));
 			}
 
 			bend.insertHandleAt(0, h);
@@ -1085,19 +1131,19 @@ public class Util {
 
 			if (isProtein_expansion_horizontal) {
 				if (sourceNode.getSUID() == node.getSUID()) {
-					h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_source - OFFSET_BEND,
+					h = handleFactory.createHandle(netView, newEdgeView, (x_or_y_Pos_source - OFFSET_BEND),
 							getYPositionOf(sourceNodeView));
 				} else {
-					h = handleFactory.createHandle(netView, newEdgeView, x_or_y_Pos_target - OFFSET_BEND,
+					h = handleFactory.createHandle(netView, newEdgeView, (x_or_y_Pos_target - OFFSET_BEND),
 							getYPositionOf(targetNodeView));
 				}
 			} else {
 				if (sourceNode.getSUID() == node.getSUID()) {
 					h = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(sourceNodeView),
-							x_or_y_Pos_source - OFFSET_BEND);
+							(x_or_y_Pos_source - OFFSET_BEND));
 				} else {
 					h = handleFactory.createHandle(netView, newEdgeView, getXPositionOf(targetNodeView),
-							x_or_y_Pos_target - OFFSET_BEND);
+							(x_or_y_Pos_target - OFFSET_BEND));
 				}
 			}
 
@@ -1299,7 +1345,7 @@ public class Util {
 
 					if (IsNodeModified(myNetwork, netView, proteinA_node)) {
 						MainSingleNodeTask.node = proteinA_node;
-						MainSingleNodeTask.proteinLength = ((Number) length_other_protein_a).floatValue();
+						setProteinLength(((Number) length_other_protein_a).floatValue());
 
 						Tuple2 inter_and_intralinks = Util.getAllLinksFromAdjacentEdgesNode(proteinA_node, myNetwork);
 						MainSingleNodeTask.interLinks = (ArrayList<CrossLink>) inter_and_intralinks.getFirst();
@@ -1330,6 +1376,78 @@ public class Util {
 			}
 
 		}
+	}
+
+	/**
+	 * Set style to node
+	 * 
+	 * @param myNetwork
+	 * @param node
+	 * @param netView
+	 */
+	public static void setNodeStyles(CyNetwork myNetwork, CyNode node, CyNetworkView netView) {
+
+		if (myNetwork == null || node == null || netView == null)
+			return;
+
+		View<CyNode> nodeView = netView.getNodeView(node);
+
+		if (Util.isProtein_expansion_horizontal) {
+			nodeView.setLockedValue(BasicVisualLexicon.NODE_WIDTH,
+					((Number) getProteinLengthScalingFactor()).doubleValue());
+			nodeView.setLockedValue(BasicVisualLexicon.NODE_HEIGHT, 15d);
+		} else {
+			nodeView.setLockedValue(BasicVisualLexicon.NODE_WIDTH, 15d);
+			nodeView.setLockedValue(BasicVisualLexicon.NODE_HEIGHT,
+					((Number) getProteinLengthScalingFactor()).doubleValue());
+		}
+
+		nodeView.setLockedValue(BasicVisualLexicon.NODE_TRANSPARENCY, 200);
+		nodeView.setLockedValue(BasicVisualLexicon.NODE_BORDER_TRANSPARENCY, Util.node_border_opacity);
+		nodeView.setLockedValue(BasicVisualLexicon.NODE_PAINT, Color.WHITE);
+		nodeView.setLockedValue(BasicVisualLexicon.NODE_LABEL_COLOR, Color.GRAY);
+		nodeView.setLockedValue(BasicVisualLexicon.NODE_LABEL_FONT_SIZE, Util.node_label_font_size);
+		nodeView.setLockedValue(BasicVisualLexicon.NODE_SELECTED_PAINT, new Color(255, 255, 255, 165));
+		nodeView.setLockedValue(BasicVisualLexicon.NODE_BORDER_WIDTH, Util.node_border_width);
+		nodeView.setLockedValue(BasicVisualLexicon.NODE_BORDER_PAINT, Util.NodeBorderColor);
+		nodeView.setLockedValue(BasicVisualLexicon.NODE_SHAPE, NodeShapeVisualProperty.ROUND_RECTANGLE);
+
+		myNetwork.getRow(node).set(PROTEIN_SCALING_FACTOR_COLUMN_NAME, node_label_factor_size);
+
+		// ######################### NODE_LABEL_POSITION ######################
+
+		VisualLexicon lexicon = MainSingleNodeTask.lexicon;
+		if (lexicon == null)
+			lexicon = LoadProteinDomainTask.lexicon;
+
+		if (lexicon == null)
+			return;
+
+		// Try to get the label visual property by its ID
+		VisualProperty<?> vp_label_position = lexicon.lookup(CyNode.class, Util.NODE_LABEL_POSITION);
+		if (vp_label_position != null) {
+
+			// If the property is supported by this rendering engine,
+			// use the serialization string value to create the actual property value
+
+			int ptn_label_length = myNetwork.getDefaultNodeTable().getRow(node.getSUID()).getRaw(CyNetwork.NAME)
+					.toString().length();
+			ptn_label_length *= (Util.node_label_font_size - 3);
+			Object position = null;
+			if (Util.isProtein_expansion_horizontal)
+				position = vp_label_position.parseSerializableString("W,W,c,-" + ptn_label_length + ".00,0.00");
+			else
+				position = (ObjectPosition) vp_label_position.parseSerializableString("N,S,c,0.00,0.00");
+
+			// If the parsed value is ok, apply it to the visual style
+			// as default value or a visual mapping
+
+			if (position != null)
+				nodeView.setLockedValue(vp_label_position, position);
+
+		}
+		// ######################### NODE_LABEL_POSITION ######################
+
 	}
 
 	/**

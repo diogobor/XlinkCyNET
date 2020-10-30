@@ -32,7 +32,7 @@ import de.fmp.liulab.internal.action.SetDomainColorAction;
 import de.fmp.liulab.internal.action.ShortcutSingleNodeExecuteAction;
 import de.fmp.liulab.task.LoadProteinDomainsTaskFactory;
 import de.fmp.liulab.task.MainSingleNodeTaskFactory;
-import de.fmp.liulab.task.SetDomainColorTask;
+import de.fmp.liulab.task.ProteinScalingFactorTableTaskFactory;
 import de.fmp.liulab.task.SetDomainColorTaskFactory;
 
 /**
@@ -87,9 +87,9 @@ public class CyActivator extends AbstractCyActivator {
 		// ###################
 
 		// ### 3.2 - LOAD ####
-		TaskFactory mySetProteinDomainsColorFactory = new SetDomainColorTaskFactory(cyApplicationManager,
-				vmmServiceRef, customChartListener);
-		
+		TaskFactory mySetProteinDomainsColorFactory = new SetDomainColorTaskFactory(cyApplicationManager, vmmServiceRef,
+				customChartListener);
+
 		SetDomainColorAction mySetProteinDomainsAction = new SetDomainColorAction(dialogTaskManager,
 				mySetProteinDomainsColorFactory);
 
@@ -124,10 +124,15 @@ public class CyActivator extends AbstractCyActivator {
 
 		// ##############################
 
+		// ##### PROTEIN SCALING FACTOR TABLE #####
+		ProteinScalingFactorTableTaskFactory proteinScalingFactorTableTaskFactory = new ProteinScalingFactorTableTaskFactory();
+
+		// ########################################
+
 		// #### LISTENER ######
 
 		ViewChangedListener updateViewListener = new UpdateViewListener(cyApplicationManager, handleFactory,
-				bendFactory, vmmServiceRef);
+				bendFactory, vmmServiceRef, dialogTaskManager, proteinScalingFactorTableTaskFactory);
 
 		registerService(bc, updateViewListener, ViewChangedListener.class, new Properties());
 		registerService(bc, updateViewListener, RowsSetListener.class, new Properties());

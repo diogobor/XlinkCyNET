@@ -106,7 +106,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 	public static ArrayList<CrossLink> interLinks;
 	public static ArrayList<CrossLink> intraLinks;
-	public static float proteinLength;
+
 	public static CyNode node;
 
 	private Thread pfamThread;
@@ -278,7 +278,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		nodeView = netView.getNodeView(node);
 
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting node styles...");
-		setNodeStyles();
+		Util.setNodeStyles(myNetwork, node, netView);
 		taskMonitor.setProgress(0.2);
 
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting protein domains...");
@@ -290,7 +290,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting styles on the edges...");
 		isPlotDone = Util.addOrUpdateEdgesToNetwork(myNetwork, node, style, netView, nodeView, handleFactory,
-				bendFactory, lexicon, proteinLength, intraLinks, interLinks, taskMonitor);
+				bendFactory, lexicon, Util.getProteinLengthScalingFactor(), intraLinks, interLinks, taskMonitor);
 		taskMonitor.setProgress(0.95);
 
 		// Apply the change to the view
@@ -369,7 +369,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		 * Modify node style
 		 */
 		currentNodeWidth = ((Number) length_protein_a).doubleValue();
-		proteinLength = (float) currentNodeWidth;
+		Util.setProteinLength((float) currentNodeWidth);
 
 		/**
 		 * Get intra and interlinks
@@ -428,7 +428,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		protein_panel.add(textLabel_Protein_size_lbl);
 
 		JLabel textLabel_Protein_size_result = new JLabel();
-		textLabel_Protein_size_result.setText((int) proteinLength + " residues");
+		textLabel_Protein_size_result.setText((int) Util.getProteinLength() + " residues");
 		textLabel_Protein_size_result.setFont(new java.awt.Font("Tahoma", Font.BOLD, 12));
 		textLabel_Protein_size_result.setBounds(80, 10, 100, 100);
 		protein_panel.add(textLabel_Protein_size_result);
@@ -729,7 +729,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 				textLabel_status_result.setText("Setting node styles...");
 				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting node styles...");
-				setNodeStyles();
+				Util.setNodeStyles(myNetwork, node, netView);
 				taskMonitor.setProgress(0.2);
 
 				textLabel_status_result.setText("Getting protein domains from table...");
@@ -750,7 +750,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting styles on the edges...");
 				isPlotDone = false;
 				isPlotDone = Util.addOrUpdateEdgesToNetwork(myNetwork, node, style, netView, nodeView, handleFactory,
-						bendFactory, lexicon, proteinLength, intraLinks, interLinks, taskMonitor);
+						bendFactory, lexicon, Util.getProteinLengthScalingFactor(), intraLinks, interLinks,
+						taskMonitor);
 				taskMonitor.setProgress(0.95);
 
 				// Apply the change to the view
@@ -820,6 +821,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		nodeView.clearValueLock(BasicVisualLexicon.NODE_HEIGHT);
 		nodeView.clearValueLock(BasicVisualLexicon.NODE_SHAPE);
 		nodeView.clearValueLock(BasicVisualLexicon.NODE_TOOLTIP);
+		nodeView.clearValueLock(BasicVisualLexicon.NODE_LABEL_FONT_SIZE);
 
 		// ######################### NODE_LABEL_POSITION ######################
 
@@ -925,7 +927,6 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			values.add(0.0f);
 			colors.add(new Color(255, 255, 255, 100));
 
-			int index_domain = 0;
 			if (myProteinDomains == null)
 				return;
 
@@ -934,12 +935,12 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 				int startId = domain.startId;
 				int endId = domain.endId;
 
-				if (startId > proteinLength)
+				if (startId > Util.getProteinLength())
 					continue;
-				if (endId > proteinLength)
-					endId = (int) proteinLength;
+				if (endId > Util.getProteinLength())
+					endId = (int) Util.getProteinLength();
 
-				float initial_range = ((float) startId / proteinLength);
+				float initial_range = ((float) startId / Util.getProteinLength());
 				float initial_range_white = initial_range - 0.0001f >= 0.0 ? initial_range - 0.0001f : initial_range;
 
 				if (initial_range_white == 0) {
@@ -957,7 +958,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 					colors.add(domain.color);
 				}
 
-				float end_range = ((float) endId / proteinLength);
+				float end_range = ((float) endId / Util.getProteinLength());
 				float end_range_white = end_range + 0.0001f <= 1.0 ? end_range + 0.0001f : end_range;
 
 				if (end_range_white == 1.0) {
@@ -969,7 +970,6 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 				if (domain.color == null) {
 					colors.add(Util.proteinDomainsColorMap.get(domain.name));
-					index_domain++;
 				} else {
 					colors.add(domain.color);
 				}
@@ -995,8 +995,9 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		}
 
 		if (hasDomain) {
-			nodeView.setLockedValue(BasicVisualLexicon.NODE_TOOLTIP, "<html><p>Protein size: " + (int) proteinLength
-					+ " residues</p><br/><p>Domains:</p>" + sb_domains.toString() + "</html>");
+			nodeView.setLockedValue(BasicVisualLexicon.NODE_TOOLTIP,
+					"<html><p>Protein size: " + (int) Util.getProteinLength() + " residues</p><br/><p>Domains:</p>"
+							+ sb_domains.toString() + "</html>");
 
 			String network_name = myNetwork.toString();
 			if (Util.proteinDomainsMap.containsKey(network_name)) {
@@ -1013,59 +1014,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		} else
 			nodeView.setLockedValue(BasicVisualLexicon.NODE_TOOLTIP,
-					"<html><p>Protein size: " + proteinLength + " residues</p></html>");
+					"<html><p>Protein size: " + Util.getProteinLength() + " residues</p></html>");
 		// ############################### END ################################
 	}
 
-	/**
-	 * Set style to node
-	 */
-	private void setNodeStyles() {
-
-		if (Util.isProtein_expansion_horizontal) {
-			nodeView.setLockedValue(BasicVisualLexicon.NODE_WIDTH, ((Number) proteinLength).doubleValue());
-			nodeView.setLockedValue(BasicVisualLexicon.NODE_HEIGHT, 15d);
-		} else {
-			nodeView.setLockedValue(BasicVisualLexicon.NODE_WIDTH, 15d);
-			nodeView.setLockedValue(BasicVisualLexicon.NODE_HEIGHT, ((Number) proteinLength).doubleValue());
-		}
-
-		nodeView.setLockedValue(BasicVisualLexicon.NODE_TRANSPARENCY, 200);
-		nodeView.setLockedValue(BasicVisualLexicon.NODE_BORDER_TRANSPARENCY, Util.node_border_opacity);
-		nodeView.setLockedValue(BasicVisualLexicon.NODE_PAINT, Color.WHITE);
-		nodeView.setLockedValue(BasicVisualLexicon.NODE_LABEL_COLOR, Color.GRAY);
-		nodeView.setLockedValue(BasicVisualLexicon.NODE_LABEL_FONT_SIZE, Util.node_label_font_size);
-		nodeView.setLockedValue(BasicVisualLexicon.NODE_SELECTED_PAINT, new Color(255, 255, 255, 165));
-		nodeView.setLockedValue(BasicVisualLexicon.NODE_BORDER_WIDTH, Util.node_border_width);
-		nodeView.setLockedValue(BasicVisualLexicon.NODE_BORDER_PAINT, Util.NodeBorderColor);
-		nodeView.setLockedValue(BasicVisualLexicon.NODE_SHAPE, NodeShapeVisualProperty.ROUND_RECTANGLE);
-
-		// ######################### NODE_LABEL_POSITION ######################
-
-		// Try to get the label visual property by its ID
-		VisualProperty<?> vp_label_position = lexicon.lookup(CyNode.class, Util.NODE_LABEL_POSITION);
-		if (vp_label_position != null) {
-
-			// If the property is supported by this rendering engine,
-			// use the serialization string value to create the actual property value
-
-			int ptn_label_length = myNetwork.getDefaultNodeTable().getRow(node.getSUID()).getRaw(CyNetwork.NAME)
-					.toString().length();
-			ptn_label_length *= 9;
-			Object position = null;
-			if (Util.isProtein_expansion_horizontal)
-				position = vp_label_position.parseSerializableString("W,W,c,-" + ptn_label_length + ".00,0.00");
-			else
-				position = (ObjectPosition) vp_label_position.parseSerializableString("N,S,c,0.00,0.00");
-
-			// If the parsed value is ok, apply it to the visual style
-			// as default value or a visual mapping
-
-			if (position != null)
-				nodeView.setLockedValue(vp_label_position, position);
-
-		}
-		// ######################### NODE_LABEL_POSITION ######################
-
-	}
 }
