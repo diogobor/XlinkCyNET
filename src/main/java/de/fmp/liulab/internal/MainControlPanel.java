@@ -112,7 +112,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		node_border_panel = new JPanel();
 		node_border_panel.setBackground(Color.WHITE);
 		node_border_panel.setBorder(BorderFactory.createTitledBorder("Border"));
-		node_border_panel.setBounds(10, 80, 250, 120);
+		node_border_panel.setBounds(10, 50, 250, 120);
 		node_border_panel.setLayout(null);
 		node_panel.add(node_border_panel);
 
@@ -290,12 +290,6 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		font_size_node.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		font_size_node.setBounds(10, offset_y, 450, 100);
 		node_panel.add(font_size_node);
-		offset_y += 30;
-
-		JLabel factor_size_node = new JLabel("Scaling factor:");
-		factor_size_node.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		factor_size_node.setBounds(10, offset_y, 450, 100);
-		node_panel.add(factor_size_node);
 		offset_y += 30;
 
 		offset_y = -20;
@@ -591,28 +585,6 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			}
 		});
 		node_panel.add(spinner_node);
-		offset_y += 30;
-
-		SpinnerModel factor_size_node = new SpinnerNumberModel(Util.node_label_factor_size, // initial value
-				0.1, // min
-				1, // max
-				0.1); // step
-		final JSpinner spinner_factor_size_node = new JSpinner(factor_size_node);
-		spinner_factor_size_node.setBounds(offset_x, offset_y, 60, 20);
-		JComponent comp_factor_size_node = spinner_factor_size_node.getEditor();
-		JFormattedTextField field_factor_size_node = (JFormattedTextField) comp_factor_size_node.getComponent(0);
-		DefaultFormatter formatter_factor_size_node = (DefaultFormatter) field_factor_size_node.getFormatter();
-		formatter_factor_size_node.setCommitsOnValidEdit(true);
-		spinner_factor_size_node.addChangeListener(new ChangeListener() {
-
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				Util.node_label_factor_size = (double) spinner_factor_size_node.getValue();
-			}
-		});
-		spinner_factor_size_node.setToolTipText(
-				"Scaling factor to the protein length. It ranges between 0 (small) and 1 (original length).");
-		node_panel.add(spinner_factor_size_node);
 	}
 
 	/**

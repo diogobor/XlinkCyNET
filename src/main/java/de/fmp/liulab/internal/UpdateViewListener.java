@@ -182,7 +182,6 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 		MainSingleNodeTask.interLinks = (ArrayList<CrossLink>) inter_and_intralinks.getFirst();
 		MainSingleNodeTask.intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
 
-		
 		CyRow proteinA_node_row = myNetwork.getRow(current_node);
 		Object length_other_protein_a = proteinA_node_row.getRaw("length_protein_a");
 		Object length_other_protein_b = proteinA_node_row.getRaw("length_protein_b");
@@ -216,8 +215,12 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 
 		if (Util.IsNodeModified(myNetwork, netView, current_node)) {
 
+			Util.node_label_factor_size = myNetwork.getRow(current_node).get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME,
+					Double.class);
+
 			Util.setNodeStyles(myNetwork, current_node, netView);
-			View<CyNode> nodeView = netView.getNodeView(current_node);//original length
+			View<CyNode> nodeView = netView.getNodeView(current_node);// original length
+
 			Util.addOrUpdateEdgesToNetwork(myNetwork, current_node, style, netView, nodeView, handleFactory,
 					bendFactory, lexicon, ((Number) length_other_protein_a).floatValue(), MainSingleNodeTask.intraLinks,
 					MainSingleNodeTask.interLinks, null);

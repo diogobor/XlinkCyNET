@@ -386,7 +386,7 @@ public class Util {
 					ContainsIntraLink = true;
 					currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
 
-					plotIntraLinks(myNetwork, nodeView, netView, handleFactory, bendFactory, style, proteinLength,
+					plotIntraLinks(myNetwork, nodeView, node, netView, handleFactory, bendFactory, style, proteinLength,
 							intraLinks);// Add or update intralinks
 
 				} else {
@@ -442,7 +442,7 @@ public class Util {
 				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting styles on the intra link edges: 98%");
 			}
 
-			plotIntraLinks(myNetwork, nodeView, netView, handleFactory, bendFactory, style, proteinLength, intraLinks);
+			plotIntraLinks(myNetwork, nodeView, node, netView, handleFactory, bendFactory, style, proteinLength, intraLinks);
 		}
 
 		UpdateViewListener.isNodeModified = true;
@@ -456,13 +456,13 @@ public class Util {
 	 * @param source
 	 * @param target
 	 */
-	private static void plotIntraLinks(CyNetwork myNetwork, View<CyNode> nodeView, CyNetworkView netView,
-			HandleFactory handleFactory, BendFactory bendFactory, VisualStyle style, float proteinLength,
-			ArrayList<CrossLink> intraLinks) {
+	private static void plotIntraLinks(CyNetwork myNetwork, View<CyNode> nodeView, CyNode original_node,
+			CyNetworkView netView, HandleFactory handleFactory, BendFactory bendFactory, VisualStyle style,
+			float proteinLength, ArrayList<CrossLink> intraLinks) {
 
 		double initial_positionX_node = getXPositionOf(nodeView);
 		double initial_positionY_node = getYPositionOf(nodeView);
-		double center_position_node = proteinLength / 2.0;
+		double center_position_node = (proteinLength * Util.node_label_factor_size) / 2.0;
 
 		double x_or_y_Pos_source = 0;
 		double xl_pos_source = 0;
@@ -625,9 +625,8 @@ public class Util {
 
 					View<CyEdge> edgeView = netView.getEdgeView(current_edge);
 					edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
-					updateIntraLinkEdgesPosition(myNetwork, netView, edgeView, intraLinks, countEdge, x_or_y_Pos_source,
-							xl_pos_source, x_or_y_Pos_target, xl_pos_target, center_position_node,
-							initial_positionX_node, initial_positionY_node);
+					updateIntraLinkEdgesPosition(myNetwork, netView, original_node, edgeView, intraLinks, countEdge,
+							center_position_node, initial_positionX_node, initial_positionY_node);
 				}
 			}
 		} else {// restore intralinks
@@ -778,9 +777,8 @@ public class Util {
 				other_node_row = myNetwork.getRow(sourceNode);
 			}
 
-			target_factor_scaling_length_protein = other_node_row.get(PROTEIN_SCALING_FACTOR_COLUMN_NAME,
-					Double.class);
-			
+			target_factor_scaling_length_protein = other_node_row.get(PROTEIN_SCALING_FACTOR_COLUMN_NAME, Double.class);
+
 			length_other_protein_a = other_node_row.getRaw(PROTEIN_LENGTH_A);
 			length_other_protein_b = other_node_row.getRaw(PROTEIN_LENGTH_B);
 
@@ -1202,10 +1200,12 @@ public class Util {
 	 * @param initial_positionX_node
 	 * @param initial_positionY_node
 	 */
-	private static void updateIntraLinkEdgesPosition(CyNetwork myNetwork, CyNetworkView netView, View<CyEdge> edgeView,
-			ArrayList<CrossLink> intraLinks, int countEdge, double x_or_y_Pos_source, double xl_pos_source,
-			double x_or_y_Pos_target, double xl_pos_target, double center_position_node, double initial_positionX_node,
-			double initial_positionY_node) {
+	private static void updateIntraLinkEdgesPosition(CyNetwork myNetwork, CyNetworkView netView, CyNode original_node,
+			View<CyEdge> edgeView, ArrayList<CrossLink> intraLinks, int countEdge, double center_position_node,
+			double initial_positionX_node, double initial_positionY_node) {
+
+		double factor_scaling_protein_length = myNetwork.getRow(original_node).get(PROTEIN_SCALING_FACTOR_COLUMN_NAME,
+				Double.class);
 
 		final String node_name_source = intraLinks.get(countEdge).protein_a + " ["
 				+ intraLinks.get(countEdge).pos_site_a + " - " + intraLinks.get(countEdge).pos_site_b + "] - Source";
@@ -1213,7 +1213,8 @@ public class Util {
 		CyNode new_node_source = getNode(myNetwork, node_name_source);
 		if (new_node_source != null) {
 
-			xl_pos_source = intraLinks.get(countEdge).pos_site_a;
+			double x_or_y_Pos_source = 0;
+			double xl_pos_source = intraLinks.get(countEdge).pos_site_a * factor_scaling_protein_length;
 			if (xl_pos_source <= center_position_node) { // [-protein_length/2, 0]
 				x_or_y_Pos_source = (-center_position_node) + xl_pos_source;
 			} else { // [0, protein_length/2]
@@ -1244,7 +1245,8 @@ public class Util {
 		CyNode new_node_target = getNode(myNetwork, node_name_target);
 		if (new_node_target != null) {
 
-			xl_pos_target = intraLinks.get(countEdge).pos_site_b;
+			double x_or_y_Pos_target = 0;
+			double xl_pos_target = intraLinks.get(countEdge).pos_site_b * factor_scaling_protein_length;
 			if (xl_pos_target <= center_position_node) { // [-protein_length/2, 0]
 				x_or_y_Pos_target = (-center_position_node) + xl_pos_target;
 			} else { // [0, protein_length/2]

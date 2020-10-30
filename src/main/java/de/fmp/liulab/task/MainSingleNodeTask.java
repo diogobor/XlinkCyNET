@@ -26,6 +26,8 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
+import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -33,9 +35,15 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
+import javax.swing.SpinnerModel;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.text.DefaultFormatter;
 
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.model.CyNetwork;
@@ -95,6 +103,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	// Window
 	private JFrame mainFrame;
 	private JPanel mainPanel;
+	private JPanel protein_panel;
 	private JLabel textLabel_status_result;
 	private String[] columnNames = { "Domain(*)", "Start Residue(*)", "End Residue(*)", "e-value", "Color" };
 	private final Class[] columnClass = new Class[] { String.class, Integer.class, Integer.class, String.class,
@@ -146,16 +155,16 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		Dimension appSize = null;
 		if (Util.isWindows()) {
-			appSize = new Dimension(540, 365);
+			appSize = new Dimension(540, 395);
 		} else {
-			appSize = new Dimension(540, 345);
+			appSize = new Dimension(540, 375);
 		}
 		mainFrame.setSize(appSize);
 		mainFrame.setResizable(false);
 
 		if (mainPanel == null)
 			mainPanel = new JPanel();
-		mainPanel.setBounds(10, 10, 490, 335);
+		mainPanel.setBounds(10, 10, 490, 365);
 		mainPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), ""));
 		mainPanel.setLayout(null);
 
@@ -379,6 +388,9 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
 
 		isCurrentNode_modified = Util.IsNodeModified(myNetwork, netView, node);
+		Util.node_label_factor_size = myNetwork.getRow(node).get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME,
+				Double.class);
+
 
 	}
 
@@ -405,45 +417,50 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	 */
 	private void setFrameLabels() {
 
-		JPanel protein_panel = new JPanel();
+		int offset_y = -20;
+
+		protein_panel = new JPanel();
 		protein_panel.setBorder(BorderFactory.createTitledBorder("Protein"));
-		protein_panel.setBounds(10, 10, 250, 120);
+		protein_panel.setBounds(10, 10, 250, 150);
 		protein_panel.setLayout(null);
 		mainPanel.add(protein_panel);
 
 		JLabel textLabel_Protein_lbl = new JLabel("Name:");
 		textLabel_Protein_lbl.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_Protein_lbl.setBounds(10, -20, 50, 100);
+		textLabel_Protein_lbl.setBounds(10, offset_y, 50, 100);
 		protein_panel.add(textLabel_Protein_lbl);
 
 		JLabel textLabel_Protein_result = new JLabel();
 		textLabel_Protein_result.setText((String) myCurrentRow.getRaw(CyNetwork.NAME));
 		textLabel_Protein_result.setFont(new java.awt.Font("Tahoma", Font.BOLD, 12));
-		textLabel_Protein_result.setBounds(80, -20, 100, 100);
+		textLabel_Protein_result.setBounds(95, offset_y, 100, 100);
 		protein_panel.add(textLabel_Protein_result);
+		offset_y += 30;
 
 		JLabel textLabel_Protein_size_lbl = new JLabel("Size:");
 		textLabel_Protein_size_lbl.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_Protein_size_lbl.setBounds(10, 10, 70, 100);
+		textLabel_Protein_size_lbl.setBounds(10, offset_y, 70, 100);
 		protein_panel.add(textLabel_Protein_size_lbl);
 
 		JLabel textLabel_Protein_size_result = new JLabel();
 		textLabel_Protein_size_result.setText((int) Util.getProteinLength() + " residues");
 		textLabel_Protein_size_result.setFont(new java.awt.Font("Tahoma", Font.BOLD, 12));
-		textLabel_Protein_size_result.setBounds(80, 10, 100, 100);
+		textLabel_Protein_size_result.setBounds(95, offset_y, 100, 100);
 		protein_panel.add(textLabel_Protein_size_result);
+		offset_y += 30;
 
 		JLabel textLabel_Protein_expansion_lbl = new JLabel("Expansion:");
 		textLabel_Protein_expansion_lbl.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_Protein_expansion_lbl.setBounds(10, 40, 70, 100);
+		textLabel_Protein_expansion_lbl.setBounds(10, offset_y, 70, 100);
 		protein_panel.add(textLabel_Protein_expansion_lbl);
+		offset_y += 40;
 
 		JRadioButton protein_expansion_horizontal = new JRadioButton("Horizontal");
 		protein_expansion_horizontal.setSelected(Util.isProtein_expansion_horizontal);
 		if (Util.isWindows()) {
-			protein_expansion_horizontal.setBounds(75, 80, 90, 20);
+			protein_expansion_horizontal.setBounds(89, offset_y, 90, 20);
 		} else {
-			protein_expansion_horizontal.setBounds(70, 80, 105, 20);
+			protein_expansion_horizontal.setBounds(84, offset_y, 105, 20);
 		}
 		protein_expansion_horizontal.addItemListener(new ItemListener() {
 
@@ -463,7 +480,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		JRadioButton protein_expansion_vertical = new JRadioButton("Vertical");
 		protein_expansion_vertical.setSelected(!Util.isProtein_expansion_horizontal);
-		protein_expansion_vertical.setBounds(165, 80, 80, 20);
+		protein_expansion_vertical.setBounds(179, offset_y, 63, 20);
 		protein_expansion_vertical.addItemListener(new ItemListener() {
 
 			@Override
@@ -482,37 +499,46 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		ButtonGroup bg = new ButtonGroup();
 		bg.add(protein_expansion_horizontal);
 		bg.add(protein_expansion_vertical);
+		offset_y -= 10;
 
+		JLabel factor_size_node = new JLabel("Scaling factor:");
+		factor_size_node.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
+		factor_size_node.setBounds(10, offset_y, 90, 100);
+		protein_panel.add(factor_size_node);
+
+		offset_y = 125;
 		JLabel textLabel_Pfam = new JLabel("Search for domains in Pfam database:");
 		textLabel_Pfam.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_Pfam.setBounds(10, 95, 300, 100);
+		textLabel_Pfam.setBounds(10, offset_y, 300, 100);
 		mainPanel.add(textLabel_Pfam);
+		offset_y += 25;
 
 		textLabel_status_result = new JLabel("???");
 		textLabel_status_result.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		textLabel_status_result.setForeground(new Color(159, 17, 17));
-		textLabel_status_result.setBounds(90, 120, 350, 100);
+		textLabel_status_result.setBounds(90, offset_y, 350, 100);
 
 		JPanel logo_panel = new JPanel();
 		logo_panel.setBorder(BorderFactory.createTitledBorder(""));
-		logo_panel.setBounds(265, 16, 245, 112);
+		logo_panel.setBounds(265, 16, 245, 142);
 		logo_panel.setLayout(null);
 		mainPanel.add(logo_panel);
 
 		JLabel jLabelIcon = new JLabel();
-		jLabelIcon.setBounds(70, -95, 300, 300);
+		jLabelIcon.setBounds(70, -75, 300, 300);
 		jLabelIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/logo.png")));
 		logo_panel.add(jLabelIcon);
 
 		JLabel textLabel_status = new JLabel("Status:");
 		textLabel_status.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_status.setBounds(10, 120, 50, 100);
+		textLabel_status.setBounds(10, offset_y, 50, 100);
 		mainPanel.add(textLabel_status);
 		mainPanel.add(textLabel_status_result);
 
+		offset_y = 262;
 		JLabel textLabel_required_fields = new JLabel("(*) Required fields");
 		textLabel_required_fields.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 10));
-		textLabel_required_fields.setBounds(10, 232, 150, 100);
+		textLabel_required_fields.setBounds(10, offset_y, 150, 100);
 		mainPanel.add(textLabel_required_fields);
 	}
 
@@ -525,9 +551,33 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		setFrameLabels();
 
+		double current_scaling_factor = myNetwork.getRow(node).get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME,
+				Double.class);
+
+		SpinnerModel factor_size_node = new SpinnerNumberModel(current_scaling_factor, // initial value
+				0.1, // min
+				1, // max
+				0.1); // step
+		final JSpinner spinner_factor_size_node = new JSpinner(factor_size_node);
+		spinner_factor_size_node.setBounds(95, 110, 60, 20);
+		JComponent comp_factor_size_node = spinner_factor_size_node.getEditor();
+		JFormattedTextField field_factor_size_node = (JFormattedTextField) comp_factor_size_node.getComponent(0);
+		DefaultFormatter formatter_factor_size_node = (DefaultFormatter) field_factor_size_node.getFormatter();
+		formatter_factor_size_node.setCommitsOnValidEdit(true);
+		spinner_factor_size_node.addChangeListener(new ChangeListener() {
+
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				Util.node_label_factor_size = (double) spinner_factor_size_node.getValue();
+			}
+		});
+		spinner_factor_size_node.setToolTipText(
+				"Scaling factor to the protein length. It ranges between 0 (small) and 1 (original length).");
+		protein_panel.add(spinner_factor_size_node);
+
 		Icon iconBtn = new ImageIcon(getClass().getResource("/images/browse_Icon.png"));
 		pFamButton = new JButton(iconBtn);
-		pFamButton.setBounds(228, 130, 30, 30);
+		pFamButton.setBounds(228, 160, 30, 30);
 		pFamButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
 				taskMonitor.setTitle("XL interactions");
@@ -603,7 +653,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		mainProteinDomainTable = new JTable(tableDataModel);
 		// Create the scroll pane and add the table to it.
 		proteinDomainTableScrollPanel = new JScrollPane();
-		proteinDomainTableScrollPanel.setBounds(10, 185, 500, 90);
+		proteinDomainTableScrollPanel.setBounds(10, 215, 500, 90);
 		proteinDomainTableScrollPanel.setViewportView(mainProteinDomainTable);
 		proteinDomainTableScrollPanel.setRowHeaderView(rowHeader);
 		mainPanel.add(proteinDomainTableScrollPanel);
@@ -709,9 +759,9 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		okButton.setText("OK");
 
 		if (Util.isWindows()) {
-			okButton.setBounds(30, 295, 220, 25);
+			okButton.setBounds(30, 325, 220, 25);
 		} else {
-			okButton.setBounds(30, 290, 220, 25);
+			okButton.setBounds(30, 320, 220, 25);
 		}
 
 		okButton.addMouseListener(new MouseAdapter() {
@@ -729,6 +779,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 				textLabel_status_result.setText("Setting node styles...");
 				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting node styles...");
+				Util.node_label_factor_size = (double) spinner_factor_size_node.getValue();
 				Util.setNodeStyles(myNetwork, node, netView);
 				taskMonitor.setProgress(0.2);
 
@@ -770,9 +821,9 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		cancelButton.setText("Cancel");
 
 		if (Util.isWindows()) {
-			cancelButton.setBounds(265, 295, 220, 25);
+			cancelButton.setBounds(265, 325, 220, 25);
 		} else {
-			cancelButton.setBounds(265, 290, 220, 25);
+			cancelButton.setBounds(265, 320, 220, 25);
 		}
 
 		cancelButton.addMouseListener(new MouseAdapter() {
@@ -787,9 +838,9 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		restoreStyleButton.setText("Restore style");
 
 		if (Util.isWindows()) {
-			restoreStyleButton.setBounds(390, 155, 120, 25);
+			restoreStyleButton.setBounds(390, 185, 120, 25);
 		} else {
-			restoreStyleButton.setBounds(390, 160, 120, 25);
+			restoreStyleButton.setBounds(390, 190, 120, 25);
 		}
 
 		restoreStyleButton.addMouseListener(new MouseAdapter() {
