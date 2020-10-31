@@ -57,10 +57,8 @@ import org.cytoscape.view.model.VisualProperty;
 import org.cytoscape.view.presentation.customgraphics.CyCustomGraphics2;
 import org.cytoscape.view.presentation.customgraphics.CyCustomGraphics2Factory;
 import org.cytoscape.view.presentation.property.BasicVisualLexicon;
-import org.cytoscape.view.presentation.property.NodeShapeVisualProperty;
 import org.cytoscape.view.presentation.property.values.BendFactory;
 import org.cytoscape.view.presentation.property.values.HandleFactory;
-import org.cytoscape.view.presentation.property.values.ObjectPosition;
 import org.cytoscape.view.vizmap.VisualMappingManager;
 import org.cytoscape.view.vizmap.VisualStyle;
 import org.cytoscape.work.AbstractTask;
@@ -388,9 +386,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
 
 		isCurrentNode_modified = Util.IsNodeModified(myNetwork, netView, node);
-		Util.node_label_factor_size = myNetwork.getRow(node).get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME,
-				Double.class);
-
+		Util.node_label_factor_size = myNetwork.getRow(node).get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME, Double.class);
 
 	}
 
@@ -421,7 +417,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		protein_panel = new JPanel();
 		protein_panel.setBorder(BorderFactory.createTitledBorder("Protein"));
-		protein_panel.setBounds(10, 10, 250, 150);
+		if (Util.isWindows())
+			protein_panel.setBounds(10, 10, 250, 150);
+		else
+			protein_panel.setBounds(10, 10, 275, 150);
 		protein_panel.setLayout(null);
 		mainPanel.add(protein_panel);
 
@@ -460,7 +459,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		if (Util.isWindows()) {
 			protein_expansion_horizontal.setBounds(89, offset_y, 90, 20);
 		} else {
-			protein_expansion_horizontal.setBounds(84, offset_y, 105, 20);
+			protein_expansion_horizontal.setBounds(89, offset_y, 105, 20);
 		}
 		protein_expansion_horizontal.addItemListener(new ItemListener() {
 
@@ -480,7 +479,11 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		JRadioButton protein_expansion_vertical = new JRadioButton("Vertical");
 		protein_expansion_vertical.setSelected(!Util.isProtein_expansion_horizontal);
-		protein_expansion_vertical.setBounds(179, offset_y, 63, 20);
+		if (Util.isWindows()) {
+			protein_expansion_vertical.setBounds(179, offset_y, 63, 20);
+		} else {
+			protein_expansion_vertical.setBounds(185, offset_y, 90, 20);
+		}
 		protein_expansion_vertical.addItemListener(new ItemListener() {
 
 			@Override
@@ -516,16 +519,22 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		textLabel_status_result = new JLabel("???");
 		textLabel_status_result.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		textLabel_status_result.setForeground(new Color(159, 17, 17));
-		textLabel_status_result.setBounds(90, offset_y, 350, 100);
+		textLabel_status_result.setBounds(65, offset_y, 350, 100);
 
 		JPanel logo_panel = new JPanel();
 		logo_panel.setBorder(BorderFactory.createTitledBorder(""));
-		logo_panel.setBounds(265, 16, 245, 142);
+		if (Util.isWindows())
+			logo_panel.setBounds(265, 16, 245, 142);
+		else
+			logo_panel.setBounds(290, 16, 220, 142);
 		logo_panel.setLayout(null);
 		mainPanel.add(logo_panel);
 
 		JLabel jLabelIcon = new JLabel();
-		jLabelIcon.setBounds(70, -75, 300, 300);
+		if (Util.isWindows())
+			jLabelIcon.setBounds(70, -75, 300, 300);
+		else
+			jLabelIcon.setBounds(55, -75, 300, 300);
 		jLabelIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/logo.png")));
 		logo_panel.add(jLabelIcon);
 
@@ -577,7 +586,11 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		Icon iconBtn = new ImageIcon(getClass().getResource("/images/browse_Icon.png"));
 		pFamButton = new JButton(iconBtn);
-		pFamButton.setBounds(228, 160, 30, 30);
+		if (Util.isWindows())
+			pFamButton.setBounds(228, 160, 30, 30);
+		else
+			pFamButton.setBounds(253, 160, 30, 30);
+
 		pFamButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
 				taskMonitor.setTitle("XL interactions");
