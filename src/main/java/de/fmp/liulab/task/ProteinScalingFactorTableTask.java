@@ -33,6 +33,15 @@ public class ProteinScalingFactorTableTask extends AbstractTask {
 				row.set(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME, 1.0d);
 			}
 
+		} else { // The column exists, but it's necessary to check the cells
+			try {
+				for (CyRow row : myNetwork.getDefaultNodeTable().getAllRows()) {
+					if (row.get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME, Double.class) == null)
+						row.set(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME, 1.0d);
+				}
+			} catch (Exception e) {
+			}
+
 		}
 	}
 }
