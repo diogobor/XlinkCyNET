@@ -1724,7 +1724,7 @@ public class Util {
 		cross_links_set.removeIf(new Predicate<String>() {
 
 			public boolean test(String xl) {
-				if (xl.equals("0") || xl.equals("NA"))
+				if (xl.isBlank() || xl.isEmpty() || xl.equals("0") || xl.equals("NA"))
 					return true;
 				String[] current_xl = xl.split("-");
 				return !(current_xl[0].equals(selected_node_name) || current_xl[2].equals(selected_node_name));
