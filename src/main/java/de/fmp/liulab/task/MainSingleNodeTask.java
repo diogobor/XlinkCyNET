@@ -95,7 +95,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	private List<CyNode> nodes;
 	private boolean isCurrentNode_modified = false;
 
-	private ArrayList<ProteinDomain> pFamProteinDomains;
+	private ArrayList<ProteinDomain> proteinDomainsServer;
 	private ArrayList<ProteinDomain> myProteinDomains;
 
 	// Window
@@ -117,7 +117,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	public static CyNode node;
 
 	private Thread pfamThread;
-	private JButton pFamButton;
+	private JButton proteinDomainServerButton;
 
 	/**
 	 * Constructor
@@ -386,9 +386,12 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
 
 		isCurrentNode_modified = Util.IsNodeModified(myNetwork, netView, node);
-		Util.node_label_factor_size = myNetwork.getRow(node).get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME, Double.class);
+		Util.node_label_factor_size = myNetwork.getRow(node).get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME,
+				Double.class) == null ? 1.0
+						: myNetwork.getRow(node).get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME, Double.class);
 		Util.isProtein_expansion_horizontal = myNetwork.getRow(node).get(Util.HORIZONTAL_EXPANSION_COLUMN_NAME,
-				Boolean.class);
+				Boolean.class) == null ? true
+						: myNetwork.getRow(node).get(Util.HORIZONTAL_EXPANSION_COLUMN_NAME, Boolean.class);
 
 	}
 
@@ -457,7 +460,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		offset_y += 40;
 
 		boolean isHorizontalExpansion = myNetwork.getRow(node).get(Util.HORIZONTAL_EXPANSION_COLUMN_NAME,
-				Boolean.class);
+				Boolean.class) == null ? true
+						: myNetwork.getRow(node).get(Util.HORIZONTAL_EXPANSION_COLUMN_NAME, Boolean.class);
 		JRadioButton protein_expansion_horizontal = new JRadioButton("Horizontal");
 		protein_expansion_horizontal.setSelected(isHorizontalExpansion);
 		if (Util.isWindows()) {
@@ -503,9 +507,9 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			}
 		});
 		protein_panel.add(protein_expansion_vertical);
-		ButtonGroup bg = new ButtonGroup();
-		bg.add(protein_expansion_horizontal);
-		bg.add(protein_expansion_vertical);
+		ButtonGroup bg_expansion = new ButtonGroup();
+		bg_expansion.add(protein_expansion_horizontal);
+		bg_expansion.add(protein_expansion_vertical);
 		offset_y -= 10;
 
 		JLabel factor_size_node = new JLabel("Scaling factor:");
@@ -513,8 +517,61 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		factor_size_node.setBounds(10, offset_y, 90, 100);
 		protein_panel.add(factor_size_node);
 
-		offset_y = 125;
-		JLabel textLabel_Pfam = new JLabel("Search for domains in Pfam database:");
+		offset_y = 165;
+
+		JRadioButton protein_domain_pfam = new JRadioButton("Pfam");
+		protein_domain_pfam.setSelected(Util.isProteinDomainPfam);
+		if (Util.isWindows()) {
+			protein_domain_pfam.setBounds(179, offset_y, 50, 20);
+		} else {
+			protein_domain_pfam.setBounds(179, offset_y, 65, 20);
+		}
+		protein_domain_pfam.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent event) {
+				int state = event.getStateChange();
+				if (state == ItemEvent.SELECTED) {
+
+					Util.isProteinDomainPfam = true;
+				} else if (state == ItemEvent.DESELECTED) {
+
+					Util.isProteinDomainPfam = false;
+				}
+			}
+		});
+		mainPanel.add(protein_domain_pfam);
+
+		JRadioButton protein_domain_supfam = new JRadioButton("Supfam");
+		protein_domain_supfam.setSelected(!Util.isProteinDomainPfam);
+		if (Util.isWindows()) {
+			protein_domain_supfam.setBounds(119, offset_y, 64, 20);
+		} else {
+			protein_domain_supfam.setBounds(119, offset_y, 69, 20);
+		}
+		protein_domain_supfam.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent event) {
+				int state = event.getStateChange();
+				if (state == ItemEvent.SELECTED) {
+
+					Util.isProteinDomainPfam = false;
+				} else if (state == ItemEvent.DESELECTED) {
+
+					Util.isProteinDomainPfam = true;
+				}
+			}
+		});
+		mainPanel.add(protein_domain_supfam);
+
+		ButtonGroup bg_database = new ButtonGroup();
+		bg_database.add(protein_domain_pfam);
+		bg_database.add(protein_domain_supfam);
+
+		offset_y -= 40;
+
+		JLabel textLabel_Pfam = new JLabel("Search for domains:");
 		textLabel_Pfam.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		textLabel_Pfam.setBounds(10, offset_y, 300, 100);
 		mainPanel.add(textLabel_Pfam);
@@ -589,16 +646,16 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		protein_panel.add(spinner_factor_size_node);
 
 		Icon iconBtn = new ImageIcon(getClass().getResource("/images/browse_Icon.png"));
-		pFamButton = new JButton(iconBtn);
+		proteinDomainServerButton = new JButton(iconBtn);
 		if (Util.isWindows())
-			pFamButton.setBounds(228, 160, 30, 30);
+			proteinDomainServerButton.setBounds(228, 160, 30, 30);
 		else
-			pFamButton.setBounds(253, 160, 30, 30);
+			proteinDomainServerButton.setBounds(253, 160, 30, 30);
 
-		pFamButton.addActionListener(new ActionListener() {
+		proteinDomainServerButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
 				taskMonitor.setTitle("XL interactions");
-				pFamButton.setEnabled(false);
+				proteinDomainServerButton.setEnabled(false);
 				try {
 
 					textLabel_status_result.setText("Accessing Pfam database...");
@@ -609,9 +666,9 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 							textLabel_status_result.setText("Getting protein domains...");
 							taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting protein domains...");
-							pFamProteinDomains = Util.getProteinDomains(myCurrentRow);
+							proteinDomainsServer = Util.getProteinDomains(myCurrentRow);
 							taskMonitor.setProgress(0.4);
-							if (pFamProteinDomains.size() > 0)
+							if (proteinDomainsServer.size() > 0)
 								textLabel_status_result.setText("Done!");
 							else {
 								textLabel_status_result.setText("WARNING: Check Task History.");
@@ -620,11 +677,15 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 										+ "'.");
 							}
 
-							Object[][] data = new Object[pFamProteinDomains.size()][5];
+							Object[][] data = null;
+							if (proteinDomainsServer.size() > 0)
+								data = new Object[proteinDomainsServer.size()][5];
+							else
+								data = new Object[1][5];
 							tableDataModel.setDataVector(data, columnNames);
 
 							int countPtnDomain = 0;
-							for (ProteinDomain domain : pFamProteinDomains) {
+							for (ProteinDomain domain : proteinDomainsServer) {
 								tableDataModel.setValueAt(domain.name, countPtnDomain, 0);
 								tableDataModel.setValueAt(domain.startId, countPtnDomain, 1);
 								tableDataModel.setValueAt(domain.endId, countPtnDomain, 2);
@@ -632,8 +693,11 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 								countPtnDomain++;
 							}
 
-							setTableProperties(pFamProteinDomains.size());
-							pFamButton.setEnabled(true);
+							if (proteinDomainsServer.size() > 0)
+								setTableProperties(proteinDomainsServer.size());
+							else
+								setTableProperties(1);
+							proteinDomainServerButton.setEnabled(true);
 						}
 					};
 
@@ -643,7 +707,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 				}
 			}
 		});
-		mainPanel.add(pFamButton);
+		mainPanel.add(proteinDomainServerButton);
 
 		Object[][] data = new Object[1][5];
 		// create table model with data

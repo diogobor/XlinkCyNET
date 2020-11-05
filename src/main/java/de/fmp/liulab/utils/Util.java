@@ -96,6 +96,7 @@ public class Util {
 	public static double edge_link_width = 2;
 	public static double node_border_width = 1.5;
 	public static boolean isProtein_expansion_horizontal = true;
+	public static boolean isProteinDomainPfam = false;
 
 	// Map<Network name, Map<Protein - Node SUID, List<ProteinDomain>>
 	public static Map<String, Map<Long, List<ProteinDomain>>> proteinDomainsMap = new HashMap<String, Map<Long, List<ProteinDomain>>>();
@@ -238,7 +239,8 @@ public class Util {
 				.floatValue();
 
 		double current_factor_scaling_length_protein = myNetwork.getRow(node).get(PROTEIN_SCALING_FACTOR_COLUMN_NAME,
-				Double.class);
+				Double.class) == null ? 1
+						: myNetwork.getRow(node).get(PROTEIN_SCALING_FACTOR_COLUMN_NAME, Double.class);
 
 		float scaling_protein_size = (float) (((Number) length_other_protein_a).floatValue()
 				* current_factor_scaling_length_protein);
@@ -310,11 +312,13 @@ public class Util {
 								.equals(style.getDefaultValue(BasicVisualLexicon.NODE_TOOLTIP)))) {// Expansion
 																									// horizontal
 					isProtein_expansion_horizontal = true;
-					myNetwork.getRow(node).set(HORIZONTAL_EXPANSION_COLUMN_NAME, isProtein_expansion_horizontal);
+					if (myNetwork.getRow(node).get(HORIZONTAL_EXPANSION_COLUMN_NAME, Boolean.class) != null)
+						myNetwork.getRow(node).set(HORIZONTAL_EXPANSION_COLUMN_NAME, isProtein_expansion_horizontal);
 					return true;
 				} else {
 					isProtein_expansion_horizontal = false;
-					myNetwork.getRow(node).set(HORIZONTAL_EXPANSION_COLUMN_NAME, isProtein_expansion_horizontal);
+					if (myNetwork.getRow(node).get(HORIZONTAL_EXPANSION_COLUMN_NAME, Boolean.class) != null)
+						myNetwork.getRow(node).set(HORIZONTAL_EXPANSION_COLUMN_NAME, isProtein_expansion_horizontal);
 					position = (ObjectPosition) vp_label_position.parseSerializableString("N,S,c,0.00,0.00");
 					if (current_position.getJustify() == position.getJustify()
 							&& current_position.getOffsetX() == position.getOffsetX()
@@ -445,7 +449,8 @@ public class Util {
 				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting styles on the intra link edges: 98%");
 			}
 
-			plotIntraLinks(myNetwork, nodeView, node, netView, handleFactory, bendFactory, style, proteinLength, intraLinks);
+			plotIntraLinks(myNetwork, nodeView, node, netView, handleFactory, bendFactory, style, proteinLength,
+					intraLinks);
 		}
 
 		UpdateViewListener.isNodeModified = true;
@@ -780,7 +785,8 @@ public class Util {
 				other_node_row = myNetwork.getRow(sourceNode);
 			}
 
-			target_factor_scaling_length_protein = other_node_row.get(PROTEIN_SCALING_FACTOR_COLUMN_NAME, Double.class);
+			target_factor_scaling_length_protein = other_node_row.get(PROTEIN_SCALING_FACTOR_COLUMN_NAME,
+					Double.class) == null ? 1 : other_node_row.get(PROTEIN_SCALING_FACTOR_COLUMN_NAME, Double.class);
 
 			length_other_protein_a = other_node_row.getRaw(PROTEIN_LENGTH_A);
 			length_other_protein_b = other_node_row.getRaw(PROTEIN_LENGTH_B);
@@ -1081,7 +1087,7 @@ public class Util {
 		String[] position2 = edgeNameArr[3].split("\\(|\\)");
 
 		double target_factor_scaling_length_protein = other_node_row.get(PROTEIN_SCALING_FACTOR_COLUMN_NAME,
-				Double.class);
+				Double.class) == null ? 1 : other_node_row.get(PROTEIN_SCALING_FACTOR_COLUMN_NAME, Double.class);
 
 		if (sourceNode.getSUID() == node.getSUID()) {
 			center_position_source_node = (proteinLength * Util.node_label_factor_size) / 2.0;
@@ -1208,7 +1214,8 @@ public class Util {
 			double initial_positionX_node, double initial_positionY_node) {
 
 		double factor_scaling_protein_length = myNetwork.getRow(original_node).get(PROTEIN_SCALING_FACTOR_COLUMN_NAME,
-				Double.class);
+				Double.class) == null ? 1
+						: myNetwork.getRow(original_node).get(PROTEIN_SCALING_FACTOR_COLUMN_NAME, Double.class);
 
 		final String node_name_source = intraLinks.get(countEdge).protein_a + " ["
 				+ intraLinks.get(countEdge).pos_site_a + " - " + intraLinks.get(countEdge).pos_site_b + "] - Source";
@@ -1428,8 +1435,10 @@ public class Util {
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_BORDER_PAINT, Util.NodeBorderColor);
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_SHAPE, NodeShapeVisualProperty.ROUND_RECTANGLE);
 
-		myNetwork.getRow(node).set(PROTEIN_SCALING_FACTOR_COLUMN_NAME, node_label_factor_size);
-		myNetwork.getRow(node).set(HORIZONTAL_EXPANSION_COLUMN_NAME, isProtein_expansion_horizontal);
+		if (myNetwork.getRow(node).get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME, Double.class) != null)
+			myNetwork.getRow(node).set(PROTEIN_SCALING_FACTOR_COLUMN_NAME, node_label_factor_size);
+		if (myNetwork.getRow(node).get(Util.HORIZONTAL_EXPANSION_COLUMN_NAME, Boolean.class) != null)
+			myNetwork.getRow(node).set(HORIZONTAL_EXPANSION_COLUMN_NAME, isProtein_expansion_horizontal);
 
 		// ######################### NODE_LABEL_POSITION ######################
 
@@ -1788,14 +1797,115 @@ public class Util {
 		String[] cols = ptnID.split("\\|");
 
 		// ############ GET PROTEIN DOMAINS #################
-		ArrayList<ProteinDomain> pFamProteinDomains = new ArrayList<ProteinDomain>(0);
+		ArrayList<ProteinDomain> proteinDomainsServer = new ArrayList<ProteinDomain>(0);
 		if (cols.length == 3) { // Correct format: sp|XXX|YYYY or tr|XXX|YYY
-			pFamProteinDomains = getProteinDomains(cols[1]);
-			Collections.sort(pFamProteinDomains);
+			proteinDomainsServer = getProteinDomains(cols[1]);
+			Collections.sort(proteinDomainsServer);
 		}
 		// ############################### END ################################
 
-		return pFamProteinDomains;
+		return proteinDomainsServer;
+	}
+
+	private static ArrayList<ProteinDomain> getProteinDomains(String proteinID) {
+		if (isProteinDomainPfam)
+			return getProteinDomainsFromPfam(proteinID);
+		else
+			return getProteinDomainsFromSupfam(proteinID);
+	}
+
+	/**
+	 * Connect to Supfam and get domains
+	 * 
+	 * @param proteinID
+	 * @return
+	 */
+	private static ArrayList<ProteinDomain> getProteinDomainsFromSupfam(String proteinID) {
+		try {
+			String _url = "http://supfam.org/SUPERFAMILY/cgi-bin/das/up/features?segment=" + proteinID;
+			final URL url = new URL(_url);
+			final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setRequestMethod("GET");
+			connection.setRequestProperty("Accept", "text/html");
+			connection.setRequestProperty("Accept-Language", "en-US");
+			connection.setRequestProperty("Connection", "close");
+			connection.setDoOutput(true);
+			connection.setReadTimeout(1000);
+			connection.setConnectTimeout(1000);
+			connection.connect();
+			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+
+				// Get Response
+				InputStream inputStream = connection.getErrorStream(); // first check for error.
+				if (inputStream == null) {
+					inputStream = connection.getInputStream();
+				}
+				BufferedReader rd = new BufferedReader(new InputStreamReader(inputStream));
+				String line;
+				StringBuilder response = new StringBuilder();
+				while ((line = rd.readLine()) != null) {
+					response.append(line);
+					response.append('\r');
+				}
+				rd.close();
+				String responseString = response.toString();
+
+				if (responseString.startsWith("<!DOCTYPE html PUBLIC"))
+					return new ArrayList<ProteinDomain>();
+
+				responseString = responseString
+						.replace("<!DOCTYPE DASGFF SYSTEM \"http://www.biodas.org/dtd/dasgff.dtd\">", "");
+
+				// Use method to convert XML string content to XML Document object
+				Document doc = convertStringToXMLDocument(responseString);
+
+				if (doc == null)
+					return new ArrayList<ProteinDomain>();
+
+				NodeList xmlnodes = doc.getElementsByTagName("FEATURE");
+
+				ArrayList<ProteinDomain> proteinDomainList = new ArrayList<ProteinDomain>();
+				for (int i = 0; i < xmlnodes.getLength(); i++) {
+					String domain = "";
+					String method = "";
+					int startId = -1;
+					int endId = -1;
+					String eValue = "";
+					boolean all_fields_filled_in = false;
+					for (int j = 0; j < xmlnodes.item(i).getChildNodes().getLength(); j++) {
+						Node nNode = xmlnodes.item(i).getChildNodes().item(j);
+						if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+							if (nNode.getNodeName().equals("TYPE")) {
+								domain = nNode.getAttributes().item(1).getNodeValue();
+							} else if (nNode.getNodeName().equals("METHOD")) {
+								method = nNode.getAttributes().item(0).getNodeValue();
+							} else if (nNode.getNodeName().equals("START")) {
+								startId = Integer.parseInt(nNode.getChildNodes().item(0).getNodeValue());
+							} else if (nNode.getNodeName().equals("END")) {
+								endId = Integer.parseInt(nNode.getChildNodes().item(0).getNodeValue());
+							} else if (nNode.getNodeName().equals("SCORE")) {
+								eValue = nNode.getChildNodes().item(0).getNodeValue();
+								all_fields_filled_in = true;
+							}
+
+							if ((!method.isBlank() || !method.isEmpty()) && !method.equals("SUPERFAMILY_"))
+								break;
+							else if (method.equals("SUPERFAMILY_") && all_fields_filled_in)
+								break;
+						}
+					}
+					if (startId > -1 && endId > -1)
+						proteinDomainList.add(new ProteinDomain(domain, startId, endId, eValue));
+				}
+				return proteinDomainList;
+			} else {
+				return new ArrayList<ProteinDomain>();
+			}
+
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			return new ArrayList<ProteinDomain>();
+		}
 	}
 
 	/**
@@ -1804,7 +1914,7 @@ public class Util {
 	 * @param proteinID
 	 * @return
 	 */
-	private static ArrayList<ProteinDomain> getProteinDomains(String proteinID) {
+	private static ArrayList<ProteinDomain> getProteinDomainsFromPfam(String proteinID) {
 
 		try {
 			String _url = "https://pfam.xfam.org/protein?entry=" + proteinID + "&output=xml";

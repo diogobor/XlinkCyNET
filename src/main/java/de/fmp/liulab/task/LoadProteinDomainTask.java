@@ -14,6 +14,8 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -29,6 +31,7 @@ import java.util.function.Predicate;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -38,6 +41,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
@@ -189,11 +193,63 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		information_panel.add(textLabel_Protein_lbl_2);
 		offset_y += 30;
 
-		JLabel textLabel_Pfam = new JLabel("Search for domains in Pfam database:");
+		JLabel textLabel_Pfam = new JLabel("Search for domains:");
 		textLabel_Pfam.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		textLabel_Pfam.setBounds(10, offset_y, 300, 100);
 		information_panel.add(textLabel_Pfam);
-		offset_y += 30;
+
+		offset_y += 40;
+		JRadioButton protein_domain_pfam = new JRadioButton("Pfam");
+		protein_domain_pfam.setSelected(Util.isProteinDomainPfam);
+		if (Util.isWindows()) {
+			protein_domain_pfam.setBounds(179, offset_y, 50, 20);
+		} else {
+			protein_domain_pfam.setBounds(179, offset_y, 65, 20);
+		}
+		protein_domain_pfam.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent event) {
+				int state = event.getStateChange();
+				if (state == ItemEvent.SELECTED) {
+
+					Util.isProteinDomainPfam = true;
+				} else if (state == ItemEvent.DESELECTED) {
+
+					Util.isProteinDomainPfam = false;
+				}
+			}
+		});
+		information_panel.add(protein_domain_pfam);
+
+		JRadioButton protein_domain_supfam = new JRadioButton("Supfam");
+		protein_domain_supfam.setSelected(!Util.isProteinDomainPfam);
+		if (Util.isWindows()) {
+			protein_domain_supfam.setBounds(119, offset_y, 64, 20);
+		} else {
+			protein_domain_supfam.setBounds(119, offset_y, 69, 20);
+		}
+		protein_domain_supfam.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent event) {
+				int state = event.getStateChange();
+				if (state == ItemEvent.SELECTED) {
+
+					Util.isProteinDomainPfam = false;
+				} else if (state == ItemEvent.DESELECTED) {
+
+					Util.isProteinDomainPfam = true;
+				}
+			}
+		});
+		information_panel.add(protein_domain_supfam);
+
+		ButtonGroup bg_database = new ButtonGroup();
+		bg_database.add(protein_domain_pfam);
+		bg_database.add(protein_domain_supfam);
+
+		offset_y -= 10;
 
 		textLabel_status_result = new JLabel("");
 		textLabel_status_result.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
@@ -366,7 +422,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 		Icon iconBtn = new ImageIcon(getClass().getResource("/images/browse_Icon.png"));
 		pFamButton = new JButton(iconBtn);
-		pFamButton.setBounds(220, 50, 30, 30);
+		pFamButton.setBounds(235, 50, 30, 30);
 		pFamButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
 				taskMonitor.setTitle("XL interactions");
@@ -390,7 +446,12 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 								isPfamLoaded = false;
 								getPfamProteinDomainsForeachNode(taskMonitor);
 
-								Object[][] data = new Object[geneListFromTable.size()][2];
+								Object[][] data = null;
+								if (geneListFromTable.size() > 0)
+									data = new Object[geneListFromTable.size()][2];
+								else
+									data = new Object[1][2];
+
 								tableDataModel.setDataVector(data, columnNames);
 								int countPtnDomain = 0;
 								for (final GeneDomain geneDomain : geneListFromTable) {
@@ -400,7 +461,10 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 											countPtnDomain, 1);
 									countPtnDomain++;
 								}
-								setTableProperties(geneListFromTable.size());
+								if (geneListFromTable.size() > 0)
+									setTableProperties(geneListFromTable.size());
+								else
+									setTableProperties(1);
 								isPfamLoaded = true;
 							}
 						};
