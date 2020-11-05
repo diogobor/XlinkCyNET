@@ -4,9 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
@@ -19,7 +16,6 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -102,7 +98,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	private boolean isPfamLoaded = true;
 	private boolean pfamDoStop = false;
 	private Thread pfamThread;
-	private JButton pFamButton;
+	private JButton proteinDomainServerButton;
 
 	public static boolean isPlotDone = false;
 
@@ -204,7 +200,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		if (Util.isWindows()) {
 			protein_domain_pfam.setBounds(179, offset_y, 50, 20);
 		} else {
-			protein_domain_pfam.setBounds(179, offset_y, 65, 20);
+			protein_domain_pfam.setBounds(203, offset_y, 65, 20);
 		}
 		protein_domain_pfam.addItemListener(new ItemListener() {
 
@@ -227,7 +223,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		if (Util.isWindows()) {
 			protein_domain_supfam.setBounds(119, offset_y, 64, 20);
 		} else {
-			protein_domain_supfam.setBounds(119, offset_y, 69, 20);
+			protein_domain_supfam.setBounds(119, offset_y, 79, 20);
 		}
 		protein_domain_supfam.addItemListener(new ItemListener() {
 
@@ -409,7 +405,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		textLabel_status_result.setText("Done!");
 
 		// Enable Pfam button and menu
-		pFamButton.setEnabled(true);
+		proteinDomainServerButton.setEnabled(true);
 		menuBar.setEnabled(true);
 	}
 
@@ -421,12 +417,12 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	private void initButtons(final TaskMonitor taskMonitor) {
 
 		Icon iconBtn = new ImageIcon(getClass().getResource("/images/browse_Icon.png"));
-		pFamButton = new JButton(iconBtn);
-		pFamButton.setBounds(235, 50, 30, 30);
-		pFamButton.addActionListener(new ActionListener() {
+		proteinDomainServerButton = new JButton(iconBtn);
+		proteinDomainServerButton.setBounds(265, 50, 30, 30);
+		proteinDomainServerButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
 				taskMonitor.setTitle("XL interactions");
-				pFamButton.setEnabled(false);
+				proteinDomainServerButton.setEnabled(false);
 				menuBar.setEnabled(false);
 				try {
 
@@ -476,7 +472,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 				}
 			}
 		});
-		information_panel.add(pFamButton);
+		information_panel.add(proteinDomainServerButton);
 
 		Icon iconBtnOk = new ImageIcon(getClass().getResource("/images/okBtn.png"));
 		JButton okButton = new JButton(iconBtnOk);

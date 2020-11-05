@@ -524,7 +524,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		if (Util.isWindows()) {
 			protein_domain_pfam.setBounds(179, offset_y, 50, 20);
 		} else {
-			protein_domain_pfam.setBounds(179, offset_y, 65, 20);
+			protein_domain_pfam.setBounds(193, offset_y, 65, 20);
 		}
 		protein_domain_pfam.addItemListener(new ItemListener() {
 
@@ -547,7 +547,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		if (Util.isWindows()) {
 			protein_domain_supfam.setBounds(119, offset_y, 64, 20);
 		} else {
-			protein_domain_supfam.setBounds(119, offset_y, 69, 20);
+			protein_domain_supfam.setBounds(119, offset_y, 79, 20);
 		}
 		protein_domain_supfam.addItemListener(new ItemListener() {
 
