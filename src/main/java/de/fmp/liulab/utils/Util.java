@@ -363,82 +363,87 @@ public class Util {
 
 		for (CyEdge edge : myNetwork.getAdjacentEdgeIterable(node, CyEdge.Type.ANY)) {
 
-			// Check if the edge was inserted by this app
-			String edge_name = myNetwork.getDefaultEdgeTable().getRow(edge.getSUID()).get(CyNetwork.NAME, String.class);
+			try {
+				// Check if the edge was inserted by this app
+				String edge_name = myNetwork.getDefaultEdgeTable().getRow(edge.getSUID()).get(CyNetwork.NAME,
+						String.class);
 
-			CyNode sourceNode = myNetwork.getEdge(edge.getSUID()).getSource();
-			CyNode targetNode = myNetwork.getEdge(edge.getSUID()).getTarget();
+				CyNode sourceNode = myNetwork.getEdge(edge.getSUID()).getSource();
+				CyNode targetNode = myNetwork.getEdge(edge.getSUID()).getTarget();
 
-			if (sourceNode.getSUID() == targetNode.getSUID()) {
-				IsIntraLink = true;
-			} else {
-				IsIntraLink = false;
-			}
-
-			View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
-			while (currentEdgeView == null) {
-				netView.updateView();
-				try {
-					Thread.sleep(200);
-				} catch (InterruptedException e1) {
-					e1.printStackTrace();
-				}
-				currentEdgeView = netView.getEdgeView(edge);
-			}
-
-			if (!edge_name.startsWith("[Source:")) {// New edges
-				HasAdjacentEdges = true;
-
-				if (IsIntraLink) {
-					ContainsIntraLink = true;
-					currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
-
-					plotIntraLinks(myNetwork, nodeView, node, netView, handleFactory, bendFactory, style, proteinLength,
-							intraLinks);// Add or update intralinks
-
+				if (sourceNode.getSUID() == targetNode.getSUID()) {
+					IsIntraLink = true;
 				} else {
-					ContainsInterLink = true;
+					IsIntraLink = false;
+				}
+
+				View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
+				while (currentEdgeView == null) {
+					netView.updateView();
+					try {
+						Thread.sleep(200);
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
+					}
+					currentEdgeView = netView.getEdgeView(edge);
+				}
+
+				if (!edge_name.startsWith("[Source:")) {// New edges
+					HasAdjacentEdges = true;
+
+					if (IsIntraLink) {
+						ContainsIntraLink = true;
+						currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+
+						plotIntraLinks(myNetwork, nodeView, node, netView, handleFactory, bendFactory, style,
+								proteinLength, intraLinks);// Add or update intralinks
+
+					} else {
+						ContainsInterLink = true;
+
+						if (isEdgeModified(myNetwork, netView, edge)) {
+							restoreEdgeStyle(myNetwork, node, netView, handleFactory, bendFactory, style, lexicon, edge,
+									sourceNode, targetNode, edge_name, proteinLength, IsIntraLink);
+						} else {// keep the original edge
+							currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+						}
+
+						if (showInterLinks) {
+							plotInterLinks(myNetwork, nodeView, netView, handleFactory, bendFactory, style, node,
+									sourceNode, targetNode, lexicon, proteinLength, interLinks);
+							currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+						}
+					}
+
+				} else { // Update all sites of the current selected node
+					HasAdjacentEdges = true;
 
 					if (isEdgeModified(myNetwork, netView, edge)) {
 						restoreEdgeStyle(myNetwork, node, netView, handleFactory, bendFactory, style, lexicon, edge,
 								sourceNode, targetNode, edge_name, proteinLength, IsIntraLink);
-					} else {// keep the original edge
-						currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+					} else {// Hide de modified edge (interlink)
+						currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
 					}
 
 					if (showInterLinks) {
-						plotInterLinks(myNetwork, nodeView, netView, handleFactory, bendFactory, style, node,
-								sourceNode, targetNode, lexicon, proteinLength, interLinks);
-						currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+						updateInterLinkEdgesPosition(myNetwork, node, netView, handleFactory, bendFactory, style,
+								lexicon, edge, sourceNode, targetNode, edge_name, proteinLength);
 					}
 				}
 
-			} else { // Update all sites of the current selected node
-				HasAdjacentEdges = true;
+				if (taskMonitor != null) {
+					summary_processed++;
+					int new_progress = (int) ((double) summary_processed / (total_edges) * 100);
+					if (new_progress > old_progress) {
+						old_progress = new_progress;
 
-				if (isEdgeModified(myNetwork, netView, edge)) {
-					restoreEdgeStyle(myNetwork, node, netView, handleFactory, bendFactory, style, lexicon, edge,
-							sourceNode, targetNode, edge_name, proteinLength, IsIntraLink);
-				} else {// Hide de modified edge (interlink)
-					currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+						taskMonitor.showMessage(TaskMonitor.Level.INFO,
+								"Setting styles on the edges: " + old_progress + "%");
+					}
 				}
-
-				if (showInterLinks) {
-					updateInterLinkEdgesPosition(myNetwork, node, netView, handleFactory, bendFactory, style, lexicon,
-							edge, sourceNode, targetNode, edge_name, proteinLength);
-				}
+			} catch (Exception e) {
 			}
 
-			if (taskMonitor != null) {
-				summary_processed++;
-				int new_progress = (int) ((double) summary_processed / (total_edges) * 100);
-				if (new_progress > old_progress) {
-					old_progress = new_progress;
-
-					taskMonitor.showMessage(TaskMonitor.Level.INFO,
-							"Setting styles on the edges: " + old_progress + "%");
-				}
-			}
 		}
 
 		if (ContainsInterLink && !ContainsIntraLink && intraLinks.size() > 0)
@@ -1894,8 +1899,10 @@ public class Util {
 								break;
 						}
 					}
-					if (startId > -1 && endId > -1)
+					if (startId > -1 && endId > -1) {
+						domain = domain.replace(",", "_");
 						proteinDomainList.add(new ProteinDomain(domain, startId, endId, eValue));
+					}
 				}
 				return proteinDomainList;
 			} else {
@@ -1966,6 +1973,8 @@ public class Util {
 						if (nNode.getNodeType() == Node.ELEMENT_NODE) {
 							// get attributes names and values
 							String domain = nNode.getAttributes().item(1).getNodeValue();
+							domain = domain.replace(",", "_");
+
 							int startId = Integer
 									.parseInt(nNode.getChildNodes().item(1).getAttributes().item(7).getNodeValue());
 							int endId = Integer
