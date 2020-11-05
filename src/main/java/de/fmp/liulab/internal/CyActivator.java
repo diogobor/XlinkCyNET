@@ -32,7 +32,7 @@ import de.fmp.liulab.internal.action.SetDomainColorAction;
 import de.fmp.liulab.internal.action.ShortcutSingleNodeExecuteAction;
 import de.fmp.liulab.task.LoadProteinDomainsTaskFactory;
 import de.fmp.liulab.task.MainSingleNodeTaskFactory;
-import de.fmp.liulab.task.ProteinScalingFactorTableTaskFactory;
+import de.fmp.liulab.task.ProteinScalingFactorHorizontalExpansionTableTaskFactory;
 import de.fmp.liulab.task.SetDomainColorTaskFactory;
 
 /**
@@ -125,7 +125,7 @@ public class CyActivator extends AbstractCyActivator {
 		// ##############################
 
 		// ##### PROTEIN SCALING FACTOR TABLE #####
-		ProteinScalingFactorTableTaskFactory proteinScalingFactorTableTaskFactory = new ProteinScalingFactorTableTaskFactory();
+		ProteinScalingFactorHorizontalExpansionTableTaskFactory proteinScalingFactorTableTaskFactory = new ProteinScalingFactorHorizontalExpansionTableTaskFactory();
 
 		// ########################################
 

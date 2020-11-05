@@ -35,7 +35,7 @@ import org.cytoscape.work.swing.DialogTaskManager;
 import de.fmp.liulab.model.CrossLink;
 import de.fmp.liulab.task.LoadProteinDomainTask;
 import de.fmp.liulab.task.MainSingleNodeTask;
-import de.fmp.liulab.task.ProteinScalingFactorTableTaskFactory;
+import de.fmp.liulab.task.ProteinScalingFactorHorizontalExpansionTableTaskFactory;
 import de.fmp.liulab.utils.Tuple2;
 import de.fmp.liulab.utils.Util;
 
@@ -55,7 +55,7 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 	private VisualStyle style;
 
 	private DialogTaskManager dialogTaskManager;
-	private ProteinScalingFactorTableTaskFactory proteinScalingFactorTableTaskFactory;
+	private ProteinScalingFactorHorizontalExpansionTableTaskFactory proteinScalingFactorHorizontalExpansionTableTaskFactory;
 
 	private CyNode selectedNode;
 	private boolean IsIntraLink = false;
@@ -69,13 +69,13 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 	 */
 	public UpdateViewListener(CyApplicationManager cyApplicationManager, HandleFactory handleFactory,
 			BendFactory bendFactory, VisualMappingManager vmmServiceRef, DialogTaskManager dialogTaskManager,
-			ProteinScalingFactorTableTaskFactory proteinScalingFactorTableTaskFactory) {
+			ProteinScalingFactorHorizontalExpansionTableTaskFactory proteinScalingFactorHorizontalExpansionTableTaskFactory) {
 		this.cyApplicationManager = cyApplicationManager;
 		this.handleFactory = handleFactory;
 		this.bendFactory = bendFactory;
 		this.style = vmmServiceRef.getCurrentVisualStyle();
 		this.dialogTaskManager = dialogTaskManager;
-		this.proteinScalingFactorTableTaskFactory = proteinScalingFactorTableTaskFactory;
+		this.proteinScalingFactorHorizontalExpansionTableTaskFactory = proteinScalingFactorHorizontalExpansionTableTaskFactory;
 	}
 
 	/**
@@ -254,8 +254,8 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 				return;
 
 			// Create protein scaling factor table
-			if (this.dialogTaskManager != null && this.proteinScalingFactorTableTaskFactory != null) {
-				TaskIterator ti = this.proteinScalingFactorTableTaskFactory.createTaskIterator(myNetwork);
+			if (this.dialogTaskManager != null && this.proteinScalingFactorHorizontalExpansionTableTaskFactory != null) {
+				TaskIterator ti = this.proteinScalingFactorHorizontalExpansionTableTaskFactory.createTaskIterator(myNetwork);
 				this.dialogTaskManager.execute(ti);
 			}
 

@@ -387,6 +387,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		isCurrentNode_modified = Util.IsNodeModified(myNetwork, netView, node);
 		Util.node_label_factor_size = myNetwork.getRow(node).get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME, Double.class);
+		Util.isProtein_expansion_horizontal = myNetwork.getRow(node).get(Util.HORIZONTAL_EXPANSION_COLUMN_NAME,
+				Boolean.class);
 
 	}
 
@@ -454,8 +456,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		protein_panel.add(textLabel_Protein_expansion_lbl);
 		offset_y += 40;
 
+		boolean isHorizontalExpansion = myNetwork.getRow(node).get(Util.HORIZONTAL_EXPANSION_COLUMN_NAME,
+				Boolean.class);
 		JRadioButton protein_expansion_horizontal = new JRadioButton("Horizontal");
-		protein_expansion_horizontal.setSelected(Util.isProtein_expansion_horizontal);
+		protein_expansion_horizontal.setSelected(isHorizontalExpansion);
 		if (Util.isWindows()) {
 			protein_expansion_horizontal.setBounds(89, offset_y, 90, 20);
 		} else {
@@ -478,7 +482,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		protein_panel.add(protein_expansion_horizontal);
 
 		JRadioButton protein_expansion_vertical = new JRadioButton("Vertical");
-		protein_expansion_vertical.setSelected(!Util.isProtein_expansion_horizontal);
+		protein_expansion_vertical.setSelected(!isHorizontalExpansion);
 		if (Util.isWindows()) {
 			protein_expansion_vertical.setBounds(179, offset_y, 63, 20);
 		} else {

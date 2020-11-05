@@ -10,11 +10,11 @@ import org.cytoscape.work.TaskMonitor;
 
 import de.fmp.liulab.utils.Util;
 
-public class ProteinScalingFactorTableTask extends AbstractTask {
+public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTask {
 
 	private CyNetwork myNetwork;
 
-	public ProteinScalingFactorTableTask(CyNetwork myNetwork) {
+	public ProteinScalingFactorHorizontalExpansionTableTask(CyNetwork myNetwork) {
 		this.myNetwork = myNetwork;
 	}
 
@@ -38,6 +38,24 @@ public class ProteinScalingFactorTableTask extends AbstractTask {
 				for (CyRow row : myNetwork.getDefaultNodeTable().getAllRows()) {
 					if (row.get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME, Double.class) == null)
 						row.set(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME, 1.0d);
+				}
+			} catch (Exception e) {
+			}
+
+		}
+		
+		if (nodeTable.getColumn(Util.HORIZONTAL_EXPANSION_COLUMN_NAME) == null) {
+			nodeTable.createColumn(Util.HORIZONTAL_EXPANSION_COLUMN_NAME, Boolean.class, false);
+
+			for (CyRow row : myNetwork.getDefaultNodeTable().getAllRows()) {
+				row.set(Util.HORIZONTAL_EXPANSION_COLUMN_NAME, true);
+			}
+
+		} else { // The column exists, but it's necessary to check the cells
+			try {
+				for (CyRow row : myNetwork.getDefaultNodeTable().getAllRows()) {
+					if (row.get(Util.HORIZONTAL_EXPANSION_COLUMN_NAME, Boolean.class) == null)
+						row.set(Util.HORIZONTAL_EXPANSION_COLUMN_NAME, true);
 				}
 			} catch (Exception e) {
 			}

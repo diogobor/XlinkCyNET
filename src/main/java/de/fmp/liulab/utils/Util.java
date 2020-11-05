@@ -68,6 +68,7 @@ import de.fmp.liulab.task.MainSingleNodeTask;
 public class Util {
 
 	public static String PROTEIN_SCALING_FACTOR_COLUMN_NAME = "scaling_factor";
+	public static String HORIZONTAL_EXPANSION_COLUMN_NAME = "is_horizontal_expansion";
 	public static String PROTEIN_LENGTH_A = "length_protein_a";
 	public static String PROTEIN_LENGTH_B = "length_protein_b";
 	public static String NODE_LABEL_POSITION = "NODE_LABEL_POSITION";
@@ -309,9 +310,11 @@ public class Util {
 								.equals(style.getDefaultValue(BasicVisualLexicon.NODE_TOOLTIP)))) {// Expansion
 																									// horizontal
 					isProtein_expansion_horizontal = true;
+					myNetwork.getRow(node).set(HORIZONTAL_EXPANSION_COLUMN_NAME, isProtein_expansion_horizontal);
 					return true;
 				} else {
 					isProtein_expansion_horizontal = false;
+					myNetwork.getRow(node).set(HORIZONTAL_EXPANSION_COLUMN_NAME, isProtein_expansion_horizontal);
 					position = (ObjectPosition) vp_label_position.parseSerializableString("N,S,c,0.00,0.00");
 					if (current_position.getJustify() == position.getJustify()
 							&& current_position.getOffsetX() == position.getOffsetX()
@@ -1405,7 +1408,7 @@ public class Util {
 
 		View<CyNode> nodeView = netView.getNodeView(node);
 
-		if (Util.isProtein_expansion_horizontal) {
+		if (isProtein_expansion_horizontal) {
 			nodeView.setLockedValue(BasicVisualLexicon.NODE_WIDTH,
 					((Number) getProteinLengthScalingFactor()).doubleValue());
 			nodeView.setLockedValue(BasicVisualLexicon.NODE_HEIGHT, 15d);
@@ -1426,6 +1429,7 @@ public class Util {
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_SHAPE, NodeShapeVisualProperty.ROUND_RECTANGLE);
 
 		myNetwork.getRow(node).set(PROTEIN_SCALING_FACTOR_COLUMN_NAME, node_label_factor_size);
+		myNetwork.getRow(node).set(HORIZONTAL_EXPANSION_COLUMN_NAME, isProtein_expansion_horizontal);
 
 		// ######################### NODE_LABEL_POSITION ######################
 
