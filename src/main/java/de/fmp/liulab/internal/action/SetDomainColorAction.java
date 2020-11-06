@@ -12,6 +12,11 @@ import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.TaskIterator;
 import org.cytoscape.work.swing.DialogTaskManager;
 
+/**
+ * Class responsible for applying a color to the protein domains
+ * @author diogobor
+ *
+ */
 public class SetDomainColorAction extends AbstractCyAction {
 
 	private static final String MENU_NAME = "Set domains color";

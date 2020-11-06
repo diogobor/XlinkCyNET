@@ -19,7 +19,7 @@ import org.cytoscape.work.TaskIterator;
 import org.cytoscape.work.swing.DialogTaskManager;
 
 /**
- * Method responsible for creating main context menu
+ * Class responsible for creating main context menu
  * @author diogobor
  *
  */

@@ -11,7 +11,7 @@ import org.cytoscape.application.swing.CytoPanelState;
 import de.fmp.liulab.internal.MainControlPanel;
 
 /**
- * Method responsible for creating main panel
+ * Class responsible for creating main panel
  * @author diogobor
  *
  */
