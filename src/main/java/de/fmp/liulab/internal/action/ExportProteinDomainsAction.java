@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -62,8 +63,10 @@ public class ExportProteinDomainsAction extends AbstractCyAction {
 			return;
 		}
 
-		JOptionPane.showMessageDialog(null, "Selected network: " + myNetwork.toString(),
-				"XlinkCyNET - Export protein domains", JOptionPane.INFORMATION_MESSAGE);
+		String msg = "<html><p><b>Selected network:</b></p><p>" + myNetwork.toString() + "</p></html>";
+
+		JOptionPane.showMessageDialog(null, msg, "XlinkCyNET - Export protein domains", JOptionPane.INFORMATION_MESSAGE,
+				new ImageIcon(getClass().getResource("/images/logo.png")));
 
 		JFrame parentFrame = new JFrame();
 		JFileChooser fileChooser = new JFileChooser();

@@ -1165,7 +1165,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 				values.add(end_range_white);
 				colors.add(new Color(255, 255, 255, 100));
 
-				sb_domains.append("<p>" + domain.name + " [" + startId + " - " + endId + "]</p>");
+				sb_domains.append("<p><i>" + domain.name + " </i>[" + startId + " - " + endId + "]</p>");
 				hasDomain = true;
 			}
 			values.add(1.0f);
@@ -1186,8 +1186,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		String protein_name = myNetwork.getDefaultNodeTable().getRow(node.getSUID()).getRaw(CyNetwork.NAME).toString();
 
 		if (hasDomain) {
-			nodeView.setLockedValue(BasicVisualLexicon.NODE_TOOLTIP, "<html><p>Protein:</p><p>" + protein_name + " [1-"
-					+ (int) Util.getProteinLength() + "]</p><br/><p>Domains:</p>" + sb_domains.toString() + "</html>");
+			nodeView.setLockedValue(BasicVisualLexicon.NODE_TOOLTIP, "<html><p><b>Protein:</b></p><p>" + protein_name + " [1-"
+					+ (int) Util.getProteinLength() + "]</p><br/><p><b>Domains:</i></p>" + sb_domains.toString() + "</html>");
 
 			String network_name = myNetwork.toString();
 			if (Util.proteinDomainsMap.containsKey(network_name)) {
@@ -1204,7 +1204,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		} else
 			nodeView.setLockedValue(BasicVisualLexicon.NODE_TOOLTIP,
-					"<html><p>Protein:</p><p>" + protein_name + " [1-" + Util.getProteinLength() + "]</p></html>");
+					"<html><p><b>Protein:</b></p><p>" + protein_name + " [1-" + Util.getProteinLength() + "]</p></html>");
 		// ############################### END ################################
 	}
 
