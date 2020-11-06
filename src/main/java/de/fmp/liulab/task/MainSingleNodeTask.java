@@ -353,8 +353,6 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 	/**
 	 * Get all information of a node
-	 * 
-	 * @throws Exception
 	 */
 	public void getNodeInformation() {
 

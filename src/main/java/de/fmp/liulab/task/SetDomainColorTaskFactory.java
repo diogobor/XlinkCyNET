@@ -9,7 +9,7 @@ import org.cytoscape.work.TaskIterator;
 import de.fmp.liulab.internal.CustomChartListener;
 
 /**
- * Class responsible for set color to protein domains
+ * Class responsible for calling the class to set color to protein domains
  * @author diogobor
  *
  */

@@ -35,6 +35,11 @@ import de.fmp.liulab.internal.view.JFrameWithoutMaxAndMinButton;
 import de.fmp.liulab.internal.view.MenuBar;
 import de.fmp.liulab.utils.Util;
 
+/**
+ * Class responsible for set color to protein domains
+ * @author diogobor
+ *
+ */
 public class SetDomainColorTask extends AbstractTask implements ActionListener {
 
 	private CyApplicationManager cyApplicationManager;

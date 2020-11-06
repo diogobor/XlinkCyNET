@@ -10,14 +10,26 @@ import org.cytoscape.work.TaskMonitor;
 
 import de.fmp.liulab.utils.Util;
 
+/**
+ * Class responsible for expanding the protein bar
+ * @author diogobor
+ *
+ */
 public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTask {
 
 	private CyNetwork myNetwork;
 
+	/**
+	 * Constructor
+	 * @param myNetwork
+	 */
 	public ProteinScalingFactorHorizontalExpansionTableTask(CyNetwork myNetwork) {
 		this.myNetwork = myNetwork;
 	}
 
+	/**
+	 * Default method
+	 */
 	@Override
 	public void run(TaskMonitor tm) throws IOException {
 

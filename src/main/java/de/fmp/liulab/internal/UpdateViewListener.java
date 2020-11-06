@@ -64,8 +64,12 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 
 	/**
 	 * Constructor
-	 * 
-	 * @param myNetwork
+	 * @param cyApplicationManager
+	 * @param handleFactory
+	 * @param bendFactory
+	 * @param vmmServiceRef
+	 * @param dialogTaskManager
+	 * @param proteinScalingFactorHorizontalExpansionTableTaskFactory
 	 */
 	public UpdateViewListener(CyApplicationManager cyApplicationManager, HandleFactory handleFactory,
 			BendFactory bendFactory, VisualMappingManager vmmServiceRef, DialogTaskManager dialogTaskManager,
