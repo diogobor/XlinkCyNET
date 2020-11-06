@@ -158,7 +158,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		if (Util.isWindows()) {
 			appSize = new Dimension(540, 395);
 		} else {
-			appSize = new Dimension(540, 375);
+			appSize = new Dimension(520, 375);
 		}
 		mainFrame.setSize(appSize);
 		mainFrame.setResizable(false);

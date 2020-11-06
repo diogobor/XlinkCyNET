@@ -25,7 +25,7 @@ import de.fmp.liulab.model.ProteinDomain;
 import de.fmp.liulab.utils.Util;
 
 /**
- * Method responsible for exporting protein domains
+ * Class responsible for exporting protein domains
  * 
  * @author diogobor
  *

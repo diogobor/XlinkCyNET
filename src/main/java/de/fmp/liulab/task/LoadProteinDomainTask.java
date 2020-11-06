@@ -132,7 +132,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		if (Util.isWindows()) {
 			appSize = new Dimension(540, 345);
 		} else {
-			appSize = new Dimension(540, 315);
+			appSize = new Dimension(525, 315);
 		}
 		mainFrame.setSize(appSize);
 		mainFrame.setResizable(false);
@@ -488,7 +488,10 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		Icon iconBtnOk = new ImageIcon(getClass().getResource("/images/okBtn.png"));
 		okButton = new JButton(iconBtnOk);
 		okButton.setText("OK");
-		okButton.setBounds(30, 250, 220, 25);
+		if(Util.isWindows())
+			okButton.setBounds(30, 250, 220, 25);
+		else
+			okButton.setBounds(30, 240, 220, 25);
 
 		okButton.addActionListener(new ActionListener() {
 
@@ -571,7 +574,10 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		Icon iconBtnCancel = new ImageIcon(getClass().getResource("/images/cancelBtn.png"));
 		JButton cancelButton = new JButton(iconBtnCancel);
 		cancelButton.setText("Cancel");
-		cancelButton.setBounds(265, 250, 220, 25);
+		if(Util.isWindows())
+			cancelButton.setBounds(265, 250, 220, 25);
+		else
+			cancelButton.setBounds(265, 240, 220, 25);
 
 		cancelButton.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
