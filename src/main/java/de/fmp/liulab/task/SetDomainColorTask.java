@@ -111,7 +111,7 @@ public class SetDomainColorTask extends AbstractTask implements ActionListener {
 
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		mainFrame.setLocation((screenSize.width - appSize.width) / 2, (screenSize.height - appSize.height) / 2);
-		mainFrame.setVisible(true);
+		mainFrame.setVisible(true); 
 	}
 
 	/**
