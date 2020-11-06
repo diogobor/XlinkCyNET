@@ -31,6 +31,7 @@ import org.cytoscape.view.vizmap.VisualMappingManager;
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.TaskMonitor;
 
+import de.fmp.liulab.internal.view.JFrameWithoutMaxAndMinButton;
 import de.fmp.liulab.internal.view.MenuBar;
 import de.fmp.liulab.utils.Util;
 
@@ -41,7 +42,7 @@ public class SetDomainColorTask extends AbstractTask implements ActionListener {
 	private CyCustomGraphics2Factory vgFactory;
 
 	// Window
-	private JFrame mainFrame;
+	private JFrameWithoutMaxAndMinButton mainFrame;
 	private JPanel mainPanel;
 	private MenuBar menuBar = new MenuBar();
 
@@ -67,7 +68,7 @@ public class SetDomainColorTask extends AbstractTask implements ActionListener {
 		this.vgFactory = vgFactory;
 
 		if (mainFrame == null)
-			mainFrame = new JFrame("XlinkCyNET - Set protein domains colors");
+			mainFrame = new JFrameWithoutMaxAndMinButton(new JFrame(), "XlinkCyNET - Protein domains colors", -1);
 
 		if (myNetwork == null) {
 			return;
@@ -82,12 +83,15 @@ public class SetDomainColorTask extends AbstractTask implements ActionListener {
 
 	}
 
+	/**
+	 * Start JFrame
+	 */
 	private void init_frame() {
 
 		mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		Dimension appSize = null;
 		if (Util.isWindows()) {
-			appSize = new Dimension(360, 345);
+			appSize = new Dimension(375, 345);
 		} else {
 			appSize = new Dimension(360, 315);
 		}
@@ -106,6 +110,9 @@ public class SetDomainColorTask extends AbstractTask implements ActionListener {
 		mainFrame.setVisible(true);
 	}
 
+	/**
+	 * Method responsible for loading protein domain colors
+	 */
 	private void loadProteinDomainsColor() {
 
 		Object[][] data = new Object[Util.proteinDomainsColorMap.size()][2];
@@ -291,8 +298,7 @@ public class SetDomainColorTask extends AbstractTask implements ActionListener {
 				String msgError = "";
 				try {
 
-					taskMonitor.showMessage(TaskMonitor.Level.INFO,
-							"Updating colors of protein domains...");
+					taskMonitor.showMessage(TaskMonitor.Level.INFO, "Updating colors of protein domains...");
 					msgError = updateDomainsFromTable();
 					if (!msgError.isBlank() && !msgError.isEmpty()) {
 						taskMonitor.showMessage(TaskMonitor.Level.ERROR, msgError);
@@ -307,7 +313,7 @@ public class SetDomainColorTask extends AbstractTask implements ActionListener {
 					mainFrame.dispose();
 					JOptionPane.showMessageDialog(null, "Colors of protein domains have been updated successfully!",
 							"XlinkCyNET - Protein domains colors", JOptionPane.INFORMATION_MESSAGE);
-				} 
+				}
 			}
 		});
 		mainPanel.add(okButton);

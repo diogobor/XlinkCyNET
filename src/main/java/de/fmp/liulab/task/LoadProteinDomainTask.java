@@ -56,6 +56,7 @@ import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.TaskMonitor;
 
 import de.fmp.liulab.internal.UpdateViewListener;
+import de.fmp.liulab.internal.view.JFrameWithoutMaxAndMinButton;
 import de.fmp.liulab.internal.view.MenuBar;
 import de.fmp.liulab.model.GeneDomain;
 import de.fmp.liulab.model.ProteinDomain;
@@ -77,7 +78,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	public static VisualStyle style;
 
 	// Window
-	private JFrame mainFrame;
+	private JFrameWithoutMaxAndMinButton mainFrame;
 	private JPanel mainPanel;
 	private JLabel textLabel_status_result;
 	private MenuBar menuBar = new MenuBar();
@@ -95,15 +96,15 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	private static JList rowHeader;
 	private static JScrollPane proteinDomainTableScrollPanel;
 
-	private boolean isPfamLoaded = true;
-	private boolean pfamDoStop = false;
-	private Thread pfamThread;
+	private static boolean isPfamLoaded = true;
+	private static boolean pfamDoStop = false;
+	private static Thread pfamThread;
 	private JButton proteinDomainServerButton;
 
-	private JButton okButton;
+	private static JButton okButton;
 
-	private Thread storeDomainThread;
-	private boolean isStoredDomains = false;
+	private static Thread storeDomainThread;
+	private static boolean isStoredDomains = false;
 
 	public static boolean isPlotDone = false;
 
@@ -124,9 +125,9 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		this.lexicon = cyApplicationManager.getCurrentRenderingEngine().getVisualLexicon();
 
 		if (mainFrame == null)
-			mainFrame = new JFrame("XlinkCyNET - Load protein domains");
+			mainFrame = new JFrameWithoutMaxAndMinButton(new JFrame(), "XlinkCyNET - Load protein domains", 1);
 
-		mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		mainFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		Dimension appSize = null;
 		if (Util.isWindows()) {
 			appSize = new Dimension(540, 345);
@@ -541,6 +542,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 									isPlotDone = true;
 									UpdateViewListener.isNodeModified = true;
 									isStoredDomains = true;
+									okButton.setEnabled(true);
 								}
 							};
 
@@ -568,47 +570,59 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 		cancelButton.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
-
-				boolean concluedProcess = true;
-
-				if (!isPfamLoaded) {
-					int input = JOptionPane.showConfirmDialog(null,
-							"Supfam/Pfam process has not been finished yet. Do you want to close this window?",
-							"XlinkCyNET - Protein domains", JOptionPane.INFORMATION_MESSAGE);
-					// 0=yes, 1=no, 2=cancel
-					if (input == 0) {
-						concluedProcess = true;
-						if (pfamThread != null) {
-							pfamDoStop = true;
-							pfamThread.interrupt();
-						}
-					} else {
-						concluedProcess = false;
-						pfamDoStop = false;
-					}
-				}
-
-				if (!isStoredDomains) {
-					int input = JOptionPane.showConfirmDialog(null,
-							"Protein domains has not been stored yet. Do you want to close this window?",
-							"XlinkCyNET - Protein domains", JOptionPane.INFORMATION_MESSAGE);
-					// 0=yes, 1=no, 2=cancel
-					if (input == 0) {
-						concluedProcess = true;
-						if (storeDomainThread != null) {
-							storeDomainThread.interrupt();
-						}
-					} else {
-						concluedProcess = false;
-					}
-				}
-
-				if (concluedProcess) {
+				if (cancelProcess())
 					mainFrame.dispose();
-				}
 			}
 		});
 		mainPanel.add(cancelButton);
+	}
+
+	/**
+	 * Method responsible for canceling the loading process
+	 * @return
+	 */
+	public static boolean cancelProcess() {
+
+		boolean concluedProcess = true;
+
+		if (!isPfamLoaded) {
+			int input = JOptionPane.showConfirmDialog(null,
+					"Supfam/Pfam process has not been finished yet. Do you want to close this window?",
+					"XlinkCyNET - Protein domains", JOptionPane.INFORMATION_MESSAGE);
+			// 0=yes, 1=no, 2=cancel
+			if (input == 0) {
+				concluedProcess = true;
+				if (pfamThread != null) {
+					pfamDoStop = true;
+					pfamThread.interrupt();
+				}
+			} else {
+				concluedProcess = false;
+				pfamDoStop = false;
+			}
+		}
+
+		if (!okButton.isEnabled() && !isStoredDomains) {
+			int input = JOptionPane.showConfirmDialog(null,
+					"Protein domains has not been stored yet. Do you want to close this window?",
+					"XlinkCyNET - Protein domains", JOptionPane.INFORMATION_MESSAGE);
+			// 0=yes, 1=no, 2=cancel
+			if (input == 0) {
+				concluedProcess = true;
+				if (storeDomainThread != null) {
+					storeDomainThread.interrupt();
+				}
+			} else {
+				concluedProcess = false;
+			}
+		}
+
+		if (concluedProcess) {
+			return true;
+		} else {
+			return false;
+		}
+
 	}
 
 	/**

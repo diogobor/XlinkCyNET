@@ -65,6 +65,7 @@ import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.TaskMonitor;
 
 import de.fmp.liulab.internal.UpdateViewListener;
+import de.fmp.liulab.internal.view.JFrameWithoutMaxAndMinButton;
 import de.fmp.liulab.model.CrossLink;
 import de.fmp.liulab.model.ProteinDomain;
 import de.fmp.liulab.utils.Tuple2;
@@ -99,7 +100,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	private ArrayList<ProteinDomain> myProteinDomains;
 
 	// Window
-	private JFrame mainFrame;
+	private JFrameWithoutMaxAndMinButton mainFrame;
 	private JPanel mainPanel;
 	private JPanel protein_panel;
 	private JLabel textLabel_status_result;
@@ -118,8 +119,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 	private Thread pfamThread;
 	private JButton proteinDomainServerButton;
-	private Thread applyLayoutThread;
-	private JButton okButton;
+	private static Thread applyLayoutThread;
+	private static JButton okButton;
 
 	/**
 	 * Constructor
@@ -150,9 +151,9 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		Util.init_availableProteinDomainColorsMap();
 
 		if (mainFrame == null)
-			mainFrame = new JFrame("XlinkCyNET - Single Node");
+			mainFrame = new JFrameWithoutMaxAndMinButton(new JFrame(), "XlinkCyNET - Single Node", 0);
 
-		mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		mainFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		Dimension appSize = null;
 		if (Util.isWindows()) {
 			appSize = new Dimension(540, 395);
@@ -278,7 +279,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		isPlotDone = false;
 		LoadProteinDomainTask.isPlotDone = false;
-		Util.stopUpdateViewer=false;
+		Util.stopUpdateViewer = false;
 
 		if (netView == null) {
 			netView = cyApplicationManager.getCurrentNetworkView();
@@ -654,6 +655,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			proteinDomainServerButton.setBounds(228, 160, 30, 30);
 		else
 			proteinDomainServerButton.setBounds(253, 160, 30, 30);
+		proteinDomainServerButton.setEnabled(true);
 
 		proteinDomainServerButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
@@ -847,6 +849,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		} else {
 			okButton.setBounds(30, 320, 220, 25);
 		}
+		okButton.setEnabled(true);
 
 		okButton.addActionListener(new ActionListener() {
 
@@ -902,6 +905,9 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 						taskMonitor.setProgress(1.0);
 						textLabel_status_result.setText("Done!");
 
+						okButton.setEnabled(true);
+						proteinDomainServerButton.setEnabled(true);
+
 						mainFrame.dispose();
 					}
 				};
@@ -924,30 +930,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		cancelButton.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
-
-				boolean concluedProcess = true;
-
-				if (!okButton.isEnabled()) {
-					int input = JOptionPane.showConfirmDialog(null,
-							"Style has not been finished yet. Do you want to close this window?",
-							"XlinkCyNET - Single Node", JOptionPane.INFORMATION_MESSAGE);
-					// 0=yes, 1=no, 2=cancel
-					if (input == 0) {
-						isPlotDone = true;
-						concluedProcess = true;
-						Util.stopUpdateViewer=true;
-						if (applyLayoutThread != null) {
-							applyLayoutThread.interrupt();
-						}
-					} else {
-						isPlotDone = false;
-						concluedProcess = false;
-						Util.stopUpdateViewer = false;
-					}
-				} else
-					concluedProcess = true;
-
-				if (concluedProcess) {
+				if (cancelProcess()) {
 					mainFrame.dispose();
 				}
 			}
@@ -973,6 +956,39 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			}
 		});
 		mainPanel.add(restoreStyleButton);
+	}
+
+	public static boolean cancelProcess() {
+		boolean concluedProcess = true;
+
+		if (!okButton.isEnabled()) {
+			int input = JOptionPane.showConfirmDialog(null,
+					"Style has not been finished yet. Do you want to close this window?", "XlinkCyNET - Single Node",
+					JOptionPane.INFORMATION_MESSAGE);
+			// 0=yes, 1=no, 2=cancel
+			if (input == 0) {
+				isPlotDone = true;
+				concluedProcess = true;
+				Util.stopUpdateViewer = true;
+				if (applyLayoutThread != null) {
+					applyLayoutThread.interrupt();
+				}
+			} else {
+				isPlotDone = false;
+				concluedProcess = false;
+				Util.stopUpdateViewer = false;
+			}
+		} else {
+			concluedProcess = true;
+			isPlotDone = true;
+			Util.stopUpdateViewer = false;
+		}
+
+		if (concluedProcess) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	/**

@@ -1,6 +1,8 @@
 package de.fmp.liulab.utils;
 
 import java.awt.Color;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -19,6 +21,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import javax.swing.AbstractListModel;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
@@ -366,11 +370,11 @@ public class Util {
 		for (CyEdge edge : myNetwork.getAdjacentEdgeIterable(node, CyEdge.Type.ANY)) {
 
 			try {
-				
-				if (stopUpdateViewer)//This variable is set true when applyLayoutThread is interruput (MainSingleNodeTask)
+
+				if (stopUpdateViewer)// This variable is set true when applyLayoutThread is interruput
+										// (MainSingleNodeTask)
 					break;
-				
-				
+
 				// Check if the edge was inserted by this app
 				String edge_name = myNetwork.getDefaultEdgeTable().getRow(edge.getSUID()).get(CyNetwork.NAME,
 						String.class);
