@@ -495,7 +495,6 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 			public void actionPerformed(ActionEvent ae) {
 
 				boolean concluedProcess = true;
-				String msgError = "";
 				try {
 
 					if (!isPfamLoaded) {
@@ -518,17 +517,24 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 					if (concluedProcess) {
 						okButton.setEnabled(false);
 
-						isPlotDone = false;
-						textLabel_status_result.setText("Detecting nodes filled out on the table...");
-						taskMonitor.showMessage(TaskMonitor.Level.INFO, "Detecting nodes filled out on the table...");
-						msgError = getNodesFromTable();
-						if (!msgError.isBlank() && !msgError.isEmpty()) {
-							taskMonitor.showMessage(TaskMonitor.Level.ERROR, msgError);
-						} else {
+						storeDomainThread = new Thread() {
 
-							storeDomainThread = new Thread() {
+							public void run() {
 
-								public void run() {
+								isPlotDone = false;
+								textLabel_status_result.setText("Checking nodes ...");
+								taskMonitor.showMessage(TaskMonitor.Level.INFO,
+										"Checking nodes...");
+								String msgError = getNodesFromTable();
+								if (!msgError.isBlank() && !msgError.isEmpty()) {
+									textLabel_status_result.setText("ERROR: Check Task History.");
+									taskMonitor.showMessage(TaskMonitor.Level.ERROR, msgError);
+									okButton.setEnabled(true);
+									isPlotDone = true;
+									UpdateViewListener.isNodeModified = true;
+									isStoredDomains = true;
+									
+								} else {
 									isStoredDomains = false;
 									textLabel_status_result.setText("Setting nodes information...");
 									taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting nodes information...");
@@ -544,17 +550,16 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 									isStoredDomains = true;
 									okButton.setEnabled(true);
 								}
-							};
+							}
+						};
 
-							storeDomainThread.start();
+						storeDomainThread.start();
 
-						}
 					}
 
 				} catch (Exception e1) {
 					textLabel_status_result.setText("ERROR: Check Task History.");
 					taskMonitor.showMessage(TaskMonitor.Level.ERROR, "ERROR: " + e1.getMessage());
-					msgError += e1.getMessage();
 					okButton.setEnabled(true);
 					if (storeDomainThread != null)
 						storeDomainThread.interrupt();
@@ -579,6 +584,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 	/**
 	 * Method responsible for canceling the loading process
+	 * 
 	 * @return
 	 */
 	public static boolean cancelProcess() {
@@ -745,6 +751,10 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		geneListFromTable = new ArrayList<GeneDomain>();
 		StringBuilder sbError = new StringBuilder();
 
+		int old_progress = 0;
+		int summary_processed = 0;
+		int total_rows = tableDataModel.getRowCount();
+		
 		for (int row = 0; row < tableDataModel.getRowCount(); row++) {
 			String gene = tableDataModel.getValueAt(row, 0) != null ? tableDataModel.getValueAt(row, 0).toString() : "";
 
@@ -773,6 +783,15 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 			} else {
 				geneListFromTable.add(new GeneDomain(gene, proteinDomains));
 			}
+			
+			summary_processed++;
+			int new_progress = (int) ((double) summary_processed / (total_rows) * 100);
+			if (new_progress > old_progress) {
+				old_progress = new_progress;
+
+				textLabel_status_result.setText("Checking nodes: " + old_progress + "%");
+			}
+			
 		}
 		if (geneListFromTable.size() == 0)
 			return "";
@@ -842,7 +861,8 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 				Object[][] data = new Object[st1.countTokens()][2];
 				tableDataModel.setDataVector(data, columnNames);
 
-				for (int i = 0; st1.hasMoreTokens(); i++) {
+				int i = 0;
+				for (i = 0; st1.hasMoreTokens(); i++) {
 					rowstring = st1.nextToken();
 					StringTokenizer st2 = new StringTokenizer(rowstring, "\t");
 					for (int j = 0; st2.hasMoreTokens(); j++) {
@@ -854,7 +874,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 					}
 				}
 
-				setTableProperties(st1.countTokens());
+				setTableProperties(i);
 
 			} catch (Exception ex) {
 				ex.printStackTrace();
