@@ -1188,7 +1188,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		if (hasDomain) {
 
 			nodeView.setLockedValue(BasicVisualLexicon.NODE_TOOLTIP, "<html><p>Protein:</p><p>" + protein_name + " [1-"
-					+ (int) Util.getProteinLength() + "]</p><br/><p>Domains:</p>" + sb_domains.toString() + "</html>");
+					+ (int) Util.getProteinLength() + "]</p><br/><p>Domains:</p>" + sb_domains.toString() + "</html>"); 
 
 			String network_name = myNetwork.toString();
 			if (Util.proteinDomainsMap.containsKey(network_name)) {
