@@ -118,6 +118,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 	private Thread pfamThread;
 	private JButton proteinDomainServerButton;
+	private Thread applyLayoutThread;
+	private JButton okButton;
 
 	/**
 	 * Constructor
@@ -276,6 +278,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		isPlotDone = false;
 		LoadProteinDomainTask.isPlotDone = false;
+		Util.stopUpdateViewer=false;
 
 		if (netView == null) {
 			netView = cyApplicationManager.getCurrentNetworkView();
@@ -295,9 +298,9 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		setNodeDomainColors();
 		taskMonitor.setProgress(0.75);
 
-		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting styles on the edges...");
+		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Defining styles for cross-links...");
 		isPlotDone = Util.addOrUpdateEdgesToNetwork(myNetwork, node, style, netView, nodeView, handleFactory,
-				bendFactory, lexicon, Util.getProteinLengthScalingFactor(), intraLinks, interLinks, taskMonitor);
+				bendFactory, lexicon, Util.getProteinLengthScalingFactor(), intraLinks, interLinks, taskMonitor, null);
 		taskMonitor.setProgress(0.95);
 
 		// Apply the change to the view
@@ -836,7 +839,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 				"deleteLineToTable");
 
 		Icon iconBtnOk = new ImageIcon(getClass().getResource("/images/okBtn.png"));
-		JButton okButton = new JButton(iconBtnOk);
+		okButton = new JButton(iconBtnOk);
 		okButton.setText("OK");
 
 		if (Util.isWindows()) {
@@ -845,9 +848,12 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			okButton.setBounds(30, 320, 220, 25);
 		}
 
-		okButton.addMouseListener(new MouseAdapter() {
+		okButton.addActionListener(new ActionListener() {
 
-			public void mouseClicked(MouseEvent e) {
+			public void actionPerformed(ActionEvent ae) {
+
+				okButton.setEnabled(false);
+				proteinDomainServerButton.setEnabled(false);
 
 				isPlotDone = false;
 				LoadProteinDomainTask.isPlotDone = false;
@@ -858,41 +864,50 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 				nodeView = netView.getNodeView(node);
 
-				textLabel_status_result.setText("Setting node styles...");
-				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting node styles...");
-				Util.node_label_factor_size = (double) spinner_factor_size_node.getValue();
-				Util.setNodeStyles(myNetwork, node, netView);
-				taskMonitor.setProgress(0.2);
+				applyLayoutThread = new Thread() {
 
-				textLabel_status_result.setText("Getting protein domains from table...");
-				try {
-					getNodeDomainsFromTable();
-					taskMonitor.setProgress(0.4);
-				} catch (Exception e2) {
-					textLabel_status_result.setText(e2.getMessage());
-					taskMonitor.showMessage(TaskMonitor.Level.WARN, e2.getMessage());
-				}
+					public void run() {
 
-				textLabel_status_result.setText("Setting protein domains to node...");
-				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting protein domains to node...");
-				setNodeDomainColors();
-				taskMonitor.setProgress(0.75);
+						textLabel_status_result.setText("Setting node styles...");
+						taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting node styles...");
+						Util.node_label_factor_size = (double) spinner_factor_size_node.getValue();
+						Util.setNodeStyles(myNetwork, node, netView);
+						taskMonitor.setProgress(0.2);
 
-				textLabel_status_result.setText("Setting styles on the edges...");
-				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting styles on the edges...");
-				isPlotDone = false;
-				isPlotDone = Util.addOrUpdateEdgesToNetwork(myNetwork, node, style, netView, nodeView, handleFactory,
-						bendFactory, lexicon, Util.getProteinLengthScalingFactor(), intraLinks, interLinks,
-						taskMonitor);
-				taskMonitor.setProgress(0.95);
+						textLabel_status_result.setText("Getting protein domains from table...");
+						try {
+							getNodeDomainsFromTable();
+							taskMonitor.setProgress(0.4);
+						} catch (Exception e2) {
+							textLabel_status_result.setText(e2.getMessage());
+							taskMonitor.showMessage(TaskMonitor.Level.WARN, e2.getMessage());
+						}
 
-				// Apply the change to the view
-				style.apply(netView);
-				netView.updateView();
-				taskMonitor.setProgress(1.0);
-				textLabel_status_result.setText("Done!");
+						textLabel_status_result.setText("Setting protein domains to node...");
+						taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting protein domains to node...");
+						setNodeDomainColors();
+						taskMonitor.setProgress(0.75);
 
-				mainFrame.dispose();
+						textLabel_status_result.setText("Setting styles to the edges...");
+						taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting styles to the edges...");
+						isPlotDone = false;
+						isPlotDone = Util.addOrUpdateEdgesToNetwork(myNetwork, node, style, netView, nodeView,
+								handleFactory, bendFactory, lexicon, Util.getProteinLengthScalingFactor(), intraLinks,
+								interLinks, taskMonitor, textLabel_status_result);
+						taskMonitor.setProgress(0.95);
+
+						// Apply the change to the view
+						style.apply(netView);
+						netView.updateView();
+						taskMonitor.setProgress(1.0);
+						textLabel_status_result.setText("Done!");
+
+						mainFrame.dispose();
+					}
+				};
+
+				applyLayoutThread.start();
+
 			}
 		});
 		mainPanel.add(okButton);
@@ -909,7 +924,32 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		cancelButton.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
-				mainFrame.dispose();
+
+				boolean concluedProcess = true;
+
+				if (!okButton.isEnabled()) {
+					int input = JOptionPane.showConfirmDialog(null,
+							"Style has not been finished yet. Do you want to close this window?",
+							"XlinkCyNET - Single Node", JOptionPane.INFORMATION_MESSAGE);
+					// 0=yes, 1=no, 2=cancel
+					if (input == 0) {
+						isPlotDone = true;
+						concluedProcess = true;
+						Util.stopUpdateViewer=true;
+						if (applyLayoutThread != null) {
+							applyLayoutThread.interrupt();
+						}
+					} else {
+						isPlotDone = false;
+						concluedProcess = false;
+						Util.stopUpdateViewer = false;
+					}
+				} else
+					concluedProcess = true;
+
+				if (concluedProcess) {
+					mainFrame.dispose();
+				}
 			}
 		});
 		mainPanel.add(cancelButton);

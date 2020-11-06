@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import javax.swing.AbstractListModel;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -97,6 +98,7 @@ public class Util {
 	public static double node_border_width = 1.5;
 	public static boolean isProtein_expansion_horizontal = true;
 	public static boolean isProteinDomainPfam = false;
+	public static boolean stopUpdateViewer = false;
 
 	// Map<Network name, Map<Protein - Node SUID, List<ProteinDomain>>
 	public static Map<String, Map<Long, List<ProteinDomain>>> proteinDomainsMap = new HashMap<String, Map<Long, List<ProteinDomain>>>();
@@ -342,7 +344,7 @@ public class Util {
 	public static boolean addOrUpdateEdgesToNetwork(CyNetwork myNetwork, CyNode node, VisualStyle style,
 			CyNetworkView netView, View<CyNode> nodeView, HandleFactory handleFactory, BendFactory bendFactory,
 			VisualLexicon lexicon, float proteinLength, ArrayList<CrossLink> intraLinks,
-			ArrayList<CrossLink> interLinks, final TaskMonitor taskMonitor) {
+			ArrayList<CrossLink> interLinks, final TaskMonitor taskMonitor, JLabel textLabel_status_result) {
 		boolean HasAdjacentEdges = false;
 		boolean IsIntraLink = false;
 		boolean ContainsInterLink = false;
@@ -364,6 +366,11 @@ public class Util {
 		for (CyEdge edge : myNetwork.getAdjacentEdgeIterable(node, CyEdge.Type.ANY)) {
 
 			try {
+				
+				if (stopUpdateViewer)//This variable is set true when applyLayoutThread is interruput (MainSingleNodeTask)
+					break;
+				
+				
 				// Check if the edge was inserted by this app
 				String edge_name = myNetwork.getDefaultEdgeTable().getRow(edge.getSUID()).get(CyNetwork.NAME,
 						String.class);
@@ -430,7 +437,8 @@ public class Util {
 								lexicon, edge, sourceNode, targetNode, edge_name, proteinLength);
 					}
 				}
-
+			} catch (Exception e) {
+			} finally {
 				if (taskMonitor != null) {
 					summary_processed++;
 					int new_progress = (int) ((double) summary_processed / (total_edges) * 100);
@@ -438,10 +446,13 @@ public class Util {
 						old_progress = new_progress;
 
 						taskMonitor.showMessage(TaskMonitor.Level.INFO,
-								"Setting styles on the edges: " + old_progress + "%");
+								"Defining styles for cross-links: " + old_progress + "%");
+
+						if (textLabel_status_result != null) {
+							textLabel_status_result.setText("Defining styles for cross-links: " + old_progress + "%");
+						}
 					}
 				}
-			} catch (Exception e) {
 			}
 
 		}
@@ -451,7 +462,7 @@ public class Util {
 
 		if (!HasAdjacentEdges || IsMixedNode) { // Node is alone and it does not have adjacent
 			if (taskMonitor != null) {
-				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting styles on the intra link edges: 98%");
+				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Defining styles for intra links: 98%");
 			}
 
 			plotIntraLinks(myNetwork, nodeView, node, netView, handleFactory, bendFactory, style, proteinLength,
@@ -1382,7 +1393,7 @@ public class Util {
 						View<CyNode> proteinA_nodeView = netView.getNodeView(proteinA_node);
 						addOrUpdateEdgesToNetwork(myNetwork, proteinA_node, style, netView, proteinA_nodeView,
 								handleFactory, bendFactory, lexicon, ((Number) length_other_protein_a).floatValue(),
-								MainSingleNodeTask.intraLinks, MainSingleNodeTask.interLinks, null);
+								MainSingleNodeTask.intraLinks, MainSingleNodeTask.interLinks, null, null);
 
 						if (current_node != null) {
 							inter_and_intralinks = getAllLinksFromAdjacentEdgesNode(current_node, myNetwork);// update

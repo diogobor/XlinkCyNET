@@ -178,6 +178,7 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 	 */
 	private void updateNodesAndEdges(final CyNode current_node) {
 
+		Util.stopUpdateViewer = false;
 		Tuple2 inter_and_intralinks = Util.getAllLinksFromAdjacentEdgesNode(current_node, myNetwork);
 		MainSingleNodeTask.interLinks = (ArrayList<CrossLink>) inter_and_intralinks.getFirst();
 		MainSingleNodeTask.intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
@@ -223,7 +224,7 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 
 			Util.addOrUpdateEdgesToNetwork(myNetwork, current_node, style, netView, nodeView, handleFactory,
 					bendFactory, lexicon, ((Number) length_other_protein_a).floatValue(), MainSingleNodeTask.intraLinks,
-					MainSingleNodeTask.interLinks, null);
+					MainSingleNodeTask.interLinks, null, null);
 		} else if (!IsIntraLink) {
 			Util.updateAllAssiciatedInterlinkNodes(myNetwork, cyApplicationManager, netView, handleFactory, bendFactory,
 					current_node);// Check if all associated nodes are
@@ -254,8 +255,10 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 				return;
 
 			// Create protein scaling factor table
-			if (this.dialogTaskManager != null && this.proteinScalingFactorHorizontalExpansionTableTaskFactory != null) {
-				TaskIterator ti = this.proteinScalingFactorHorizontalExpansionTableTaskFactory.createTaskIterator(myNetwork);
+			if (this.dialogTaskManager != null
+					&& this.proteinScalingFactorHorizontalExpansionTableTaskFactory != null) {
+				TaskIterator ti = this.proteinScalingFactorHorizontalExpansionTableTaskFactory
+						.createTaskIterator(myNetwork);
 				this.dialogTaskManager.execute(ti);
 			}
 

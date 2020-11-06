@@ -100,6 +100,8 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	private Thread pfamThread;
 	private JButton proteinDomainServerButton;
 
+	private JButton okButton;
+
 	private Thread storeDomainThread;
 	private boolean isStoredDomains = false;
 
@@ -483,13 +485,13 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		information_panel.add(proteinDomainServerButton);
 
 		Icon iconBtnOk = new ImageIcon(getClass().getResource("/images/okBtn.png"));
-		final JButton okButton = new JButton(iconBtnOk);
+		okButton = new JButton(iconBtnOk);
 		okButton.setText("OK");
 		okButton.setBounds(30, 250, 220, 25);
 
-		okButton.addMouseListener(new MouseAdapter() {
+		okButton.addActionListener(new ActionListener() {
 
-			public void mouseClicked(MouseEvent e) {
+			public void actionPerformed(ActionEvent ae) {
 
 				boolean concluedProcess = true;
 				String msgError = "";
@@ -513,6 +515,8 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 					}
 
 					if (concluedProcess) {
+						okButton.setEnabled(false);
+
 						isPlotDone = false;
 						textLabel_status_result.setText("Detecting nodes filled out on the table...");
 						taskMonitor.showMessage(TaskMonitor.Level.INFO, "Detecting nodes filled out on the table...");
@@ -524,7 +528,6 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 							storeDomainThread = new Thread() {
 
 								public void run() {
-									okButton.setEnabled(false);
 									isStoredDomains = false;
 									textLabel_status_result.setText("Setting nodes information...");
 									taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting nodes information...");
@@ -550,6 +553,9 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 					textLabel_status_result.setText("ERROR: Check Task History.");
 					taskMonitor.showMessage(TaskMonitor.Level.ERROR, "ERROR: " + e1.getMessage());
 					msgError += e1.getMessage();
+					okButton.setEnabled(true);
+					if (storeDomainThread != null)
+						storeDomainThread.interrupt();
 				}
 			}
 		});

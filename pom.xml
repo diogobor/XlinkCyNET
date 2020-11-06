@@ -13,9 +13,9 @@
 	</properties>
 	
 	<groupId>de.fmp.liulab</groupId>
-	<artifactId>xl-interactions</artifactId>
+	<artifactId>XlinkCyNET</artifactId>
 	<packaging>bundle</packaging>
-	<version>1.0.0.1</version>
+	<version>1.0.3</version>
 
 	<name>XlinkCyNET</name>
 
