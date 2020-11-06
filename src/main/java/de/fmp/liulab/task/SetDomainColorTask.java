@@ -96,7 +96,7 @@ public class SetDomainColorTask extends AbstractTask implements ActionListener {
 		mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		Dimension appSize = null;
 		if (Util.isWindows()) {
-			appSize = new Dimension(375, 345);
+			appSize = new Dimension(375, 330);
 		} else {
 			appSize = new Dimension(360, 315);
 		}
