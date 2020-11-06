@@ -14,6 +14,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -1116,6 +1117,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			if (myProteinDomains == null)
 				return;
 
+			Collections.sort(myProteinDomains);
+
 			for (ProteinDomain domain : myProteinDomains) {
 
 				int startId = domain.startId;
@@ -1180,10 +1183,12 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 				nodeView.setLockedValue(vp_node_linear_gradient, customGraphics);
 		}
 
+		String protein_name = myNetwork.getDefaultNodeTable().getRow(node.getSUID()).getRaw(CyNetwork.NAME).toString();
+
 		if (hasDomain) {
-			nodeView.setLockedValue(BasicVisualLexicon.NODE_TOOLTIP,
-					"<html><p>Protein size: " + (int) Util.getProteinLength() + " residues</p><br/><p>Domains:</p>"
-							+ sb_domains.toString() + "</html>");
+
+			nodeView.setLockedValue(BasicVisualLexicon.NODE_TOOLTIP, "<html><p>Protein:</p><p>" + protein_name + " [1-"
+					+ (int) Util.getProteinLength() + "]</p><br/><p>Domains:</p>" + sb_domains.toString() + "</html>");
 
 			String network_name = myNetwork.toString();
 			if (Util.proteinDomainsMap.containsKey(network_name)) {
@@ -1200,7 +1205,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		} else
 			nodeView.setLockedValue(BasicVisualLexicon.NODE_TOOLTIP,
-					"<html><p>Protein size: " + Util.getProteinLength() + " residues</p></html>");
+					"<html><p>Protein:</p><p>" + protein_name + " [1-" + Util.getProteinLength() + "]</p></html>");
 		// ############################### END ################################
 	}
 
