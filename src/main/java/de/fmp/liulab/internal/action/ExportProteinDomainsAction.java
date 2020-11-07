@@ -144,7 +144,7 @@ public class ExportProteinDomainsAction extends AbstractCyAction {
 
 		} catch (IOException e) {
 
-			String errorMsg = "ERROR: It is not possible to save the file." + e.getMessage();
+			String errorMsg = "<htmml><p>ERROR: It is not possible to save the file.</p><p>" + e.getMessage() + "</p></html>";
 			JOptionPane.showMessageDialog(null, errorMsg, "XlinkCyNET - Export protein domains",
 					JOptionPane.ERROR_MESSAGE);
 

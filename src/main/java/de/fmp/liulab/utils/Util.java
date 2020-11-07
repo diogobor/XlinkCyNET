@@ -1,8 +1,6 @@
 package de.fmp.liulab.utils;
 
 import java.awt.Color;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -21,8 +19,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import javax.swing.AbstractListModel;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
