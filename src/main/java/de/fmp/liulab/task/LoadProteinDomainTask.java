@@ -48,6 +48,9 @@ import org.cytoscape.model.CyIdentifiable;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyRow;
+import org.cytoscape.model.CyTable;
+import org.cytoscape.model.CyTableFactory;
+import org.cytoscape.task.edit.MapTableToNetworkTablesTaskFactory;
 import org.cytoscape.view.model.VisualLexicon;
 import org.cytoscape.view.presentation.customgraphics.CyCustomGraphics2Factory;
 import org.cytoscape.view.vizmap.VisualMappingManager;
@@ -73,6 +76,8 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	private CyApplicationManager cyApplicationManager;
 	private CyNetwork myNetwork;
 	private CyCustomGraphics2Factory vgFactory;
+	private CyTableFactory tableFactory;
+	private MapTableToNetworkTablesTaskFactory mapTableToNetworkTablesTaskFactory;
 
 	public static VisualLexicon lexicon;
 	public static VisualStyle style;
@@ -109,17 +114,21 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	public static boolean isPlotDone = false;
 
 	/**
-	 * Constructor
+	 * /** Constructor
 	 * 
 	 * @param cyApplicationManager main app manager
-	 * @param vmmServiceRef visual mapping manager
-	 * @param vgFactory graphic factory
+	 * @param vmmServiceRef        visual mapping manager
+	 * @param vgFactory            graphic factory
+	 * @param tableFactory         table factory
 	 */
 	public LoadProteinDomainTask(CyApplicationManager cyApplicationManager, final VisualMappingManager vmmServiceRef,
-			CyCustomGraphics2Factory vgFactory) {
+			CyCustomGraphics2Factory vgFactory, CyTableFactory tableFactory,
+			MapTableToNetworkTablesTaskFactory mapTableToNetworkTablesTaskFactory) {
 		this.cyApplicationManager = cyApplicationManager;
 		this.myNetwork = cyApplicationManager.getCurrentNetwork();
 		this.vgFactory = vgFactory;
+		this.tableFactory = tableFactory;
+		this.mapTableToNetworkTablesTaskFactory = mapTableToNetworkTablesTaskFactory;
 		this.style = vmmServiceRef.getCurrentVisualStyle();
 		// Get the current Visual Lexicon
 		this.lexicon = cyApplicationManager.getCurrentRenderingEngine().getVisualLexicon();
@@ -488,7 +497,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		Icon iconBtnOk = new ImageIcon(getClass().getResource("/images/okBtn.png"));
 		okButton = new JButton(iconBtnOk);
 		okButton.setText("OK");
-		if(Util.isWindows())
+		if (Util.isWindows())
 			okButton.setBounds(30, 250, 220, 25);
 		else
 			okButton.setBounds(30, 240, 220, 25);
@@ -526,8 +535,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 								isPlotDone = false;
 								textLabel_status_result.setText("Checking nodes ...");
-								taskMonitor.showMessage(TaskMonitor.Level.INFO,
-										"Checking nodes...");
+								taskMonitor.showMessage(TaskMonitor.Level.INFO, "Checking nodes...");
 								String msgError = getNodesFromTable();
 								if (!msgError.isBlank() && !msgError.isEmpty()) {
 									textLabel_status_result.setText("ERROR: Check Task History.");
@@ -536,13 +544,14 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 									isPlotDone = true;
 									UpdateViewListener.isNodeModified = true;
 									isStoredDomains = true;
-									
+
 								} else {
 									isStoredDomains = false;
 									textLabel_status_result.setText("Setting nodes information...");
 									taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting nodes information...");
 									try {
 										setNodesInformation(taskMonitor);
+										createProteinDomainTable();
 									} catch (Exception e) {
 										textLabel_status_result.setText("ERROR: Check Task History.");
 										taskMonitor.showMessage(TaskMonitor.Level.ERROR, "ERROR: " + e.getMessage());
@@ -574,7 +583,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		Icon iconBtnCancel = new ImageIcon(getClass().getResource("/images/cancelBtn.png"));
 		JButton cancelButton = new JButton(iconBtnCancel);
 		cancelButton.setText("Cancel");
-		if(Util.isWindows())
+		if (Util.isWindows())
 			cancelButton.setBounds(265, 250, 220, 25);
 		else
 			cancelButton.setBounds(265, 240, 220, 25);
@@ -586,6 +595,21 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 			}
 		});
 		mainPanel.add(cancelButton);
+	}
+
+	private void createProteinDomainTable() {
+		CyTable table = tableFactory.createTable("Protein Domain Table", "name", String.class, true, true);
+		table.setPublic(true);
+		
+		String proteinColumnName = "protein";
+		table.createColumn(proteinColumnName, String.class, false);
+		String[] keys = { "PROTEIN1", "PROTEIN2" };
+		CyRow row = table.getRow(keys[0]);
+		row.set(proteinColumnName, "PROTEIN11");
+		row = table.getRow(keys[1]);
+		row.set(proteinColumnName, "PROTEIN22");
+
+		super.insertTasksAfterCurrentTask(mapTableToNetworkTablesTaskFactory.createTaskIterator(table));
 	}
 
 	/**
@@ -671,7 +695,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	}
 
 	/**
-	 * Method responsible for getting all information of all nodes
+	 * Method responsible for setting information of all nodes
 	 * 
 	 * @throws Exception
 	 */
@@ -760,7 +784,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		int old_progress = 0;
 		int summary_processed = 0;
 		int total_rows = tableDataModel.getRowCount();
-		
+
 		for (int row = 0; row < tableDataModel.getRowCount(); row++) {
 			String gene = tableDataModel.getValueAt(row, 0) != null ? tableDataModel.getValueAt(row, 0).toString() : "";
 
@@ -789,7 +813,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 			} else {
 				geneListFromTable.add(new GeneDomain(gene, proteinDomains));
 			}
-			
+
 			summary_processed++;
 			int new_progress = (int) ((double) summary_processed / (total_rows) * 100);
 			if (new_progress > old_progress) {
@@ -797,7 +821,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 				textLabel_status_result.setText("Checking nodes: " + old_progress + "%");
 			}
-			
+
 		}
 		if (geneListFromTable.size() == 0)
 			return "";
@@ -807,6 +831,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 	/**
 	 * Set properties to the Node domain table
+	 * 
 	 * @param number_lines total number of lines
 	 */
 	public static void setTableProperties(int number_lines) {

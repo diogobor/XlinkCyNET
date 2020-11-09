@@ -11,8 +11,10 @@ import org.cytoscape.application.swing.CyAction;
 import org.cytoscape.application.swing.CyNodeViewContextMenuFactory;
 import org.cytoscape.application.swing.CySwingApplication;
 import org.cytoscape.application.swing.CytoPanelComponent;
+import org.cytoscape.model.CyTableFactory;
 import org.cytoscape.model.events.RowsSetListener;
 import org.cytoscape.service.util.AbstractCyActivator;
+import org.cytoscape.task.edit.MapTableToNetworkTablesTaskFactory;
 import org.cytoscape.util.swing.OpenBrowser;
 import org.cytoscape.view.model.events.ViewChangedListener;
 import org.cytoscape.view.presentation.customgraphics.CyCustomGraphics2Factory;
@@ -79,8 +81,11 @@ public class CyActivator extends AbstractCyActivator {
 		// ####################
 
 		// ### 3.2 - LOAD ####
+		CyTableFactory tableFactory = getService(bc, CyTableFactory.class);
+		MapTableToNetworkTablesTaskFactory mapTableToNetworkTablesTaskFactory = getService(bc,
+				MapTableToNetworkTablesTaskFactory.class);
 		TaskFactory myLoadProteinDomainsFactory = new LoadProteinDomainsTaskFactory(cyApplicationManager, vmmServiceRef,
-				customChartListener);
+				customChartListener, tableFactory, mapTableToNetworkTablesTaskFactory);
 
 		LoadProteinDomainsAction myLoadProteinDomainsAction = new LoadProteinDomainsAction(dialogTaskManager,
 				myLoadProteinDomainsFactory);
