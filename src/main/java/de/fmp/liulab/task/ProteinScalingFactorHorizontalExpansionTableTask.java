@@ -21,7 +21,7 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 
 	/**
 	 * Constructor
-	 * @param myNetwork
+	 * @param myNetwork current network
 	 */
 	public ProteinScalingFactorHorizontalExpansionTableTask(CyNetwork myNetwork) {
 		this.myNetwork = myNetwork;

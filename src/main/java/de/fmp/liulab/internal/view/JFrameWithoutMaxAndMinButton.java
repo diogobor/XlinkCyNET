@@ -23,8 +23,8 @@ public class JFrameWithoutMaxAndMinButton extends JDialog {
 
 	/**
 	 * 
-	 * @param frame
-	 * @param title
+	 * @param frame main frame
+	 * @param title title of frame
 	 * @param originalFrame -1:Nothing, 0: MainSingleNode, 1: LoadProteinDomain
 	 */
 	public JFrameWithoutMaxAndMinButton(final JFrame frame, String title, final int originalFrame) {

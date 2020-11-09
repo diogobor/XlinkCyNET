@@ -62,9 +62,9 @@ public class SetDomainColorTask extends AbstractTask implements ActionListener {
 	/**
 	 * Constructor
 	 * 
-	 * @param cyApplicationManager
-	 * @param vmmServiceRef
-	 * @param vgFactory
+	 * @param cyApplicationManager main app manager
+	 * @param vmmServiceRef visual manager
+	 * @param vgFactory visual factory
 	 */
 	public SetDomainColorTask(CyApplicationManager cyApplicationManager, final VisualMappingManager vmmServiceRef,
 			CyCustomGraphics2Factory vgFactory) {
@@ -270,6 +270,7 @@ public class SetDomainColorTask extends AbstractTask implements ActionListener {
 
 	/**
 	 * Set properties to the Node domain table
+	 * @param number_lines total number of lines
 	 */
 	public static void setTableProperties(int number_lines) {
 		if (mainProteinDomainTable != null) {

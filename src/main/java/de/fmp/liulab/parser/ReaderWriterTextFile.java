@@ -20,8 +20,8 @@ public class ReaderWriterTextFile {
 
 	/**
 	 * Constructor 1: the argument is a file name
-	 * @param fileName
-	 * @throws IOException
+	 * @param fileName file name
+	 * @throws IOException throws an exception if the file has a problem
 	 */
 	public ReaderWriterTextFile(String fileName) throws IOException {
 		bf = new BufferedReader(new FileReader(fileName));
@@ -29,7 +29,7 @@ public class ReaderWriterTextFile {
 
 	/**
 	 * Constructor 2: a new file is created.
-	 * @throws IOException
+	 * @throws IOException throws an exception if the file has a problem
 	 */
 	public ReaderWriterTextFile() throws IOException {
 		bw = new BufferedWriter(new FileWriter("./file/output.txt"));
@@ -47,7 +47,7 @@ public class ReaderWriterTextFile {
 	/**
 	 * 
 	 * @return return true if there is more line to be read.
-	 * @throws IOException
+	 * @throws IOException throws an exception if the file has a problem
 	 */
 	public boolean hasLine() throws IOException {
 		while (bf.ready()) { 
@@ -73,7 +73,7 @@ public class ReaderWriterTextFile {
 	/**
 	 * Append a new line to the file
 	 * 
-	 * @param line 
+	 * @param line current line
 	 *            
 	 */
 

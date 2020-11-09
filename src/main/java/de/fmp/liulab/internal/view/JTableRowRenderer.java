@@ -23,7 +23,7 @@ public class JTableRowRenderer extends JLabel implements ListCellRenderer<Object
 
 	/**
 	 * Constructor
-	 * @param table
+	 * @param table table reference
 	 */
 	public JTableRowRenderer(JTable table) {
 		JTableHeader header = table.getTableHeader();

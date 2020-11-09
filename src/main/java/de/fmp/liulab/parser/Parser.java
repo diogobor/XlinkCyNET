@@ -27,7 +27,7 @@ public class Parser {
 	/**
 	 * Constructor
 	 * 
-	 * @param fileName
+	 * @param fileName file name
 	 */
 	public Parser(String fileName) {
 

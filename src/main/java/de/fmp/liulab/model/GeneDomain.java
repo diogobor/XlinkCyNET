@@ -14,8 +14,8 @@ public class GeneDomain implements Comparable<GeneDomain> {
 
 	/**
 	 * Constructor
-	 * @param geneName
-	 * @param proteinDomains
+	 * @param geneName gene name
+	 * @param proteinDomains all protein domains
 	 */
 	public GeneDomain(String geneName, List<ProteinDomain> proteinDomains) {
 		this.getGeneName = geneName;

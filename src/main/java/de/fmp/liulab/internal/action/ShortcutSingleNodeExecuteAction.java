@@ -27,8 +27,8 @@ public class ShortcutSingleNodeExecuteAction extends AbstractCyAction {
 
 	/**
 	 * Constructor
-	 * @param dialogTaskManager
-	 * @param myFactory
+	 * @param dialogTaskManager task manager
+	 * @param myFactory main factory
 	 */
 	public ShortcutSingleNodeExecuteAction(DialogTaskManager dialogTaskManager, TaskFactory myFactory) {
 		super(MENU_NAME);

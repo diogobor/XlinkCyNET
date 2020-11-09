@@ -29,8 +29,8 @@ public class MainContextMenu implements CyNodeViewContextMenuFactory, ActionList
 
 	/**
 	 * Constructor
-	 * @param myFactory
-	 * @param dialogTaskManager
+	 * @param myFactory graphic instance
+	 * @param dialogTaskManager task manager
 	 */
 	public MainContextMenu(TaskFactory myFactory, DialogTaskManager dialogTaskManager) {
 		this.myFactory = myFactory;

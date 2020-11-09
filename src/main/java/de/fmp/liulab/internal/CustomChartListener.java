@@ -15,8 +15,8 @@ public class CustomChartListener {
      
      /**
       * Method responsible for adding the customized GraphicsFactory based on FACTORY_ID
-      * @param factory
-      * @param serviceProps
+      * @param factory graphic instance
+      * @param serviceProps services properties
       */
      public void addCustomGraphicsFactory(CyCustomGraphics2Factory<?> factory, Map<Object,Object> serviceProps) {
              if(FACTORY_ID.equals(factory.getId())) {
@@ -26,8 +26,8 @@ public class CustomChartListener {
      
      /**
       * Method responsible for removing the customized GraphicsFactory
-      * @param factory
-      * @param serviceProps
+      * @param factory graphic instance
+      * @param serviceProps services properties
       */
      public void removeCustomGraphicsFactory(CyCustomGraphics2Factory<?> factory, Map<Object,Object> serviceProps) {
              this.factory = null;

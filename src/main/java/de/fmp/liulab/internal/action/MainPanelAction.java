@@ -26,8 +26,8 @@ public class MainPanelAction extends AbstractCyAction {
 
 	/**
 	 * Constructor
-	 * @param desktopApp
-	 * @param myCytoPanel
+	 * @param desktopApp swing application
+	 * @param myCytoPanel main control panel
 	 */
 	public MainPanelAction(CySwingApplication desktopApp, MainControlPanel myCytoPanel) {
 		super(MENU_NAME);

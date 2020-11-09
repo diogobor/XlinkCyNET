@@ -10,9 +10,11 @@ package de.fmp.liulab.internal.view;
      String[] extensions;  
      String description;  
    
-     /**  
-      * Creates the file filter with many different extensions  
-      */  
+     /**
+      * Creates the file filter with many different extensions 
+      * @param descr description
+      * @param exts one or more extensions
+      */
      public ExtensionFileFilter(String descr, String... exts)  
      {  
          // clone and lowercase the extensions  

@@ -111,9 +111,9 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	/**
 	 * Constructor
 	 * 
-	 * @param cyApplicationManager
-	 * @param vmmServiceRef
-	 * @param vgFactory
+	 * @param cyApplicationManager main app manager
+	 * @param vmmServiceRef visual mapping manager
+	 * @param vgFactory graphic factory
 	 */
 	public LoadProteinDomainTask(CyApplicationManager cyApplicationManager, final VisualMappingManager vmmServiceRef,
 			CyCustomGraphics2Factory vgFactory) {
@@ -591,7 +591,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	/**
 	 * Method responsible for canceling the loading process
 	 * 
-	 * @return
+	 * @return true if process is canceld, otherwise, returns false.
 	 */
 	public static boolean cancelProcess() {
 
@@ -807,6 +807,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 	/**
 	 * Set properties to the Node domain table
+	 * @param number_lines total number of lines
 	 */
 	public static void setTableProperties(int number_lines) {
 		if (mainProteinDomainTable != null) {

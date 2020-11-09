@@ -19,8 +19,8 @@ public class ProteinScalingFactorHorizontalExpansionTableTaskFactory extends Abs
 
 	/**
 	 * Method responsible for calling thee task 
-	 * @param myNetwork
-	 * @return
+	 * @param myNetwork current network
+	 * @return return current task iterator
 	 */
 	public TaskIterator createTaskIterator(CyNetwork myNetwork) {
 		return new TaskIterator(new ProteinScalingFactorHorizontalExpansionTableTask(myNetwork));

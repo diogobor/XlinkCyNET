@@ -122,7 +122,7 @@ public class Util {
 	/**
 	 * Method responsible for updating protein domains color Map
 	 * 
-	 * @param proteinDomains
+	 * @param proteinDomains list of protein domains
 	 */
 	public static void updateProteinDomainsColorMap(List<ProteinDomain> proteinDomains) {
 
@@ -182,10 +182,10 @@ public class Util {
 	/**
 	 * Check if a specific edge has been modified
 	 * 
-	 * @param myNetwork
-	 * @param netView
-	 * @param edge
-	 * @return
+	 * @param myNetwork current network
+	 * @param netView   current network view
+	 * @param edge      current edge
+	 * @return true if the edge is modified, otherwise, returns false.
 	 */
 	public static boolean isEdgeModified(CyNetwork myNetwork, CyNetworkView netView, CyEdge edge) {
 
@@ -211,9 +211,9 @@ public class Util {
 	/**
 	 * Check if a specific node has been modified
 	 * 
-	 * @param myNetwork
-	 * @param netView
-	 * @param node
+	 * @param myNetwork current network
+	 * @param netView   current network view
+	 * @param node      current node
 	 * @return true if node is modified otherwise returns false
 	 */
 	public static boolean IsNodeModified(CyNetwork myNetwork, CyNetworkView netView, CyNode node) {
@@ -340,6 +340,21 @@ public class Util {
 
 	/**
 	 * Add all edges to the network
+	 * 
+	 * @param myNetwork               current network
+	 * @param node                    current node
+	 * @param style                   current style
+	 * @param netView                 current network view
+	 * @param nodeView                current node view
+	 * @param handleFactory           handle factory
+	 * @param bendFactory             bend factory
+	 * @param lexicon                 lexicon
+	 * @param proteinLength           current protein length
+	 * @param intraLinks              all intralinks
+	 * @param interLinks              all interlinks
+	 * @param taskMonitor             task monitor
+	 * @param textLabel_status_result display current status
+	 * @return true if all edges have been added or updated
 	 */
 	public static boolean addOrUpdateEdgesToNetwork(CyNetwork myNetwork, CyNode node, VisualStyle style,
 			CyNetworkView netView, View<CyNode> nodeView, HandleFactory handleFactory, BendFactory bendFactory,
@@ -475,10 +490,17 @@ public class Util {
 	}
 
 	/**
-	 * Plot all intralinks
+	 * Plot all intralink
 	 * 
-	 * @param source
-	 * @param target
+	 * @param myNetwork     current network
+	 * @param nodeView      current node view
+	 * @param original_node original node
+	 * @param netView       current network view
+	 * @param handleFactory handle factory
+	 * @param bendFactory   bend factory
+	 * @param style         current style
+	 * @param proteinLength length of the current protein
+	 * @param intraLinks    all intralinks
 	 */
 	private static void plotIntraLinks(CyNetwork myNetwork, View<CyNode> nodeView, CyNode original_node,
 			CyNetworkView netView, HandleFactory handleFactory, BendFactory bendFactory, VisualStyle style,
@@ -661,8 +683,9 @@ public class Util {
 	/**
 	 * Method responsible for getting edge from a name
 	 * 
-	 * @param edge_name
-	 * @return
+	 * @param myNetwork current network
+	 * @param edge_name current edge name
+	 * @return return edge
 	 */
 	public static CyEdge getEdge(CyNetwork myNetwork, final String edge_name) {
 
@@ -690,8 +713,9 @@ public class Util {
 	/**
 	 * Method responsible for getting node from a name
 	 * 
-	 * @param node_name
-	 * @return
+	 * @param myNetwork current network
+	 * @param node_name current node name
+	 * @return Node
 	 */
 	public static CyNode getNode(CyNetwork myNetwork, final String node_name) {
 
@@ -719,8 +743,9 @@ public class Util {
 	/**
 	 * Method responsible for getting node from a SUID
 	 * 
-	 * @param node_suid
-	 * @return
+	 * @param myNetwork current network
+	 * @param node_suid current SUID of the node
+	 * @return Node
 	 */
 	public static CyNode getNode(CyNetwork myNetwork, final Long node_suid) {
 
@@ -746,10 +771,20 @@ public class Util {
 	}
 
 	/**
-	 * Plot all inter-links
+	 * Plot all interlinks
 	 * 
-	 * @param sourceNode
-	 * @param targetNode
+	 * @param myNetwork     current network
+	 * @param nodeView      current node view
+	 * @param netView       current network view
+	 * @param handleFactory handle factory
+	 * @param bendFactory   bend factory
+	 * @param style         current style
+	 * @param node          current node
+	 * @param sourceNode    current source node
+	 * @param targetNode    current target node
+	 * @param lexicon       lexicon
+	 * @param proteinLength length of the current protein
+	 * @param interLinks    all interlinks
 	 */
 	private static void plotInterLinks(CyNetwork myNetwork, View<CyNode> nodeView, CyNetworkView netView,
 			HandleFactory handleFactory, BendFactory bendFactory, VisualStyle style, CyNode node, CyNode sourceNode,
@@ -1017,7 +1052,18 @@ public class Util {
 	 * Update all edges that represent interlinks according to their current
 	 * position
 	 * 
-	 * @param edge
+	 * @param myNetwork     current network
+	 * @param node          current node
+	 * @param netView       current network view
+	 * @param handleFactory handle factory
+	 * @param bendFactory   bend factory
+	 * @param style         current style
+	 * @param lexicon       lexicon
+	 * @param edge          edge
+	 * @param sourceNode    current source node
+	 * @param targetNode    current target node
+	 * @param edge_name     current edge name
+	 * @param proteinLength length of current protein
 	 */
 	private static void updateInterLinkEdgesPosition(CyNetwork myNetwork, CyNode node, CyNetworkView netView,
 			HandleFactory handleFactory, BendFactory bendFactory, VisualStyle style, VisualLexicon lexicon, CyEdge edge,
@@ -1216,14 +1262,15 @@ public class Util {
 	 * Update all edges that represent intralinks according to their current
 	 * position
 	 * 
-	 * @param countEdge
-	 * @param x_or_y_Pos_source
-	 * @param xl_pos_source
-	 * @param x_or_y_Pos_target
-	 * @param xl_pos_target
-	 * @param center_position_node
-	 * @param initial_positionX_node
-	 * @param initial_positionY_node
+	 * @param myNetwork              current network
+	 * @param netView                current network view
+	 * @param original_node          current original node
+	 * @param edgeView               current edge view
+	 * @param intraLinks             all intralinks
+	 * @param countEdge              amount of edges
+	 * @param center_position_node   center position of the current node
+	 * @param initial_positionX_node initial position X of the current node
+	 * @param initial_positionY_node initial position Y of the current node
 	 */
 	private static void updateIntraLinkEdgesPosition(CyNetwork myNetwork, CyNetworkView netView, CyNode original_node,
 			View<CyEdge> edgeView, ArrayList<CrossLink> intraLinks, int countEdge, double center_position_node,
@@ -1232,6 +1279,16 @@ public class Util {
 		double factor_scaling_protein_length = myNetwork.getRow(original_node).get(PROTEIN_SCALING_FACTOR_COLUMN_NAME,
 				Double.class) == null ? 1
 						: myNetwork.getRow(original_node).get(PROTEIN_SCALING_FACTOR_COLUMN_NAME, Double.class);
+
+		float offSet = 0;
+		if (factor_scaling_protein_length != 1) {
+			View<CyNode> new_node_view = netView.getNodeView(original_node);
+			if (isProtein_expansion_horizontal) {
+				offSet = ((Number) new_node_view.getVisualProperty(BasicVisualLexicon.NODE_HEIGHT)).floatValue() / 2;
+			} else {
+				offSet = ((Number) new_node_view.getVisualProperty(BasicVisualLexicon.NODE_WIDTH)).floatValue() / 2;
+			}
+		}
 
 		final String node_name_source = intraLinks.get(countEdge).protein_a + " ["
 				+ intraLinks.get(countEdge).pos_site_a + " - " + intraLinks.get(countEdge).pos_site_b + "] - Source";
@@ -1255,9 +1312,11 @@ public class Util {
 			View<CyNode> new_node_source_view = netView.getNodeView(new_node_source);
 			if (isProtein_expansion_horizontal) {
 				new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, x_or_y_Pos_source);
-				new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, initial_positionY_node);
+				new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION,
+						initial_positionY_node + offSet);
 			} else {
-				new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, initial_positionX_node);
+				new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION,
+						initial_positionX_node + offSet);
 				new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, x_or_y_Pos_source);
 			}
 			new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, true);
@@ -1287,9 +1346,11 @@ public class Util {
 			View<CyNode> new_node_target_view = netView.getNodeView(new_node_target);
 			if (isProtein_expansion_horizontal) {
 				new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, x_or_y_Pos_target);
-				new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, initial_positionY_node);
+				new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION,
+						initial_positionY_node + offSet);
 			} else {
-				new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, initial_positionX_node);
+				new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION,
+						initial_positionX_node + offSet);
 				new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, x_or_y_Pos_target);
 			}
 			new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, true);
@@ -1316,12 +1377,12 @@ public class Util {
 	/**
 	 * Check and update all edges of associated nodes
 	 * 
-	 * @param myNetwork
-	 * @param cyApplicationManager
-	 * @param netView
-	 * @param handleFactory
-	 * @param bendFactory
-	 * @param current_node
+	 * @param myNetwork            current network
+	 * @param cyApplicationManager main app manager
+	 * @param netView              current network view
+	 * @param handleFactory        handle factory
+	 * @param bendFactory          bend factory
+	 * @param current_node         current node
 	 */
 	public static void updateAllAssiciatedInterlinkNodes(CyNetwork myNetwork, CyApplicationManager cyApplicationManager,
 			CyNetworkView netView, HandleFactory handleFactory, BendFactory bendFactory, CyNode current_node) {
@@ -1420,9 +1481,9 @@ public class Util {
 	/**
 	 * Set style to node
 	 * 
-	 * @param myNetwork
-	 * @param node
-	 * @param netView
+	 * @param myNetwork current network
+	 * @param node      current node
+	 * @param netView   current network view
 	 */
 	public static void setNodeStyles(CyNetwork myNetwork, CyNode node, CyNetworkView netView) {
 
@@ -1496,19 +1557,19 @@ public class Util {
 	 * Method responsible for restoring edge style when
 	 * showInterlinks/showIntralinks is false
 	 * 
-	 * @param myNetwork
-	 * @param node
-	 * @param netView
-	 * @param handleFactory
-	 * @param bendFactory
-	 * @param style
-	 * @param lexicon
-	 * @param edge
-	 * @param sourceNode
-	 * @param targetNode
-	 * @param edge_name
-	 * @param proteinLength
-	 * @param IsIntraLink
+	 * @param myNetwork     current network
+	 * @param node          current node
+	 * @param netView       current network view
+	 * @param handleFactory handle factory
+	 * @param bendFactory   bend factory
+	 * @param style         current style
+	 * @param lexicon       lexicon
+	 * @param edge          current edge
+	 * @param sourceNode    current source node
+	 * @param targetNode    current target node
+	 * @param edge_name     current edge name
+	 * @param proteinLength length of the current protein
+	 * @param IsIntraLink   check if there is only intralink
 	 */
 	public static void restoreEdgeStyle(CyNetwork myNetwork, CyNode node, CyNetworkView netView,
 			HandleFactory handleFactory, BendFactory bendFactory, VisualStyle style, VisualLexicon lexicon, CyEdge edge,
@@ -1539,13 +1600,13 @@ public class Util {
 	/**
 	 * Method responsible for restoring edges style
 	 * 
-	 * @param taskMonitor
-	 * @param myNetwork
-	 * @param cyApplicationManager
-	 * @param netView
-	 * @param handleFactory
-	 * @param bendFactory
-	 * @param current_node
+	 * @param taskMonitor          task monitor
+	 * @param myNetwork            current network
+	 * @param cyApplicationManager main app manager
+	 * @param netView              current network view
+	 * @param handleFactory        handle factory
+	 * @param bendFactory          bend factory
+	 * @param current_node         current node
 	 */
 	public static void restoreEdgesStyle(final TaskMonitor taskMonitor, CyNetwork myNetwork,
 			CyApplicationManager cyApplicationManager, CyNetworkView netView, HandleFactory handleFactory,
@@ -1630,6 +1691,9 @@ public class Util {
 	/**
 	 * Method responsible for removing all intralinks of a node when the layout is
 	 * restored
+	 * 
+	 * @param myNetwork current network
+	 * @param netView   current network view
 	 */
 	public static void hideAllIntraLinks(CyNetwork myNetwork, CyNetworkView netView) {
 
@@ -1676,7 +1740,10 @@ public class Util {
 	/**
 	 * Method responsible for updating table row header
 	 * 
-	 * @param number_lines
+	 * @param number_lines                  total number of lines
+	 * @param mainProteinDomainTable        main table
+	 * @param rowHeader                     row header of the table
+	 * @param proteinDomainTableScrollPanel scroll panel of the table
 	 */
 	public static void updateRowHeader(int number_lines, JTable mainProteinDomainTable, JList rowHeader,
 			JScrollPane proteinDomainTableScrollPanel) {
@@ -1710,6 +1777,10 @@ public class Util {
 
 	/**
 	 * Get all links from adjacent edges of a node
+	 * 
+	 * @param node      current node
+	 * @param myNetwork current network
+	 * @return all intra and interlinks
 	 */
 	public static Tuple2<ArrayList<CrossLink>, ArrayList<CrossLink>> getAllLinksFromAdjacentEdgesNode(CyNode node,
 			CyNetwork myNetwork) {
@@ -1797,6 +1868,9 @@ public class Util {
 
 	/**
 	 * Get protein domains in PFam database
+	 * 
+	 * @param myCurrentRow current row of the table
+	 * @return all protein domains
 	 */
 	public static ArrayList<ProteinDomain> getProteinDomains(CyRow myCurrentRow) {
 		Object protein_a_name = myCurrentRow.getRaw(PROTEIN_A);
@@ -1833,8 +1907,8 @@ public class Util {
 	/**
 	 * Connect to Supfam and get domains
 	 * 
-	 * @param proteinID
-	 * @return
+	 * @param proteinID protein id
+	 * @return all protein domains
 	 */
 	private static ArrayList<ProteinDomain> getProteinDomainsFromSupfam(String proteinID) {
 		try {
@@ -1929,8 +2003,8 @@ public class Util {
 	/**
 	 * Connect to PFam and get domains
 	 * 
-	 * @param proteinID
-	 * @return
+	 * @param proteinID protein id
+	 * @return all protein domains
 	 */
 	private static ArrayList<ProteinDomain> getProteinDomainsFromPfam(String proteinID) {
 
@@ -2007,10 +2081,10 @@ public class Util {
 	}
 
 	/**
-	 * Convert Pfam object to XML
+	 * Convert Subpfam / Pfam object to XML
 	 * 
-	 * @param xmlString
-	 * @return
+	 * @param xmlString return from webservice
+	 * @return the document object
 	 */
 	private static Document convertStringToXMLDocument(String xmlString) {
 		// Parser that produces DOM object trees from XML content
@@ -2035,8 +2109,8 @@ public class Util {
 	/**
 	 * Returns X position of a node
 	 * 
-	 * @param nodeView
-	 * @return
+	 * @param nodeView current node view
+	 * @return position
 	 */
 	private static double getXPositionOf(View<CyNode> nodeView) {
 		return nodeView.getVisualProperty(BasicVisualLexicon.NODE_X_LOCATION);
@@ -2045,8 +2119,8 @@ public class Util {
 	/**
 	 * Returns Y position of a node
 	 * 
-	 * @param nodeView
-	 * @return
+	 * @param nodeView current node view
+	 * @return position
 	 */
 	private static double getYPositionOf(View<CyNode> nodeView) {
 		return nodeView.getVisualProperty(BasicVisualLexicon.NODE_Y_LOCATION);
@@ -2055,7 +2129,7 @@ public class Util {
 	/**
 	 * Check if the operating system is Windows
 	 * 
-	 * @return
+	 * @return true if the operating system is Windows.
 	 */
 	public static boolean isWindows() {
 		return (OS.indexOf("win") >= 0);
@@ -2064,7 +2138,7 @@ public class Util {
 	/**
 	 * Check if the operating system is Linux
 	 * 
-	 * @return
+	 * @return true if the operating system is Windows.
 	 */
 	public static boolean isUnix() {
 		return (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0);

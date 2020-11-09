@@ -4,8 +4,8 @@ package de.fmp.liulab.utils;
  * Class responsible for creating tuple
  * @author diogobor
  *
- * @param <K>
- * @param <V>
+ * @param <K> first param
+ * @param <V> second param
  */
 public class Tuple2<K, V> {
 	 

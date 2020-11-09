@@ -26,8 +26,8 @@ public class ControlURLAction extends AbstractCyAction {
 
 	/**
 	 * Constructor
-	 * @param openBrowser
-	 * @param version
+	 * @param openBrowser open browser reference
+	 * @param version version of the app
 	 */
 	public ControlURLAction(OpenBrowser openBrowser, String version) {
 		super(MENU_NAME);

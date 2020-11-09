@@ -21,9 +21,9 @@ public class LoadProteinDomainsTaskFactory extends AbstractTaskFactory {
 
 	/**
 	 * Constructor
-	 * @param cyApplicationManager
-	 * @param vmmServiceRef
-	 * @param customChartListener
+	 * @param cyApplicationManager main app manager
+	 * @param vmmServiceRef visual mapping manager
+	 * @param customChartListener chart style listener
 	 */
 	public LoadProteinDomainsTaskFactory(CyApplicationManager cyApplicationManager, final VisualMappingManager vmmServiceRef,
 			CustomChartListener customChartListener) {

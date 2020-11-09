@@ -21,9 +21,9 @@ public class SetDomainColorTaskFactory extends AbstractTaskFactory {
 	
 	/**
 	 * Constructor
-	 * @param cyApplicationManager
-	 * @param vmmServiceRef
-	 * @param customChartListener
+	 * @param cyApplicationManager main app manager
+	 * @param vmmServiceRef isual mapping manager
+	 * @param customChartListener chart style listener
 	 */
 	public SetDomainColorTaskFactory(CyApplicationManager cyApplicationManager, final VisualMappingManager vmmServiceRef,
 			CustomChartListener customChartListener) {

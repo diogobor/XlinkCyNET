@@ -16,10 +16,10 @@ public class ProteinDomain implements Comparable<ProteinDomain> {
 	/**
 	 * Constructor
 	 * 
-	 * @param name
-	 * @param startId
-	 * @param endId
-	 * @param eValue
+	 * @param name protein domain name
+	 * @param startId start index
+	 * @param endId end index
+	 * @param eValue score
 	 */
 	public ProteinDomain(String name, int startId, int endId, String eValue) {
 		this.name = name;
@@ -31,10 +31,10 @@ public class ProteinDomain implements Comparable<ProteinDomain> {
 	/**
 	 * Constructor 2
 	 * 
-	 * @param name
-	 * @param startId
-	 * @param endId
-	 * @param color
+	 * @param name protein domain name
+	 * @param startId start index
+	 * @param endId end index
+	 * @param color score
 	 */
 	public ProteinDomain(String name, int startId, int endId, java.awt.Color color) {
 		this.name = name;

@@ -126,12 +126,12 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	/**
 	 * Constructor
 	 * 
-	 * @param cyApplicationManager
-	 * @param vmmServiceRef
-	 * @param vgFactory
-	 * @param bendFactory
-	 * @param handleFactory
-	 * @param forcedWindowOpen
+	 * @param cyApplicationManager main app manager
+	 * @param vmmServiceRef        visual mapping manager
+	 * @param vgFactory            graphic factory
+	 * @param bendFactory          bend factory
+	 * @param handleFactory        handle factory
+	 * @param forcedWindowOpen     forced window open
 	 */
 	public MainSingleNodeTask(CyApplicationManager cyApplicationManager, final VisualMappingManager vmmServiceRef,
 			CyCustomGraphics2Factory<?> vgFactory, BendFactory bendFactory, HandleFactory handleFactory,
@@ -289,6 +289,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting the selected node...");
 		nodeView = netView.getNodeView(node);
 
+		double tmp_scaling_factor = Util.node_label_factor_size;
+		Util.node_label_factor_size = 1.0;
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting node styles...");
 		Util.setNodeStyles(myNetwork, node, netView);
 		taskMonitor.setProgress(0.2);
@@ -304,11 +306,26 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		isPlotDone = Util.addOrUpdateEdgesToNetwork(myNetwork, node, style, netView, nodeView, handleFactory,
 				bendFactory, lexicon, Util.getProteinLengthScalingFactor(), intraLinks, interLinks, taskMonitor, null);
 		taskMonitor.setProgress(0.95);
+		Util.node_label_factor_size = tmp_scaling_factor;
+
+		if (Util.node_label_factor_size != 1)
+			resizeProtein(taskMonitor);
 
 		// Apply the change to the view
 		style.apply(netView);
 		netView.updateView();
 		taskMonitor.setProgress(1.0);
+	}
+
+	private void resizeProtein(final TaskMonitor taskMonitor) {
+		isPlotDone = false;
+		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Resizing node length...");
+		Util.setNodeStyles(myNetwork, node, netView);
+		taskMonitor.setProgress(0.2);
+
+		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Resizing edges...");
+		isPlotDone = Util.addOrUpdateEdgesToNetwork(myNetwork, node, style, netView, nodeView, handleFactory,
+				bendFactory, lexicon, Util.getProteinLengthScalingFactor(), intraLinks, interLinks, taskMonitor, null);
 	}
 
 	/**
@@ -872,7 +889,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 						textLabel_status_result.setText("Setting node styles...");
 						taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting node styles...");
-						Util.node_label_factor_size = (double) spinner_factor_size_node.getValue();
+
+						Util.node_label_factor_size = 1;// (double) spinner_factor_size_node.getValue();
 						Util.setNodeStyles(myNetwork, node, netView);
 						taskMonitor.setProgress(0.2);
 
@@ -897,6 +915,9 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 								handleFactory, bendFactory, lexicon, Util.getProteinLengthScalingFactor(), intraLinks,
 								interLinks, taskMonitor, textLabel_status_result);
 						taskMonitor.setProgress(0.95);
+
+						Util.node_label_factor_size = (double) spinner_factor_size_node.getValue();
+						resizeProtein(taskMonitor);
 
 						// Apply the change to the view
 						style.apply(netView);

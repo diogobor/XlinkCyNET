@@ -20,10 +20,10 @@ public class CrossLink implements Comparable<CrossLink> {
 	
 	/**
 	 * Constructor
-	 * @param ptn_a
-	 * @param ptn_b
-	 * @param pos_a
-	 * @param pos_b
+	 * @param ptn_a protein a name
+	 * @param ptn_b protein b name
+	 * @param pos_a position a
+	 * @param pos_b position b
 	 */
 	public CrossLink(String ptn_a, String ptn_b, int pos_a, int pos_b) {
 		this.protein_a = ptn_a;

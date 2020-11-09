@@ -28,12 +28,12 @@ public class MainSingleNodeTaskFactory extends AbstractTaskFactory {
 	/**
 	 * Constructor
 	 * 
-	 * @param cyApplicationManager
-	 * @param vmmServiceRef
-	 * @param customChartListener
-	 * @param bendFactory
-	 * @param handleFactory
-	 * @param forcedWindowOpen
+	 * @param cyApplicationManager main app manager
+	 * @param vmmServiceRef visual mapping manager
+	 * @param customChartListener chart style listener
+	 * @param bendFactory bend factory
+	 * @param handleFactory handle factory
+	 * @param forcedWindowOpen forced window open
 	 */
 	public MainSingleNodeTaskFactory(CyApplicationManager cyApplicationManager,
 			final VisualMappingManager vmmServiceRef, CustomChartListener customChartListener, BendFactory bendFactory,

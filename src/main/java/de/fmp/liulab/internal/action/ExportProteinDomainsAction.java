@@ -42,7 +42,7 @@ public class ExportProteinDomainsAction extends AbstractCyAction {
 	/**
 	 * Constructor
 	 * 
-	 * @param cyApplicationManager
+	 * @param cyApplicationManager main app manager
 	 */
 	public ExportProteinDomainsAction(CyApplicationManager cyApplicationManager) {
 		super(MENU_NAME);
@@ -87,8 +87,9 @@ public class ExportProteinDomainsAction extends AbstractCyAction {
 	}
 
 	/**
-	 * Returns the selected file from a JFileChooser, including the extension from
-	 * the file filter.
+	 * Returns the selected file from a JFileChooser, including the extension from the file filter.
+	 * @param c file chooser reference
+	 * @return return the file
 	 */
 	public static File getSelectedFileWithExtension(JFileChooser c) {
 		File file = c.getSelectedFile();
@@ -107,8 +108,8 @@ public class ExportProteinDomainsAction extends AbstractCyAction {
 	}
 
 	/**
-	 * Method responsible for creating the output file with all domains for the
-	 * selected network
+	 * Method responsible for creating the output file with all domains for the selected network
+	 * @param fileName file name
 	 */
 	private void createProteinDomainsFile(String fileName) {
 		try {
