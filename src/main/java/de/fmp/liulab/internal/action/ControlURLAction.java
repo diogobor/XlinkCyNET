@@ -1,7 +1,5 @@
 package de.fmp.liulab.internal.action;
 
-import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
-
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
