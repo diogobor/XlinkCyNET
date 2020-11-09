@@ -1208,7 +1208,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		} else
 			nodeView.setLockedValue(BasicVisualLexicon.NODE_TOOLTIP, "<html><p><b>Protein:</b></p><p>" + protein_name
-					+ " [1-" + Util.getProteinLength() + "]</p></html>");
+					+ " [1-" + (int) Util.getProteinLength() + "]</p></html>");
 		// ############################### END ################################
 	}
 
