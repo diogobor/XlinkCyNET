@@ -1,6 +1,8 @@
 package de.fmp.liulab.task;
 
 import org.cytoscape.application.CyApplicationManager;
+import org.cytoscape.model.CyTableFactory;
+import org.cytoscape.model.CyTableManager;
 import org.cytoscape.view.presentation.customgraphics.CyCustomGraphics2Factory;
 import org.cytoscape.view.presentation.property.values.BendFactory;
 import org.cytoscape.view.presentation.property.values.HandleFactory;
@@ -23,26 +25,31 @@ public class MainSingleNodeTaskFactory extends AbstractTaskFactory {
 	private CyCustomGraphics2Factory vgFactory;
 	private HandleFactory handleFactory;
 	private BendFactory bendFactory;
+	private CyTableFactory tableFactory;
+	private CyTableManager tableManager;
 	private boolean forcedWindowOpen;
 
 	/**
 	 * Constructor
 	 * 
 	 * @param cyApplicationManager main app manager
-	 * @param vmmServiceRef visual mapping manager
-	 * @param customChartListener chart style listener
-	 * @param bendFactory bend factory
-	 * @param handleFactory handle factory
-	 * @param forcedWindowOpen forced window open
+	 * @param vmmServiceRef        visual mapping manager
+	 * @param customChartListener  chart style listener
+	 * @param bendFactory          bend factory
+	 * @param handleFactory        handle factory
+	 * @param forcedWindowOpen     forced window open
 	 */
 	public MainSingleNodeTaskFactory(CyApplicationManager cyApplicationManager,
 			final VisualMappingManager vmmServiceRef, CustomChartListener customChartListener, BendFactory bendFactory,
-			HandleFactory handleFactory, boolean forcedWindowOpen) {
+			HandleFactory handleFactory, CyTableFactory tableFactory, CyTableManager tableManager,
+			boolean forcedWindowOpen) {
 		this.cyApplicationManager = cyApplicationManager;
 		this.vmmServiceRef = vmmServiceRef;
 		this.vgFactory = customChartListener.getFactory();
 		this.bendFactory = bendFactory;
 		this.handleFactory = handleFactory;
+		this.tableFactory = tableFactory;
+		this.tableManager = tableManager;
 		this.forcedWindowOpen = forcedWindowOpen;
 	}
 
@@ -57,7 +64,7 @@ public class MainSingleNodeTaskFactory extends AbstractTaskFactory {
 	 */
 	public TaskIterator createTaskIterator() {
 		return new TaskIterator(new MainSingleNodeTask(cyApplicationManager, vmmServiceRef, vgFactory, bendFactory,
-				handleFactory, forcedWindowOpen));
+				handleFactory, tableFactory, tableManager, forcedWindowOpen));
 	}
 
 }

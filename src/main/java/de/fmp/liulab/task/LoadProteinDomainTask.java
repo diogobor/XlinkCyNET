@@ -48,9 +48,8 @@ import org.cytoscape.model.CyIdentifiable;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyRow;
-import org.cytoscape.model.CyTable;
 import org.cytoscape.model.CyTableFactory;
-import org.cytoscape.task.edit.MapTableToNetworkTablesTaskFactory;
+import org.cytoscape.model.CyTableManager;
 import org.cytoscape.view.model.VisualLexicon;
 import org.cytoscape.view.presentation.customgraphics.CyCustomGraphics2Factory;
 import org.cytoscape.view.vizmap.VisualMappingManager;
@@ -77,7 +76,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	private CyNetwork myNetwork;
 	private CyCustomGraphics2Factory vgFactory;
 	private CyTableFactory tableFactory;
-	private MapTableToNetworkTablesTaskFactory mapTableToNetworkTablesTaskFactory;
+	private CyTableManager tableManager;
 
 	public static VisualLexicon lexicon;
 	public static VisualStyle style;
@@ -122,13 +121,13 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	 * @param tableFactory         table factory
 	 */
 	public LoadProteinDomainTask(CyApplicationManager cyApplicationManager, final VisualMappingManager vmmServiceRef,
-			CyCustomGraphics2Factory vgFactory, CyTableFactory tableFactory,
-			MapTableToNetworkTablesTaskFactory mapTableToNetworkTablesTaskFactory) {
+			CyCustomGraphics2Factory vgFactory, CyTableFactory tableFactory, CyTableManager tableManager) {
 		this.cyApplicationManager = cyApplicationManager;
 		this.myNetwork = cyApplicationManager.getCurrentNetwork();
 		this.vgFactory = vgFactory;
 		this.tableFactory = tableFactory;
-		this.mapTableToNetworkTablesTaskFactory = mapTableToNetworkTablesTaskFactory;
+		this.tableManager = tableManager;
+
 		this.style = vmmServiceRef.getCurrentVisualStyle();
 		// Get the current Visual Lexicon
 		this.lexicon = cyApplicationManager.getCurrentRenderingEngine().getVisualLexicon();
@@ -397,7 +396,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 			if (pfamDoStop)
 				break;
 
-			CyNode current_node = Util.getNode(myNetwork, geneDomain.getGeneName);
+			CyNode current_node = Util.getNode(myNetwork, geneDomain.geneName);
 
 			if (current_node != null) {
 				myCurrentRow = myNetwork.getRow(current_node);
@@ -472,7 +471,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 								int countPtnDomain = 0;
 								for (final GeneDomain geneDomain : geneListFromTable) {
 
-									tableDataModel.setValueAt(geneDomain.getGeneName, countPtnDomain, 0);
+									tableDataModel.setValueAt(geneDomain.geneName, countPtnDomain, 0);
 									tableDataModel.setValueAt(ToStringProteinDomains(geneDomain.proteinDomains),
 											countPtnDomain, 1);
 									countPtnDomain++;
@@ -551,7 +550,21 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 									taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting nodes information...");
 									try {
 										setNodesInformation(taskMonitor);
-										createProteinDomainTable();
+										if (geneListFromTable.size() > 0) {
+											Util.create_or_update_ProteinDomainTable(taskMonitor, tableManager,
+													tableFactory, geneListFromTable);
+
+										}
+
+										taskMonitor.setProgress(1.0);
+										taskMonitor.showMessage(TaskMonitor.Level.INFO,
+												"Protein domains have been loaded successfully!");
+
+										mainFrame.dispose();
+										JOptionPane.showMessageDialog(null,
+												"Protein domains have been loaded successfully!",
+												"XlinkCyNET - Protein domains", JOptionPane.INFORMATION_MESSAGE);
+
 									} catch (Exception e) {
 										textLabel_status_result.setText("ERROR: Check Task History.");
 										taskMonitor.showMessage(TaskMonitor.Level.ERROR, "ERROR: " + e.getMessage());
@@ -595,21 +608,6 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 			}
 		});
 		mainPanel.add(cancelButton);
-	}
-
-	private void createProteinDomainTable() {
-		CyTable table = tableFactory.createTable("Protein Domain Table", "name", String.class, true, true);
-		table.setPublic(true);
-		
-		String proteinColumnName = "protein";
-		table.createColumn(proteinColumnName, String.class, false);
-		String[] keys = { "PROTEIN1", "PROTEIN2" };
-		CyRow row = table.getRow(keys[0]);
-		row.set(proteinColumnName, "PROTEIN11");
-		row = table.getRow(keys[1]);
-		row.set(proteinColumnName, "PROTEIN22");
-
-		super.insertTasksAfterCurrentTask(mapTableToNetworkTablesTaskFactory.createTaskIterator(table));
 	}
 
 	/**
@@ -717,7 +715,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 			Optional<CyRow> isNodePresent = myNetwork.getDefaultNodeTable().getAllRows().stream()
 					.filter(new Predicate<CyRow>() {
 						public boolean test(CyRow o) {
-							return o.get(CyNetwork.NAME, String.class).equals(geneDomain.getGeneName);
+							return o.get(CyNetwork.NAME, String.class).equals(geneDomain.geneName);
 						}
 					}).findFirst();
 
@@ -741,13 +739,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 			}
 		}
 
-		taskMonitor.setProgress(1.0);
-		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Protein domains have been loaded successfully!");
-
-		mainFrame.dispose();
-		JOptionPane.showMessageDialog(null, "Protein domains have been loaded successfully!",
-				"XlinkCyNET - Protein domains", JOptionPane.INFORMATION_MESSAGE);
-
+		taskMonitor.setProgress(0.98);
 	}
 
 	/**

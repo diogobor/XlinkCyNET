@@ -12,9 +12,9 @@ import org.cytoscape.application.swing.CyNodeViewContextMenuFactory;
 import org.cytoscape.application.swing.CySwingApplication;
 import org.cytoscape.application.swing.CytoPanelComponent;
 import org.cytoscape.model.CyTableFactory;
+import org.cytoscape.model.CyTableManager;
 import org.cytoscape.model.events.RowsSetListener;
 import org.cytoscape.service.util.AbstractCyActivator;
-import org.cytoscape.task.edit.MapTableToNetworkTablesTaskFactory;
 import org.cytoscape.util.swing.OpenBrowser;
 import org.cytoscape.view.model.events.ViewChangedListener;
 import org.cytoscape.view.presentation.customgraphics.CyCustomGraphics2Factory;
@@ -82,10 +82,9 @@ public class CyActivator extends AbstractCyActivator {
 
 		// ### 3.2 - LOAD ####
 		CyTableFactory tableFactory = getService(bc, CyTableFactory.class);
-		MapTableToNetworkTablesTaskFactory mapTableToNetworkTablesTaskFactory = getService(bc,
-				MapTableToNetworkTablesTaskFactory.class);
+		CyTableManager tableManager = getService(bc, CyTableManager.class);
 		TaskFactory myLoadProteinDomainsFactory = new LoadProteinDomainsTaskFactory(cyApplicationManager, vmmServiceRef,
-				customChartListener, tableFactory, mapTableToNetworkTablesTaskFactory);
+				customChartListener, tableFactory, tableManager);
 
 		LoadProteinDomainsAction myLoadProteinDomainsAction = new LoadProteinDomainsAction(dialogTaskManager,
 				myLoadProteinDomainsFactory);
@@ -109,7 +108,7 @@ public class CyActivator extends AbstractCyActivator {
 				CyCustomGraphics2Factory.class);
 
 		TaskFactory mySingleNodeContextMenuFactory = new MainSingleNodeTaskFactory(cyApplicationManager, vmmServiceRef,
-				customChartListener, bendFactory, handleFactory, true);
+				customChartListener, bendFactory, handleFactory, tableFactory, tableManager, true);
 
 		CyNodeViewContextMenuFactory myNodeViewContextMenuFactory = new MainContextMenu(mySingleNodeContextMenuFactory,
 				dialogTaskManager);
@@ -123,7 +122,7 @@ public class CyActivator extends AbstractCyActivator {
 		myNodeViewContextMenuFactoryProps.put(ServiceProperties.ENABLE_FOR, "networkAndView");
 
 		TaskFactory mySingleNodeShortCutFactory = new MainSingleNodeTaskFactory(cyApplicationManager, vmmServiceRef,
-				customChartListener, bendFactory, handleFactory, false);
+				customChartListener, bendFactory, handleFactory, tableFactory, tableManager, false);
 
 		ShortcutSingleNodeExecuteAction myShortcutSingleNodeAction = new ShortcutSingleNodeExecuteAction(
 				dialogTaskManager, mySingleNodeShortCutFactory);

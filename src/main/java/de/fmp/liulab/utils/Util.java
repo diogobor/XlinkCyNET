@@ -33,6 +33,9 @@ import org.cytoscape.model.CyIdentifiable;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyRow;
+import org.cytoscape.model.CyTable;
+import org.cytoscape.model.CyTableFactory;
+import org.cytoscape.model.CyTableManager;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.View;
 import org.cytoscape.view.model.VisualLexicon;
@@ -56,6 +59,7 @@ import org.xml.sax.InputSource;
 import de.fmp.liulab.internal.UpdateViewListener;
 import de.fmp.liulab.internal.view.JTableRowRenderer;
 import de.fmp.liulab.model.CrossLink;
+import de.fmp.liulab.model.GeneDomain;
 import de.fmp.liulab.model.ProteinDomain;
 import de.fmp.liulab.task.LoadProteinDomainTask;
 import de.fmp.liulab.task.MainSingleNodeTask;
@@ -86,7 +90,7 @@ public class Util {
 	public static Color InterLinksColor = new Color(102, 102, 0);
 	public static Color NodeBorderColor = new Color(315041);// Dark green
 	public static boolean showLinksLegend = false;
-	public static boolean showIntraLinks = true;
+	public static boolean showIntraLinks = false;
 	public static boolean showInterLinks = true;
 	public static Integer edge_label_font_size = 12;
 	public static Integer node_label_font_size = 12;
@@ -708,6 +712,61 @@ public class Util {
 		}
 
 		return _edge;
+	}
+
+	/**
+	 * Create the Protein domain table
+	 * 
+	 * @param taskMonitor  task monitor
+	 * @param tableManager table manager
+	 * @param tableFactory table factory
+	 * @param geneList     list of genes
+	 */
+	public static void create_or_update_ProteinDomainTable(TaskMonitor taskMonitor, CyTableManager tableManager,
+			CyTableFactory tableFactory, List<GeneDomain> geneList) {
+
+		if (tableManager == null || tableFactory == null)
+			return;
+
+		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Creating or updating protein domain table");
+
+		Set<CyTable> all_tables = tableManager.getAllTables(false);
+
+		Optional<CyTable> existingTable = all_tables.stream().filter(new Predicate<CyTable>() {
+			public boolean test(CyTable o) {
+				return o.getTitle().equals("Protein Domain Table");
+			}
+		}).findFirst();
+
+		CyTable table = null;
+		String proteinColumnName = "protein_domain";
+		if (!existingTable.isPresent()) {// Check if table exists
+
+			table = tableFactory.createTable("Protein Domain Table", CyNetwork.NAME, String.class, true, true);
+			table.createColumn(proteinColumnName, String.class, false);
+			tableManager.addTable(table);
+
+		} else {
+			table = existingTable.get();
+
+		}
+
+		StringBuilder sb_domains = new StringBuilder();
+		for (final GeneDomain geneDomain : geneList) {
+			CyRow row = table.getRow(geneDomain.geneName);
+
+			for (ProteinDomain domain : geneDomain.proteinDomains) {
+				sb_domains.append(domain.name);
+				sb_domains.append("[");
+				sb_domains.append(domain.startId);
+				sb_domains.append("-");
+				sb_domains.append(domain.endId);
+				sb_domains.append("], ");
+			}
+
+			row.set(proteinColumnName, sb_domains.substring(0, sb_domains.length() - 2));
+			sb_domains.delete(0, sb_domains.length());
+		}
 	}
 
 	/**

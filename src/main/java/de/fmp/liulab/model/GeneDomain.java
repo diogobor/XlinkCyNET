@@ -1,25 +1,29 @@
 package de.fmp.liulab.model;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Model class for protein domains of each gene
+ * 
  * @author borges.diogo
  *
  */
 public class GeneDomain implements Comparable<GeneDomain> {
 
-	public String getGeneName;
+	public String geneName;
 	public List<ProteinDomain> proteinDomains;
 
 	/**
 	 * Constructor
-	 * @param geneName gene name
+	 * 
+	 * @param geneName       gene name
 	 * @param proteinDomains all protein domains
 	 */
 	public GeneDomain(String geneName, List<ProteinDomain> proteinDomains) {
-		this.getGeneName = geneName;
+		this.geneName = geneName;
 		this.proteinDomains = proteinDomains;
+		Collections.sort(this.proteinDomains);
 	}
 
 	/**
@@ -27,7 +31,7 @@ public class GeneDomain implements Comparable<GeneDomain> {
 	 */
 	@Override
 	public int compareTo(GeneDomain o) {
-		return getGeneName.compareTo(o.getGeneName);
+		return geneName.compareTo(o.geneName);
 	}
 
 	/**
@@ -35,6 +39,6 @@ public class GeneDomain implements Comparable<GeneDomain> {
 	 */
 	@Override
 	public String toString() {
-		return "Gene {" + this.getGeneName + "}";
+		return "Gene {" + this.geneName + "}";
 	}
 }
