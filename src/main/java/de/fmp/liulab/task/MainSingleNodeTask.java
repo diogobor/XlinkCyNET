@@ -50,8 +50,6 @@ import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyRow;
-import org.cytoscape.model.CyTableFactory;
-import org.cytoscape.model.CyTableManager;
 import org.cytoscape.model.CyTableUtil;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.View;
@@ -91,8 +89,6 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	private CyCustomGraphics2Factory vgFactory;
 	private HandleFactory handleFactory;
 	private BendFactory bendFactory;
-	private CyTableFactory tableFactory;
-	private CyTableManager tableManager;
 
 	private boolean forcedWindowOpen;
 	public static VisualStyle style;
@@ -141,7 +137,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	 */
 	public MainSingleNodeTask(CyApplicationManager cyApplicationManager, final VisualMappingManager vmmServiceRef,
 			CyCustomGraphics2Factory<?> vgFactory, BendFactory bendFactory, HandleFactory handleFactory,
-			CyTableFactory tableFactory, CyTableManager tableManager, boolean forcedWindowOpen) {
+			boolean forcedWindowOpen) {
 
 		this.cyApplicationManager = cyApplicationManager;
 		this.netView = cyApplicationManager.getCurrentNetworkView();
@@ -152,8 +148,6 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		lexicon = cyApplicationManager.getCurrentRenderingEngine().getVisualLexicon();
 		this.bendFactory = bendFactory;
 		this.handleFactory = handleFactory;
-		this.tableFactory = tableFactory;
-		this.tableManager = tableManager;
 		this.forcedWindowOpen = forcedWindowOpen;
 
 		// Initialize protein domain colors map if LoadProteinDomainTask has not been
@@ -326,15 +320,14 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		taskMonitor.setProgress(1.0);
 	}
 
-	private void create_or_update_protein_domain_table(TaskMonitor taskMonitor, CyTableManager tableManager,
-			CyTableFactory tableFactory, List<ProteinDomain> proteinDomainList) {
+	private void update_protein_domain_table(TaskMonitor taskMonitor, List<ProteinDomain> proteinDomainList) {
 
-		if(proteinDomainList.size() > 0) {
+		if (proteinDomainList.size() > 0) {
 			String node_name = myNetwork.getDefaultNodeTable().getRow(node.getSUID()).getRaw(CyNetwork.NAME).toString();
 			List<GeneDomain> geneList = new ArrayList<GeneDomain>();
 			geneList.add(new GeneDomain(node_name, proteinDomainList));
-			Util.create_or_update_ProteinDomainTable(taskMonitor, tableManager, tableFactory, geneList);
-			
+			Util.update_ProteinDomainColumn(taskMonitor, myNetwork, geneList);
+
 		}
 	}
 
@@ -928,8 +921,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 						taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting protein domains to node...");
 						setNodeDomainColors();
 						taskMonitor.setProgress(0.75);
-						
-						create_or_update_protein_domain_table(taskMonitor, tableManager, tableFactory, myProteinDomains);
+
+						update_protein_domain_table(taskMonitor, myProteinDomains);
 						taskMonitor.setProgress(0.85);
 
 						textLabel_status_result.setText("Setting styles to the edges...");

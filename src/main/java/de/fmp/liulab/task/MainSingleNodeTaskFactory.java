@@ -25,8 +25,6 @@ public class MainSingleNodeTaskFactory extends AbstractTaskFactory {
 	private CyCustomGraphics2Factory vgFactory;
 	private HandleFactory handleFactory;
 	private BendFactory bendFactory;
-	private CyTableFactory tableFactory;
-	private CyTableManager tableManager;
 	private boolean forcedWindowOpen;
 
 	/**
@@ -41,15 +39,12 @@ public class MainSingleNodeTaskFactory extends AbstractTaskFactory {
 	 */
 	public MainSingleNodeTaskFactory(CyApplicationManager cyApplicationManager,
 			final VisualMappingManager vmmServiceRef, CustomChartListener customChartListener, BendFactory bendFactory,
-			HandleFactory handleFactory, CyTableFactory tableFactory, CyTableManager tableManager,
-			boolean forcedWindowOpen) {
+			HandleFactory handleFactory, boolean forcedWindowOpen) {
 		this.cyApplicationManager = cyApplicationManager;
 		this.vmmServiceRef = vmmServiceRef;
 		this.vgFactory = customChartListener.getFactory();
 		this.bendFactory = bendFactory;
 		this.handleFactory = handleFactory;
-		this.tableFactory = tableFactory;
-		this.tableManager = tableManager;
 		this.forcedWindowOpen = forcedWindowOpen;
 	}
 
@@ -64,7 +59,7 @@ public class MainSingleNodeTaskFactory extends AbstractTaskFactory {
 	 */
 	public TaskIterator createTaskIterator() {
 		return new TaskIterator(new MainSingleNodeTask(cyApplicationManager, vmmServiceRef, vgFactory, bendFactory,
-				handleFactory, tableFactory, tableManager, forcedWindowOpen));
+				handleFactory, forcedWindowOpen));
 	}
 
 }

@@ -48,8 +48,6 @@ import org.cytoscape.model.CyIdentifiable;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyRow;
-import org.cytoscape.model.CyTableFactory;
-import org.cytoscape.model.CyTableManager;
 import org.cytoscape.view.model.VisualLexicon;
 import org.cytoscape.view.presentation.customgraphics.CyCustomGraphics2Factory;
 import org.cytoscape.view.vizmap.VisualMappingManager;
@@ -75,8 +73,6 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	private CyApplicationManager cyApplicationManager;
 	private CyNetwork myNetwork;
 	private CyCustomGraphics2Factory vgFactory;
-	private CyTableFactory tableFactory;
-	private CyTableManager tableManager;
 
 	public static VisualLexicon lexicon;
 	public static VisualStyle style;
@@ -118,15 +114,12 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	 * @param cyApplicationManager main app manager
 	 * @param vmmServiceRef        visual mapping manager
 	 * @param vgFactory            graphic factory
-	 * @param tableFactory         table factory
 	 */
 	public LoadProteinDomainTask(CyApplicationManager cyApplicationManager, final VisualMappingManager vmmServiceRef,
-			CyCustomGraphics2Factory vgFactory, CyTableFactory tableFactory, CyTableManager tableManager) {
+			CyCustomGraphics2Factory vgFactory) {
 		this.cyApplicationManager = cyApplicationManager;
 		this.myNetwork = cyApplicationManager.getCurrentNetwork();
 		this.vgFactory = vgFactory;
-		this.tableFactory = tableFactory;
-		this.tableManager = tableManager;
 
 		this.style = vmmServiceRef.getCurrentVisualStyle();
 		// Get the current Visual Lexicon
@@ -551,8 +544,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 									try {
 										setNodesInformation(taskMonitor);
 										if (geneListFromTable.size() > 0) {
-											Util.create_or_update_ProteinDomainTable(taskMonitor, tableManager,
-													tableFactory, geneListFromTable);
+											Util.update_ProteinDomainColumn(taskMonitor, myNetwork, geneListFromTable);
 
 										}
 

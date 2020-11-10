@@ -33,9 +33,6 @@ import org.cytoscape.model.CyIdentifiable;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyRow;
-import org.cytoscape.model.CyTable;
-import org.cytoscape.model.CyTableFactory;
-import org.cytoscape.model.CyTableManager;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.View;
 import org.cytoscape.view.model.VisualLexicon;
@@ -74,6 +71,7 @@ public class Util {
 
 	public static String PROTEIN_SCALING_FACTOR_COLUMN_NAME = "scaling_factor";
 	public static String HORIZONTAL_EXPANSION_COLUMN_NAME = "is_horizontal_expansion";
+	public static String PROTEIN_DOMAIN_COLUMN = "domain_annotation";
 	public static String PROTEIN_LENGTH_A = "length_protein_a";
 	public static String PROTEIN_LENGTH_B = "length_protein_b";
 	public static String NODE_LABEL_POSITION = "NODE_LABEL_POSITION";
@@ -715,57 +713,37 @@ public class Util {
 	}
 
 	/**
-	 * Create the Protein domain table
-	 * 
-	 * @param taskMonitor  task monitor
-	 * @param tableManager table manager
-	 * @param tableFactory table factory
-	 * @param geneList     list of genes
+	 * Update Protein domain column
+	 * @param taskMonitor task monitor
+	 * @param myNetwork current network
+	 * @param geneList list of genes
 	 */
-	public static void create_or_update_ProteinDomainTable(TaskMonitor taskMonitor, CyTableManager tableManager,
-			CyTableFactory tableFactory, List<GeneDomain> geneList) {
+	public static void update_ProteinDomainColumn(TaskMonitor taskMonitor, CyNetwork myNetwork,
+			List<GeneDomain> geneList) {
 
-		if (tableManager == null || tableFactory == null)
+		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Updating protein domain column");
+		
+		if (myNetwork == null)
 			return;
-
-		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Creating or updating protein domain table");
-
-		Set<CyTable> all_tables = tableManager.getAllTables(false);
-
-		Optional<CyTable> existingTable = all_tables.stream().filter(new Predicate<CyTable>() {
-			public boolean test(CyTable o) {
-				return o.getTitle().equals("Protein Domain Table");
-			}
-		}).findFirst();
-
-		CyTable table = null;
-		String proteinColumnName = "protein_domain";
-		if (!existingTable.isPresent()) {// Check if table exists
-
-			table = tableFactory.createTable("Protein Domain Table", CyNetwork.NAME, String.class, true, true);
-			table.createColumn(proteinColumnName, String.class, false);
-			tableManager.addTable(table);
-
-		} else {
-			table = existingTable.get();
-
-		}
 
 		StringBuilder sb_domains = new StringBuilder();
 		for (final GeneDomain geneDomain : geneList) {
-			CyRow row = table.getRow(geneDomain.geneName);
 
-			for (ProteinDomain domain : geneDomain.proteinDomains) {
-				sb_domains.append(domain.name);
-				sb_domains.append("[");
-				sb_domains.append(domain.startId);
-				sb_domains.append("-");
-				sb_domains.append(domain.endId);
-				sb_domains.append("], ");
+			CyNode node = getNode(myNetwork, geneDomain.geneName);
+			if(node!=null) {
+				for (ProteinDomain domain : geneDomain.proteinDomains) {
+					sb_domains.append(domain.name);
+					sb_domains.append("[");
+					sb_domains.append(domain.startId);
+					sb_domains.append("-");
+					sb_domains.append(domain.endId);
+					sb_domains.append("], ");
+				}
+				
+				if (myNetwork.getRow(node).get(Util.PROTEIN_DOMAIN_COLUMN, String.class) != null)
+					myNetwork.getRow(node).set(PROTEIN_DOMAIN_COLUMN, sb_domains.substring(0, sb_domains.length() - 2));
+				sb_domains.delete(0, sb_domains.length());
 			}
-
-			row.set(proteinColumnName, sb_domains.substring(0, sb_domains.length() - 2));
-			sb_domains.delete(0, sb_domains.length());
 		}
 	}
 

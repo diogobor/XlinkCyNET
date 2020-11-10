@@ -11,8 +11,6 @@ import org.cytoscape.application.swing.CyAction;
 import org.cytoscape.application.swing.CyNodeViewContextMenuFactory;
 import org.cytoscape.application.swing.CySwingApplication;
 import org.cytoscape.application.swing.CytoPanelComponent;
-import org.cytoscape.model.CyTableFactory;
-import org.cytoscape.model.CyTableManager;
 import org.cytoscape.model.events.RowsSetListener;
 import org.cytoscape.service.util.AbstractCyActivator;
 import org.cytoscape.util.swing.OpenBrowser;
@@ -32,6 +30,7 @@ import de.fmp.liulab.internal.action.LoadProteinDomainsAction;
 import de.fmp.liulab.internal.action.MainPanelAction;
 import de.fmp.liulab.internal.action.SetDomainColorAction;
 import de.fmp.liulab.internal.action.ShortcutSingleNodeExecuteAction;
+import de.fmp.liulab.internal.action.ShortcutWindowSingleNodeLayout;
 import de.fmp.liulab.task.LoadProteinDomainsTaskFactory;
 import de.fmp.liulab.task.MainSingleNodeTaskFactory;
 import de.fmp.liulab.task.ProteinScalingFactorHorizontalExpansionTableTaskFactory;
@@ -81,10 +80,8 @@ public class CyActivator extends AbstractCyActivator {
 		// ####################
 
 		// ### 3.2 - LOAD ####
-		CyTableFactory tableFactory = getService(bc, CyTableFactory.class);
-		CyTableManager tableManager = getService(bc, CyTableManager.class);
 		TaskFactory myLoadProteinDomainsFactory = new LoadProteinDomainsTaskFactory(cyApplicationManager, vmmServiceRef,
-				customChartListener, tableFactory, tableManager);
+				customChartListener);
 
 		LoadProteinDomainsAction myLoadProteinDomainsAction = new LoadProteinDomainsAction(dialogTaskManager,
 				myLoadProteinDomainsFactory);
@@ -107,12 +104,6 @@ public class CyActivator extends AbstractCyActivator {
 		registerServiceListener(bc, customChartListener, "addCustomGraphicsFactory", "removeCustomGraphicsFactory",
 				CyCustomGraphics2Factory.class);
 
-		TaskFactory mySingleNodeContextMenuFactory = new MainSingleNodeTaskFactory(cyApplicationManager, vmmServiceRef,
-				customChartListener, bendFactory, handleFactory, tableFactory, tableManager, true);
-
-		CyNodeViewContextMenuFactory myNodeViewContextMenuFactory = new MainContextMenu(mySingleNodeContextMenuFactory,
-				dialogTaskManager);
-
 		Properties myNodeViewContextMenuFactoryProps = new Properties();
 		myNodeViewContextMenuFactoryProps.put(PREFERRED_MENU, "Apps");
 		myNodeViewContextMenuFactoryProps.put(COMMAND_DESCRIPTION,
@@ -122,10 +113,19 @@ public class CyActivator extends AbstractCyActivator {
 		myNodeViewContextMenuFactoryProps.put(ServiceProperties.ENABLE_FOR, "networkAndView");
 
 		TaskFactory mySingleNodeShortCutFactory = new MainSingleNodeTaskFactory(cyApplicationManager, vmmServiceRef,
-				customChartListener, bendFactory, handleFactory, tableFactory, tableManager, false);
+				customChartListener, bendFactory, handleFactory, false);
 
 		ShortcutSingleNodeExecuteAction myShortcutSingleNodeAction = new ShortcutSingleNodeExecuteAction(
 				dialogTaskManager, mySingleNodeShortCutFactory);
+
+		TaskFactory mySingleNodeContextMenuFactory = new MainSingleNodeTaskFactory(cyApplicationManager, vmmServiceRef,
+				customChartListener, bendFactory, handleFactory, true);
+
+		CyNodeViewContextMenuFactory myNodeViewContextMenuFactory = new MainContextMenu(mySingleNodeContextMenuFactory,
+				dialogTaskManager);
+		
+		ShortcutWindowSingleNodeLayout myShortcutWindowSingleNodeAction = new ShortcutWindowSingleNodeLayout(
+				dialogTaskManager, mySingleNodeContextMenuFactory);
 
 		// ##############################
 
@@ -145,8 +145,9 @@ public class CyActivator extends AbstractCyActivator {
 		// #####################
 
 		// #### SERVICES #####
-		registerService(bc, myShortcutSingleNodeAction, CyAction.class, new Properties());
+		registerService(bc, myShortcutWindowSingleNodeAction, CyAction.class, new Properties());
 		registerService(bc, myLoadProteinDomainsAction, CyAction.class, new Properties());
+		registerService(bc, myShortcutSingleNodeAction, CyAction.class, new Properties());
 		registerService(bc, myExportProteinDomainsAction, CyAction.class, new Properties());
 		registerService(bc, mySetProteinDomainsAction, CyAction.class, new Properties());
 

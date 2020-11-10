@@ -45,7 +45,6 @@ public class MainContextMenu implements CyNodeViewContextMenuFactory, ActionList
 		menuItem.addActionListener(this);
 
 		CyMenuItem cyMenuItem = new CyMenuItem(menuItem, 0);
-		cyMenuItem.getMenuItem().setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, CTRL_DOWN_MASK));
 		return cyMenuItem;
 	}
 

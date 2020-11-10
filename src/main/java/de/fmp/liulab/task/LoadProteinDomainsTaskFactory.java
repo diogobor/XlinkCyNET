@@ -1,8 +1,6 @@
 package de.fmp.liulab.task;
 
 import org.cytoscape.application.CyApplicationManager;
-import org.cytoscape.model.CyTableFactory;
-import org.cytoscape.model.CyTableManager;
 import org.cytoscape.view.presentation.customgraphics.CyCustomGraphics2Factory;
 import org.cytoscape.view.vizmap.VisualMappingManager;
 import org.cytoscape.work.AbstractTaskFactory;
@@ -21,8 +19,6 @@ public class LoadProteinDomainsTaskFactory extends AbstractTaskFactory {
 	private CyApplicationManager cyApplicationManager;
 	private VisualMappingManager vmmServiceRef;
 	private CyCustomGraphics2Factory vgFactory;
-	private CyTableFactory tableFactory;
-	private CyTableManager tableManager;
 
 	/**
 	 * Constructor
@@ -32,13 +28,10 @@ public class LoadProteinDomainsTaskFactory extends AbstractTaskFactory {
 	 * @param customChartListener  chart style listener
 	 */
 	public LoadProteinDomainsTaskFactory(CyApplicationManager cyApplicationManager,
-			final VisualMappingManager vmmServiceRef, CustomChartListener customChartListener,
-			CyTableFactory tableFactory, CyTableManager tableManager) {
+			final VisualMappingManager vmmServiceRef, CustomChartListener customChartListener) {
 		this.cyApplicationManager = cyApplicationManager;
 		this.vmmServiceRef = vmmServiceRef;
 		this.vgFactory = customChartListener.getFactory();
-		this.tableFactory = tableFactory;
-		this.tableManager = tableManager;
 	}
 
 	/**
@@ -51,7 +44,6 @@ public class LoadProteinDomainsTaskFactory extends AbstractTaskFactory {
 	 * Method responsible for initializing task
 	 */
 	public TaskIterator createTaskIterator() {
-		return new TaskIterator(new LoadProteinDomainTask(cyApplicationManager, vmmServiceRef, vgFactory, tableFactory,
-				tableManager));
+		return new TaskIterator(new LoadProteinDomainTask(cyApplicationManager, vmmServiceRef, vgFactory));
 	}
 }

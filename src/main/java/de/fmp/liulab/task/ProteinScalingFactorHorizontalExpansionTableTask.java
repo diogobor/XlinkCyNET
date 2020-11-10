@@ -73,5 +73,25 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 			}
 
 		}
+		
+		if (nodeTable.getColumn(Util.PROTEIN_DOMAIN_COLUMN) == null) {
+			nodeTable.createColumn(Util.PROTEIN_DOMAIN_COLUMN, String.class, false);
+
+			for (CyRow row : myNetwork.getDefaultNodeTable().getAllRows()) {
+				row.set(Util.PROTEIN_DOMAIN_COLUMN, "");
+			}
+
+		} else { // The column exists, but it's necessary to check the cells
+			try {
+				for (CyRow row : myNetwork.getDefaultNodeTable().getAllRows()) {
+					if (row.get(Util.PROTEIN_DOMAIN_COLUMN, String.class) == null)
+						row.set(Util.PROTEIN_DOMAIN_COLUMN, "");
+				}
+			} catch (Exception e) {
+			}
+
+		}
+		
+		
 	}
 }
