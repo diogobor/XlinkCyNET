@@ -1227,9 +1227,14 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		String protein_name = myNetwork.getDefaultNodeTable().getRow(node.getSUID()).getRaw(CyNetwork.NAME).toString();
 
 		if (hasDomain) {
-			nodeView.setLockedValue(BasicVisualLexicon.NODE_TOOLTIP,
-					"<html><p><b>Protein:</b></p><p>" + protein_name + " [1-" + (int) Util.getProteinLength()
-							+ "]</p><br/><p><b>Domains:</i></p>" + sb_domains.toString() + "</html>");
+			if(myProteinDomains.size() > 1)
+				nodeView.setLockedValue(BasicVisualLexicon.NODE_TOOLTIP,
+						"<html><p><b>Protein:</b></p><p>" + protein_name + " [1 - " + (int) Util.getProteinLength()
+								+ "]</p><br/><p><b>Domains:</i></p>" + sb_domains.toString() + "</html>");
+			else
+				nodeView.setLockedValue(BasicVisualLexicon.NODE_TOOLTIP,
+						"<html><p><b>Protein:</b></p><p>" + protein_name + " [1 - " + (int) Util.getProteinLength()
+								+ "]</p><br/><p><b>Domain:</i></p>" + sb_domains.toString() + "</html>");
 
 			String network_name = myNetwork.toString();
 			if (Util.proteinDomainsMap.containsKey(network_name)) {
@@ -1246,7 +1251,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		} else
 			nodeView.setLockedValue(BasicVisualLexicon.NODE_TOOLTIP, "<html><p><b>Protein:</b></p><p>" + protein_name
-					+ " [1-" + (int) Util.getProteinLength() + "]</p></html>");
+					+ " [1 - " + (int) Util.getProteinLength() + "]</p></html>");
 		// ############################### END ################################
 	}
 
