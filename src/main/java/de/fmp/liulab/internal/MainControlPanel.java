@@ -9,6 +9,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Properties;
 
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
@@ -30,6 +31,7 @@ import javax.swing.text.DefaultFormatter;
 import org.cytoscape.application.swing.CytoPanelComponent;
 import org.cytoscape.application.swing.CytoPanelName;
 
+import de.fmp.liulab.core.ConfigurationManager;
 import de.fmp.liulab.utils.Util;
 
 /**
@@ -57,13 +59,122 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 	private JCheckBox show_links_legend;
 
+	private Properties XlinkCyNETProps;
+
 	/**
 	 * Constructor
 	 */
-	public MainControlPanel() {
+	public MainControlPanel(Properties XlinkCyNETProps, ConfigurationManager cm) {
 
+		this.XlinkCyNETProps = XlinkCyNETProps;
+		this.load_default_parameters(cm);
 		setFrameObjects();
 		this.setVisible(true);
+	}
+
+	/**
+	 * Load default parameters to main panel
+	 * 
+	 * @param bc main context
+	 * @param cm configuration manager
+	 */
+	private void load_default_parameters(ConfigurationManager cm) {
+
+		String propertyValue = "";
+		if (cm == null)
+			propertyValue = ((Properties) XlinkCyNETProps).getProperty("xlinkcynet.showLinksLegend");
+		else
+			propertyValue = cm.getProperties().getProperty("xlinkcynet.showLinksLegend");
+		Util.showLinksLegend = Boolean.parseBoolean(propertyValue);
+
+		if (cm == null)
+			propertyValue = ((Properties) XlinkCyNETProps).getProperty("xlinkcynet.showIntraLinks");
+		else
+			propertyValue = cm.getProperties().getProperty("xlinkcynet.showIntraLinks");
+		Util.showIntraLinks = Boolean.parseBoolean(propertyValue);
+
+		if (cm == null)
+			propertyValue = ((Properties) XlinkCyNETProps).getProperty("xlinkcynet.showInterLinks");
+		else
+			propertyValue = cm.getProperties().getProperty("xlinkcynet.showInterLinks");
+		Util.showInterLinks = Boolean.parseBoolean(propertyValue);
+
+		if (cm == null)
+			propertyValue = ((Properties) XlinkCyNETProps).getProperty("xlinkcynet.edge_label_font_size");
+		else
+			propertyValue = cm.getProperties().getProperty("xlinkcynet.edge_label_font_size");
+		Util.edge_label_font_size = Integer.parseInt(propertyValue);
+
+		if (cm == null)
+			propertyValue = ((Properties) XlinkCyNETProps).getProperty("xlinkcynet.node_label_font_size");
+		else
+			propertyValue = cm.getProperties().getProperty("xlinkcynet.node_label_font_size");
+		Util.node_label_font_size = Integer.parseInt(propertyValue);
+
+		if (cm == null)
+			propertyValue = ((Properties) XlinkCyNETProps).getProperty("xlinkcynet.edge_label_opacity");
+		else
+			propertyValue = cm.getProperties().getProperty("xlinkcynet.edge_label_opacity");
+		Util.edge_label_opacity = Integer.parseInt(propertyValue);
+
+		if (cm == null)
+			propertyValue = ((Properties) XlinkCyNETProps).getProperty("xlinkcynet.edge_link_opacity");
+		else
+			propertyValue = cm.getProperties().getProperty("xlinkcynet.edge_link_opacity");
+		Util.edge_link_opacity = Integer.parseInt(propertyValue);
+
+		if (cm == null)
+			propertyValue = ((Properties) XlinkCyNETProps).getProperty("xlinkcynet.node_border_opacity");
+		else
+			propertyValue = cm.getProperties().getProperty("xlinkcynet.node_border_opacity");
+		Util.node_border_opacity = Integer.parseInt(propertyValue);
+
+		if (cm == null)
+			propertyValue = ((Properties) XlinkCyNETProps).getProperty("xlinkcynet.edge_link_width");
+		else
+			propertyValue = cm.getProperties().getProperty("xlinkcynet.edge_link_width");
+		Util.edge_link_width = Double.parseDouble(propertyValue);
+
+		if (cm == null)
+			propertyValue = ((Properties) XlinkCyNETProps).getProperty("xlinkcynet.node_border_width");
+		else
+			propertyValue = cm.getProperties().getProperty("xlinkcynet.node_border_width");
+		Util.node_border_width = Double.parseDouble(propertyValue);
+
+		if (cm == null)
+			propertyValue = ((Properties) XlinkCyNETProps).getProperty("xlinkcynet.IntraLinksColor");
+		else
+			propertyValue = cm.getProperties().getProperty("xlinkcynet.IntraLinksColor");
+		Util.IntraLinksColor = stringToColor(propertyValue);
+
+		if (cm == null)
+			propertyValue = ((Properties) XlinkCyNETProps).getProperty("xlinkcynet.InterLinksColor");
+		else
+			propertyValue = cm.getProperties().getProperty("xlinkcynet.InterLinksColor");
+		Util.InterLinksColor = stringToColor(propertyValue);
+
+		if (cm == null)
+			propertyValue = ((Properties) XlinkCyNETProps).getProperty("xlinkcynet.NodeBorderColor");
+		else
+			propertyValue = cm.getProperties().getProperty("xlinkcynet.NodeBorderColor");
+		Util.NodeBorderColor = stringToColor(propertyValue);
+
+	}
+	
+	/**
+	 * Converter string to color
+	 * 
+	 * @param color_string string color
+	 * @return color object
+	 */
+	private Color stringToColor(String color_string) {
+
+		Color color = null;
+		String[] cols = color_string.split("#");
+		color = new Color(Integer.parseInt(cols[0]), Integer.parseInt(cols[1]), Integer.parseInt(cols[2]), 255);
+
+		return color;
+
 	}
 
 	/**
@@ -119,7 +230,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	}
 
 	/**
-	 * Method responsible for initializing all checkboxes in the frame
+	 * Method responsible for initializing all check boxes in the frame
 	 */
 	private void init_checkBoxes() {
 		int offset_y = 20;
@@ -147,7 +258,8 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 				if (e.getStateChange() == ItemEvent.SELECTED) {// checkbox has been selected
 					intraLinkColorButton.setEnabled(true);
 					Util.showIntraLinks = true;
-					
+					XlinkCyNETProps.setProperty("xlinkcynet.showIntraLinks", "true");
+
 					if (!show_inter_link.isSelected()) {
 						spinner_opacity_edge_link.setEnabled(true);
 						spinner_width_edge_link.setEnabled(true);
@@ -157,15 +269,15 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 				} else {
 					intraLinkColorButton.setEnabled(false);
 					Util.showIntraLinks = false;
+					XlinkCyNETProps.setProperty("xlinkcynet.showIntraLinks", "false");
 
 					if (!show_inter_link.isSelected()) {
 						spinner_opacity_edge_link.setEnabled(false);
 						spinner_width_edge_link.setEnabled(false);
 						show_links_legend.setSelected(false);
 						show_links_legend.setEnabled(false);
-						
-					}
-					else {
+
+					} else {
 						spinner_opacity_edge_link.setEnabled(true);
 						spinner_width_edge_link.setEnabled(true);
 						show_links_legend.setEnabled(true);
@@ -195,25 +307,26 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 				if (e.getStateChange() == ItemEvent.SELECTED) {// checkbox has been selected
 					interLinkColorButton.setEnabled(true);
 					Util.showInterLinks = true;
-					
+					XlinkCyNETProps.setProperty("xlinkcynet.showInterLinks", "true");
+
 					if (!show_intra_link.isSelected()) {
 						spinner_opacity_edge_link.setEnabled(true);
 						spinner_width_edge_link.setEnabled(true);
 						show_links_legend.setEnabled(true);
 					}
-					
+
 				} else {
 					interLinkColorButton.setEnabled(false);
 					Util.showInterLinks = false;
-					
+					XlinkCyNETProps.setProperty("xlinkcynet.showInterLinks", "false");
+
 					if (!show_intra_link.isSelected()) {
 						spinner_opacity_edge_link.setEnabled(false);
 						spinner_width_edge_link.setEnabled(false);
 						show_links_legend.setSelected(false);
 						show_links_legend.setEnabled(false);
-						
-					}
-					else {
+
+					} else {
 						spinner_opacity_edge_link.setEnabled(true);
 						spinner_width_edge_link.setEnabled(true);
 						show_links_legend.setEnabled(true);
@@ -244,10 +357,12 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 					spinner_link.setEnabled(true);
 					spinner_opacity_edge_label.setEnabled(true);
 					Util.showLinksLegend = true;
+					XlinkCyNETProps.setProperty("xlinkcynet.showLinksLegend", "true");
 				} else {
 					spinner_link.setEnabled(false);
 					spinner_opacity_edge_label.setEnabled(false);
 					Util.showLinksLegend = false;
+					XlinkCyNETProps.setProperty("xlinkcynet.showLinksLegend", "false");
 				}
 				;
 			}
@@ -347,6 +462,8 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 					intraLinkColorButton.setOpaque(true);
 					intraLinkColorButton.setBorderPainted(false);
 					Util.IntraLinksColor = color;
+					XlinkCyNETProps.setProperty("xlinkcynet.IntraLinksColor",
+							color.getRed() + "#" + color.getGreen() + "#" + color.getBlue());
 
 					intraLinkColorButton.setToolTipText("Value: R:" + Util.IntraLinksColor.getRed() + " G:"
 							+ Util.IntraLinksColor.getGreen() + " B:" + Util.IntraLinksColor.getBlue() + " - "
@@ -381,6 +498,8 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 					interLinkColorButton.setOpaque(true);
 					interLinkColorButton.setBorderPainted(false);
 					Util.InterLinksColor = color;
+					XlinkCyNETProps.setProperty("xlinkcynet.InterLinksColor",
+							color.getRed() + "#" + color.getGreen() + "#" + color.getBlue());
 
 					interLinkColorButton.setToolTipText("Value: R:" + Util.InterLinksColor.getRed() + " G:"
 							+ Util.InterLinksColor.getGreen() + " B:" + Util.InterLinksColor.getBlue() + " - "
@@ -416,6 +535,8 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 				borderNodeColorButton.setOpaque(true);
 				borderNodeColorButton.setBorderPainted(false);
 				Util.NodeBorderColor = color;
+				XlinkCyNETProps.setProperty("xlinkcynet.NodeBorderColor",
+						color.getRed() + "#" + color.getGreen() + "#" + color.getBlue());
 
 				borderNodeColorButton.setToolTipText("Value: R:" + Util.NodeBorderColor.getRed() + " G:"
 						+ Util.NodeBorderColor.getGreen() + " B:" + Util.NodeBorderColor.getBlue() + " - "
@@ -449,6 +570,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				Util.edge_label_font_size = (Integer) spinner_link.getValue();
+				XlinkCyNETProps.setProperty("xlinkcynet.edge_label_font_size", Util.edge_label_font_size.toString());
 			}
 		});
 		link_legend_panel.add(spinner_link);
@@ -470,6 +592,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				Util.edge_label_opacity = (Integer) spinner_opacity_edge_label.getValue();
+				XlinkCyNETProps.setProperty("xlinkcynet.edge_label_opacity", Util.edge_label_opacity.toString());
 			}
 		});
 		spinner_opacity_edge_label.setToolTipText("Set a value between 0 (transparent) and 255 (opaque).");
@@ -493,6 +616,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				Util.edge_link_opacity = (Integer) spinner_opacity_edge_link.getValue();
+				XlinkCyNETProps.setProperty("xlinkcynet.edge_link_opacity", Util.edge_link_opacity.toString());
 			}
 		});
 		spinner_opacity_edge_link.setToolTipText("Set a value between 0 (transparent) and 255 (opaque).");
@@ -515,6 +639,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				Util.edge_link_width = (double) spinner_width_edge_link.getValue();
+				XlinkCyNETProps.setProperty("xlinkcynet.edge_link_width", String.valueOf(Util.edge_link_width));
 			}
 		});
 		spinner_width_edge_link.setToolTipText("Set a value between 1 and 10.");
@@ -538,6 +663,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				Util.node_border_opacity = (Integer) spinner_opacity_node_border.getValue();
+				XlinkCyNETProps.setProperty("xlinkcynet.node_border_opacity", Util.node_border_opacity.toString());
 			}
 		});
 		spinner_opacity_node_border.setToolTipText("Set a value between 0 (transparent) and 255 (opaque).");
@@ -560,6 +686,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				Util.node_border_width = (double) spinner_width_node_border.getValue();
+				XlinkCyNETProps.setProperty("xlinkcynet.node_border_width", String.valueOf(Util.node_border_width));
 			}
 		});
 		spinner_width_node_border.setToolTipText("Set a value between 1 and 10.");
@@ -582,6 +709,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				Util.node_label_font_size = (Integer) spinner_node.getValue();
+				XlinkCyNETProps.setProperty("xlinkcynet.node_label_font_size", Util.node_label_font_size.toString());
 			}
 		});
 		node_panel.add(spinner_node);

@@ -3,6 +3,7 @@ package de.fmp.liulab.internal;
 import static org.cytoscape.work.ServiceProperties.COMMAND_DESCRIPTION;
 import static org.cytoscape.work.ServiceProperties.PREFERRED_MENU;
 
+import java.util.Locale;
 import java.util.Properties;
 
 import org.cytoscape.application.CyApplicationManager;
@@ -12,6 +13,7 @@ import org.cytoscape.application.swing.CyNodeViewContextMenuFactory;
 import org.cytoscape.application.swing.CySwingApplication;
 import org.cytoscape.application.swing.CytoPanelComponent;
 import org.cytoscape.model.events.RowsSetListener;
+import org.cytoscape.property.CyProperty;
 import org.cytoscape.service.util.AbstractCyActivator;
 import org.cytoscape.util.swing.OpenBrowser;
 import org.cytoscape.view.model.events.ViewChangedListener;
@@ -24,6 +26,7 @@ import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.swing.DialogTaskManager;
 import org.osgi.framework.BundleContext;
 
+import de.fmp.liulab.core.ConfigurationManager;
 import de.fmp.liulab.internal.action.ControlURLAction;
 import de.fmp.liulab.internal.action.ExportProteinDomainsAction;
 import de.fmp.liulab.internal.action.LoadProteinDomainsAction;
@@ -43,6 +46,10 @@ import de.fmp.liulab.task.SetDomainColorTaskFactory;
  *
  */
 public class CyActivator extends AbstractCyActivator {
+
+	private Properties XlinkCyNETProps;
+	private ConfigurationManager cm;
+
 	public CyActivator() {
 		super();
 	}
@@ -57,13 +64,6 @@ public class CyActivator extends AbstractCyActivator {
 		String version = bc.getBundle().getVersion().toString();
 		ControlURLAction controlURLAction = new ControlURLAction(openBrowser, version);
 		// ###############
-
-		// #### 2 - PANEL (SETTINGS) ####
-		CySwingApplication cytoscapeDesktopService = getService(bc, CySwingApplication.class);
-		MainControlPanel mainControlPanel = new MainControlPanel();
-		MainPanelAction panelAction = new MainPanelAction(cytoscapeDesktopService, mainControlPanel);
-
-		// ##############################
 
 		CyApplicationManager cyApplicationManager = getService(bc, CyApplicationManager.class);
 		VisualMappingManager vmmServiceRef = getService(bc, VisualMappingManager.class);
@@ -123,7 +123,7 @@ public class CyActivator extends AbstractCyActivator {
 
 		CyNodeViewContextMenuFactory myNodeViewContextMenuFactory = new MainContextMenu(mySingleNodeContextMenuFactory,
 				dialogTaskManager);
-		
+
 		ShortcutWindowSingleNodeLayout myShortcutWindowSingleNodeAction = new ShortcutWindowSingleNodeLayout(
 				dialogTaskManager, mySingleNodeContextMenuFactory);
 
@@ -144,6 +144,15 @@ public class CyActivator extends AbstractCyActivator {
 		registerService(bc, updateViewListener, SetCurrentNetworkListener.class, new Properties());
 		// #####################
 
+		// #### 2 - PANEL (SETTINGS) ####
+		init_default_params(bc);
+
+		CySwingApplication cytoscapeDesktopService = getService(bc, CySwingApplication.class);
+		MainControlPanel mainControlPanel = new MainControlPanel(XlinkCyNETProps, cm);
+		MainPanelAction panelAction = new MainPanelAction(cytoscapeDesktopService, mainControlPanel);
+
+		// ##############################
+
 		// #### SERVICES #####
 		registerService(bc, myShortcutWindowSingleNodeAction, CyAction.class, new Properties());
 		registerService(bc, myLoadProteinDomainsAction, CyAction.class, new Properties());
@@ -158,5 +167,26 @@ public class CyActivator extends AbstractCyActivator {
 
 		registerAllServices(bc, myNodeViewContextMenuFactory, myNodeViewContextMenuFactoryProps);
 
+	}
+
+	private void init_default_params(BundleContext bc) {
+
+		try {
+			XlinkCyNETProps = (Properties) getService(bc, CyProperty.class, "(cyPropertyName=xlinkcynet.props)");
+
+		} catch (Exception e) {
+			Properties propsReaderServiceProps = null;
+			if (XlinkCyNETProps == null) {
+				cm = new ConfigurationManager("xlinkcynet", "xlinkcynet.props");
+				propsReaderServiceProps = new Properties();
+				propsReaderServiceProps.setProperty("cyPropertyName", "xlinkcynet.props");
+
+				Locale usEnglish = new Locale("en", "US");
+				cm.getProperties().setProperty("locale", usEnglish.getLanguage() + usEnglish.getCountry());
+				XlinkCyNETProps = cm.getProperties();
+
+				registerAllServices(bc, cm, propsReaderServiceProps);
+			}
+		}
 	}
 }

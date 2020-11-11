@@ -1,0 +1,13 @@
+xlinkcynet.IntraLinksColor = 0#153#255
+xlinkcynet.InterLinksColor = 102#102#0
+xlinkcynet.NodeBorderColor = 4#206#161
+xlinkcynet.showLinksLegend = false
+xlinkcynet.showIntraLinks = false
+xlinkcynet.showInterLinks = true
+xlinkcynet.edge_label_font_size = 12
+xlinkcynet.node_label_font_size = 12
+xlinkcynet.edge_label_opacity = 120
+xlinkcynet.edge_link_opacity = 120
+xlinkcynet.node_border_opacity = 200
+xlinkcynet.edge_link_width = 2
+xlinkcynet.node_border_width = 1.5
