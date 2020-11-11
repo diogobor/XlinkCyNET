@@ -12,11 +12,11 @@
 		<maven-bundle-plugin.version>2.3.4</maven-bundle-plugin.version>
 		<osgi.api.version>4.2.0</osgi.api.version>
 	</properties>
-	
+
 	<groupId>de.fmp.liulab</groupId>
 	<artifactId>XlinkCyNET</artifactId>
 	<packaging>bundle</packaging>
-	<version>1.0.6.5</version>
+	<version>1.0.6.6</version>
 
 	<name>XlinkCyNET</name>
 
@@ -77,13 +77,13 @@
 					</instructions>
 				</configuration>
 			</plugin>
-			<!-- <plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<configuration>
-			    	<source>8</source>
-			    	<detectJavaApiLink>false</detectJavaApiLink>
-			    </configuration>
+					<source>8</source>
+					<detectJavaApiLink>false</detectJavaApiLink>
+				</configuration>
 				<executions>
 					<execution>
 						<id>attach-javadocs</id>
@@ -93,7 +93,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			 -->
+
 		</plugins>
 	</build>
 

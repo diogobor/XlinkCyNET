@@ -605,7 +605,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	/**
 	 * Method responsible for canceling the loading process
 	 * 
-	 * @return true if process is canceld, otherwise, returns false.
+	 * @return true if process is canceled, otherwise, returns false.
 	 */
 	public static boolean cancelProcess() {
 

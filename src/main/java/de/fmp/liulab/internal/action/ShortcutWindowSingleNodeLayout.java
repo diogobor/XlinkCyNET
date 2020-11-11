@@ -35,8 +35,7 @@ public class ShortcutWindowSingleNodeLayout extends AbstractCyAction {
 		super(MENU_NAME);
 		setPreferredMenu(MENU_CATEGORY);
 		setMenuGravity(1.0f);
-		insertSeparatorAfter = true;
-		setAcceleratorKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_Y, CTRL_DOWN_MASK));
+		setAcceleratorKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_U, CTRL_DOWN_MASK));
 		this.dialogTaskManager = dialogTaskManager;
 		this.myFactory = myFactory;
 	}
