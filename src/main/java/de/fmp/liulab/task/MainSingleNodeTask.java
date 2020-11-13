@@ -320,6 +320,11 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		taskMonitor.setProgress(1.0);
 	}
 
+	/**
+	 * Update domain annotations in the cytoscape node table
+	 * @param taskMonitor
+	 * @param proteinDomainList
+	 */
 	private void update_protein_domain_table(TaskMonitor taskMonitor, List<ProteinDomain> proteinDomainList) {
 
 		if (proteinDomainList.size() > 0) {
@@ -331,6 +336,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		}
 	}
 
+	/**
+	 * Resize protein node
+	 * @param taskMonitor task monitor
+	 */
 	private void resizeProtein(final TaskMonitor taskMonitor) {
 		isPlotDone = false;
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Resizing node length...");
@@ -904,7 +913,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 						textLabel_status_result.setText("Setting node styles...");
 						taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting node styles...");
 
-						Util.node_label_factor_size = 1;// (double) spinner_factor_size_node.getValue();
+						Util.node_label_factor_size = 1;
 						Util.setNodeStyles(myNetwork, node, netView);
 						taskMonitor.setProgress(0.2);
 

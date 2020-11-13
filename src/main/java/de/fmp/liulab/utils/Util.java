@@ -714,15 +714,16 @@ public class Util {
 
 	/**
 	 * Update Protein domain column
+	 * 
 	 * @param taskMonitor task monitor
-	 * @param myNetwork current network
-	 * @param geneList list of genes
+	 * @param myNetwork   current network
+	 * @param geneList    list of genes
 	 */
 	public static void update_ProteinDomainColumn(TaskMonitor taskMonitor, CyNetwork myNetwork,
 			List<GeneDomain> geneList) {
 
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Updating protein domain column");
-		
+
 		if (myNetwork == null)
 			return;
 
@@ -730,7 +731,7 @@ public class Util {
 		for (final GeneDomain geneDomain : geneList) {
 
 			CyNode node = getNode(myNetwork, geneDomain.geneName);
-			if(node!=null) {
+			if (node != null) {
 				for (ProteinDomain domain : geneDomain.proteinDomains) {
 					sb_domains.append(domain.name);
 					sb_domains.append("[");
@@ -739,7 +740,7 @@ public class Util {
 					sb_domains.append(domain.endId);
 					sb_domains.append("], ");
 				}
-				
+
 				if (myNetwork.getRow(node).get(Util.PROTEIN_DOMAIN_COLUMN, String.class) != null)
 					myNetwork.getRow(node).set(PROTEIN_DOMAIN_COLUMN, sb_domains.substring(0, sb_domains.length() - 2));
 				sb_domains.delete(0, sb_domains.length());
@@ -1863,8 +1864,8 @@ public class Util {
 			public boolean test(String xl) {
 				if (xl.isBlank() || xl.isEmpty() || xl.equals("0") || xl.equals("NA"))
 					return true;
-				String[] current_xl = xl.split("-");
-				return !(current_xl[0].equals(selected_node_name) || current_xl[2].equals(selected_node_name));
+				String[] current_xl = xl.split(selected_node_name);
+				return (current_xl.length == 1);
 			}
 		});
 
@@ -1874,7 +1875,7 @@ public class Util {
 		for (String xl : cross_links_set) {
 
 			try {
-				String[] current_xl = xl.split("-");
+				String[] current_xl = splitLinks(xl, selected_node_name);// xl.split("-");
 
 				if (current_xl[0].equals(current_xl[2])) {// it's intralink
 
@@ -1901,6 +1902,58 @@ public class Util {
 		Collections.sort(intraLinks);
 
 		return new Tuple2(interLinks, intraLinks);
+	}
+
+	private static String[] splitLinks(String xl, String selected_node_name) {
+		String[] current_xl = xl.split("-");
+
+		if (current_xl.length == 4) {// name-position-name-position
+			return current_xl;
+		} else {
+			StringBuilder new_link = new StringBuilder();
+			current_xl = xl.split(selected_node_name);
+			if (current_xl.length == 3) {// intralink
+				new_link.append(selected_node_name);
+				new_link.append("#");
+				new_link.append(current_xl[1].replace("-", ""));
+				new_link.append("#");
+				new_link.append(selected_node_name);
+				new_link.append("#");
+				new_link.append(current_xl[2].replace("-", ""));
+
+				return new_link.toString().split("#");
+			} else if (current_xl.length == 2) {// interlink
+
+				if (current_xl[0].isBlank() || current_xl[0].isEmpty()) {// selected_node_name-position-name-position
+					new_link.append(selected_node_name);
+					new_link.append("#");
+					String[] _xl = current_xl[1].split("-");
+					if (_xl.length == 4) {// second node has no dashes
+						new_link.append(_xl[1]);
+						new_link.append("#");
+						new_link.append(_xl[2]);
+						new_link.append("#");
+						new_link.append(_xl[3]);
+						return new_link.toString().split("#");
+					}
+				} else {// name-position-selected_node_name-position
+					String[] _xl = current_xl[0].substring(0, current_xl[0].length() - 1).split("-");
+					String startPos = _xl[_xl.length - 1];
+					_xl = Arrays.copyOf(_xl, _xl.length - 1);
+					new_link.append(String.join("-", _xl));
+					new_link.append("#");
+					new_link.append(startPos);
+					new_link.append("#");
+					new_link.append(selected_node_name);
+					new_link.append("#");
+					new_link.append(current_xl[1].replace("-", ""));
+					return new_link.toString().split("#");
+				}
+
+			}
+		}
+
+		return null;
 	}
 
 	/**

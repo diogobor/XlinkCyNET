@@ -1,9 +1,10 @@
 package de.fmp.liulab.internal;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -21,10 +22,10 @@ import org.cytoscape.model.events.RowsSetEvent;
 import org.cytoscape.model.events.RowsSetListener;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.View;
-import org.cytoscape.view.model.VisualLexicon;
 import org.cytoscape.view.model.events.ViewChangeRecord;
 import org.cytoscape.view.model.events.ViewChangedEvent;
 import org.cytoscape.view.model.events.ViewChangedListener;
+import org.cytoscape.view.presentation.property.BasicVisualLexicon;
 import org.cytoscape.view.presentation.property.values.BendFactory;
 import org.cytoscape.view.presentation.property.values.HandleFactory;
 import org.cytoscape.view.vizmap.VisualMappingManager;
@@ -32,10 +33,10 @@ import org.cytoscape.view.vizmap.VisualStyle;
 import org.cytoscape.work.TaskIterator;
 import org.cytoscape.work.swing.DialogTaskManager;
 
-import de.fmp.liulab.model.CrossLink;
 import de.fmp.liulab.task.LoadProteinDomainTask;
 import de.fmp.liulab.task.MainSingleNodeTask;
 import de.fmp.liulab.task.ProteinScalingFactorHorizontalExpansionTableTaskFactory;
+import de.fmp.liulab.task.UpdateViewerTaskFactory;
 import de.fmp.liulab.utils.Tuple2;
 import de.fmp.liulab.utils.Util;
 
@@ -56,30 +57,39 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 
 	private DialogTaskManager dialogTaskManager;
 	private ProteinScalingFactorHorizontalExpansionTableTaskFactory proteinScalingFactorHorizontalExpansionTableTaskFactory;
+	private UpdateViewerTaskFactory updateViewerTaskFactory;
 
 	private CyNode selectedNode;
-	private boolean IsIntraLink = false;
+
+	private Map<CyNode, Tuple2<Double, Double>> mapLastNodesPosition = new HashMap<CyNode, Tuple2<Double, Double>>();
 
 	public static boolean isNodeModified = false;
 
 	/**
 	 * Constructor
-	 * @param cyApplicationManager main app manager
-	 * @param handleFactory handle factory
-	 * @param bendFactory bend factory
-	 * @param vmmServiceRef visual mapping manager
-	 * @param dialogTaskManager task manager
-	 * @param proteinScalingFactorHorizontalExpansionTableTaskFactory protein length scaling factor factory
+	 * 
+	 * @param cyApplicationManager                                    main app
+	 *                                                                manager
+	 * @param handleFactory                                           handle factory
+	 * @param bendFactory                                             bend factory
+	 * @param vmmServiceRef                                           visual mapping
+	 *                                                                manager
+	 * @param dialogTaskManager                                       task manager
+	 * @param proteinScalingFactorHorizontalExpansionTableTaskFactory protein length
+	 *                                                                scaling factor
+	 *                                                                factory
 	 */
 	public UpdateViewListener(CyApplicationManager cyApplicationManager, HandleFactory handleFactory,
 			BendFactory bendFactory, VisualMappingManager vmmServiceRef, DialogTaskManager dialogTaskManager,
-			ProteinScalingFactorHorizontalExpansionTableTaskFactory proteinScalingFactorHorizontalExpansionTableTaskFactory) {
+			ProteinScalingFactorHorizontalExpansionTableTaskFactory proteinScalingFactorHorizontalExpansionTableTaskFactory,
+			UpdateViewerTaskFactory updateViewerTaskFactory) {
 		this.cyApplicationManager = cyApplicationManager;
 		this.handleFactory = handleFactory;
 		this.bendFactory = bendFactory;
 		this.style = vmmServiceRef.getCurrentVisualStyle();
 		this.dialogTaskManager = dialogTaskManager;
 		this.proteinScalingFactorHorizontalExpansionTableTaskFactory = proteinScalingFactorHorizontalExpansionTableTaskFactory;
+		this.updateViewerTaskFactory = updateViewerTaskFactory;
 	}
 
 	/**
@@ -110,7 +120,6 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 					Boolean value = (Boolean) record.getValue();
 					if (value.equals(Boolean.TRUE)) {
 						this.selectedNode = myNetwork.getNode(suid);
-						MainSingleNodeTask.node = this.selectedNode;
 
 						updateNodesAndEdges(this.selectedNode);
 					}
@@ -176,63 +185,27 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 	}
 
 	/**
-	 * Method responsible for updating Nodes and Edges
+	 * Update nodes and edges
 	 * 
-	 * @param current_node
+	 * @param current_node current node
 	 */
-	private void updateNodesAndEdges(final CyNode current_node) {
+	private void updateNodesAndEdges(CyNode current_node) {
 
-		Util.stopUpdateViewer = false;
-		Tuple2 inter_and_intralinks = Util.getAllLinksFromAdjacentEdgesNode(current_node, myNetwork);
-		MainSingleNodeTask.interLinks = (ArrayList<CrossLink>) inter_and_intralinks.getFirst();
-		MainSingleNodeTask.intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
-
-		CyRow proteinA_node_row = myNetwork.getRow(current_node);
-		Object length_other_protein_a = proteinA_node_row.getRaw("length_protein_a");
-		Object length_other_protein_b = proteinA_node_row.getRaw("length_protein_b");
-
-		if (length_other_protein_a == null) {
-			if (length_other_protein_b == null)
-				length_other_protein_a = 10;
-			else
-				length_other_protein_a = length_other_protein_b;
+		View<CyNode> nodeView = netView.getNodeView(current_node);
+		double current_posX = nodeView.getVisualProperty(BasicVisualLexicon.NODE_X_LOCATION);
+		double current_posY = nodeView.getVisualProperty(BasicVisualLexicon.NODE_Y_LOCATION);
+		if (mapLastNodesPosition.containsKey(current_node)) {
+			double last_posX = mapLastNodesPosition.get(current_node).getFirst();
+			double last_posY = mapLastNodesPosition.get(current_node).getSecond();
+			if (current_posX == last_posX && current_posY == last_posY)
+				return;
 		}
-
-		Util.setProteinLength((float) ((Number) length_other_protein_a).doubleValue());
-
-		VisualStyle style = MainSingleNodeTask.style;
-		if (style == null)
-			style = LoadProteinDomainTask.style;
-		if (style == null)
-			return;
-
-		VisualLexicon lexicon = MainSingleNodeTask.lexicon;
-		if (lexicon == null)
-			lexicon = LoadProteinDomainTask.lexicon;
-		if (lexicon == null)
-			return;
-
-		if (MainSingleNodeTask.interLinks.size() > 0) { // The selectedNode has interlinks
-			IsIntraLink = false;
-		} else {
-			IsIntraLink = true;
-		}
-
-		if (Util.IsNodeModified(myNetwork, netView, current_node)) {
-
-			Util.node_label_factor_size = myNetwork.getRow(current_node).get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME,
-					Double.class);
-
-			Util.setNodeStyles(myNetwork, current_node, netView);
-			View<CyNode> nodeView = netView.getNodeView(current_node);// original length
-
-			Util.addOrUpdateEdgesToNetwork(myNetwork, current_node, style, netView, nodeView, handleFactory,
-					bendFactory, lexicon, ((Number) length_other_protein_a).floatValue(), MainSingleNodeTask.intraLinks,
-					MainSingleNodeTask.interLinks, null, null);
-		} else if (!IsIntraLink) {
-			Util.updateAllAssiciatedInterlinkNodes(myNetwork, cyApplicationManager, netView, handleFactory, bendFactory,
-					current_node);// Check if all associated nodes are
-									// unmodified
+		
+		// Create protein scaling factor table
+		if (this.dialogTaskManager != null && this.updateViewerTaskFactory != null) {
+			TaskIterator ti = this.updateViewerTaskFactory.createTaskIterator(cyApplicationManager, handleFactory,
+					bendFactory, myNetwork, netView, current_node, mapLastNodesPosition);
+			this.dialogTaskManager.execute(ti);
 		}
 	}
 
@@ -245,6 +218,7 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 
 		MainSingleNodeTask.interLinks = null;
 		MainSingleNodeTask.intraLinks = null;
+		mapLastNodesPosition.clear();
 
 		try {
 

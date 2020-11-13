@@ -38,6 +38,7 @@ import de.fmp.liulab.task.LoadProteinDomainsTaskFactory;
 import de.fmp.liulab.task.MainSingleNodeTaskFactory;
 import de.fmp.liulab.task.ProteinScalingFactorHorizontalExpansionTableTaskFactory;
 import de.fmp.liulab.task.SetDomainColorTaskFactory;
+import de.fmp.liulab.task.UpdateViewerTaskFactory;
 
 /**
  * Class responsible for initializing cytoscape methods
@@ -136,8 +137,9 @@ public class CyActivator extends AbstractCyActivator {
 
 		// #### LISTENER ######
 
-		ViewChangedListener updateViewListener = new UpdateViewListener(cyApplicationManager, handleFactory,
-				bendFactory, vmmServiceRef, dialogTaskManager, proteinScalingFactorTableTaskFactory);
+		UpdateViewerTaskFactory updateViewerTaskFactory = new UpdateViewerTaskFactory();
+		ViewChangedListener updateViewListener = new UpdateViewListener(
+				cyApplicationManager, handleFactory, bendFactory, vmmServiceRef, dialogTaskManager, proteinScalingFactorTableTaskFactory, updateViewerTaskFactory);
 
 		registerService(bc, updateViewListener, ViewChangedListener.class, new Properties());
 		registerService(bc, updateViewListener, RowsSetListener.class, new Properties());
