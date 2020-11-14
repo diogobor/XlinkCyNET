@@ -1,13 +1,9 @@
 package de.fmp.liulab.internal;
 
-import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 
 import javax.swing.JMenuItem;
-import javax.swing.KeyStroke;
 
 import org.cytoscape.application.swing.CyMenuItem;
 import org.cytoscape.application.swing.CyNodeViewContextMenuFactory;

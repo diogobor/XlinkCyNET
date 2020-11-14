@@ -1,7 +1,5 @@
 package de.fmp.liulab.task;
 
-import java.util.Map;
-
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
@@ -10,8 +8,6 @@ import org.cytoscape.view.presentation.property.values.BendFactory;
 import org.cytoscape.view.presentation.property.values.HandleFactory;
 import org.cytoscape.work.AbstractTaskFactory;
 import org.cytoscape.work.TaskIterator;
-
-import de.fmp.liulab.utils.Tuple2;
 
 /**
  * Class responsible for calling the task for updating edges
