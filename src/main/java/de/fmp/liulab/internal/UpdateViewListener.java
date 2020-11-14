@@ -1,12 +1,13 @@
 package de.fmp.liulab.internal;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import org.cytoscape.application.CyApplicationManager;
@@ -30,14 +31,16 @@ import org.cytoscape.view.presentation.property.values.BendFactory;
 import org.cytoscape.view.presentation.property.values.HandleFactory;
 import org.cytoscape.view.vizmap.VisualMappingManager;
 import org.cytoscape.view.vizmap.VisualStyle;
+import org.cytoscape.work.FinishStatus;
+import org.cytoscape.work.ObservableTask;
 import org.cytoscape.work.TaskIterator;
+import org.cytoscape.work.TaskObserver;
 import org.cytoscape.work.swing.DialogTaskManager;
 
 import de.fmp.liulab.task.LoadProteinDomainTask;
 import de.fmp.liulab.task.MainSingleNodeTask;
 import de.fmp.liulab.task.ProteinScalingFactorHorizontalExpansionTableTaskFactory;
 import de.fmp.liulab.task.UpdateViewerTaskFactory;
-import de.fmp.liulab.utils.Tuple2;
 import de.fmp.liulab.utils.Util;
 
 /**
@@ -60,8 +63,6 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 	private UpdateViewerTaskFactory updateViewerTaskFactory;
 
 	private CyNode selectedNode;
-
-	private Map<CyNode, Tuple2<Double, Double>> mapLastNodesPosition = new HashMap<CyNode, Tuple2<Double, Double>>();
 
 	public static boolean isNodeModified = false;
 
@@ -90,6 +91,7 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 		this.dialogTaskManager = dialogTaskManager;
 		this.proteinScalingFactorHorizontalExpansionTableTaskFactory = proteinScalingFactorHorizontalExpansionTableTaskFactory;
 		this.updateViewerTaskFactory = updateViewerTaskFactory;
+
 	}
 
 	/**
@@ -121,7 +123,7 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 					if (value.equals(Boolean.TRUE)) {
 						this.selectedNode = myNetwork.getNode(suid);
 
-						updateNodesAndEdges(this.selectedNode);
+						updateNodesAndEdges(new ArrayList<CyNode>(Arrays.asList(this.selectedNode)));
 					}
 				}
 			}
@@ -173,13 +175,8 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 				}
 			}
 
-			// Iterating over hash set items
-			Iterator<CyNode> _iterator_CyNode = nodes.iterator();
-			while (_iterator_CyNode.hasNext()) {
+			updateNodesAndEdges(nodes);
 
-				updateNodesAndEdges(_iterator_CyNode.next());
-
-			}
 		} catch (Exception exception) {
 		}
 	}
@@ -189,24 +186,57 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 	 * 
 	 * @param current_node current node
 	 */
-	private void updateNodesAndEdges(CyNode current_node) {
+	private void updateNodesAndEdges(List<CyNode> nodes) {
+		final Iterator<CyNode> _iterator_CyNode = nodes.iterator();
 
+		if (!_iterator_CyNode.hasNext())
+			return;
+
+		CyNode current_node = _iterator_CyNode.next();
 		View<CyNode> nodeView = netView.getNodeView(current_node);
 		double current_posX = nodeView.getVisualProperty(BasicVisualLexicon.NODE_X_LOCATION);
 		double current_posY = nodeView.getVisualProperty(BasicVisualLexicon.NODE_Y_LOCATION);
-		if (mapLastNodesPosition.containsKey(current_node)) {
-			double last_posX = mapLastNodesPosition.get(current_node).getFirst();
-			double last_posY = mapLastNodesPosition.get(current_node).getSecond();
+		if (Util.mapLastNodesPosition.containsKey(current_node)) {
+			double last_posX = Util.mapLastNodesPosition.get(current_node).getFirst();
+			double last_posY = Util.mapLastNodesPosition.get(current_node).getSecond();
 			if (current_posX == last_posX && current_posY == last_posY)
 				return;
 		}
-		
-		// Create protein scaling factor table
-		if (this.dialogTaskManager != null && this.updateViewerTaskFactory != null) {
-			TaskIterator ti = this.updateViewerTaskFactory.createTaskIterator(cyApplicationManager, handleFactory,
-					bendFactory, myNetwork, netView, current_node, mapLastNodesPosition);
-			this.dialogTaskManager.execute(ti);
+
+		if (!Util.stopUpdateViewer) {
+			if (this.dialogTaskManager != null && this.updateViewerTaskFactory != null) {
+
+				TaskIterator ti = this.updateViewerTaskFactory.createTaskIterator(cyApplicationManager, handleFactory,
+						bendFactory, myNetwork, netView, current_node);
+
+				TaskObserver observer = new TaskObserver() {
+
+					@Override
+					public void taskFinished(ObservableTask task) {
+
+					}
+
+					@Override
+					public void allFinished(FinishStatus finishStatus) {
+						if (!_iterator_CyNode.hasNext())
+							return;
+
+						final List<CyNode> remainingList = new ArrayList<CyNode>();
+						_iterator_CyNode.forEachRemaining(new Consumer<CyNode>() {
+							@Override
+							public void accept(CyNode key) {
+								remainingList.add(key);
+							}
+						});
+						updateNodesAndEdges(remainingList);
+					}
+				};
+
+				this.dialogTaskManager.execute(ti, observer);
+
+			}
 		}
+
 	}
 
 	/**
@@ -218,7 +248,7 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 
 		MainSingleNodeTask.interLinks = null;
 		MainSingleNodeTask.intraLinks = null;
-		mapLastNodesPosition.clear();
+		Util.mapLastNodesPosition.clear();
 
 		try {
 

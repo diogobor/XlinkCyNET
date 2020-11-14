@@ -107,6 +107,8 @@ public class Util {
 	public static Map<String, Color> proteinDomainsColorMap = new HashMap<String, Color>();
 	public static List<java.awt.Color> available_domain_colors = new ArrayList<Color>();
 
+	public static Map<CyNode, Tuple2<Double, Double>> mapLastNodesPosition = new HashMap<CyNode, Tuple2<Double, Double>>();
+
 	private static float proteinLength;
 
 	public static void setProteinLength(float value) {
@@ -134,6 +136,28 @@ public class Util {
 				proteinDomainsColorMap.put(ptnDomain.name, available_domain_colors
 						.get(proteinDomainsColorMap.size() % Util.available_domain_colors.size()));
 			}
+		}
+	}
+
+	/**
+	 * Method responsible for updating Map Nodes Position
+	 * 
+	 * @param current_node current node
+	 * @param nodeView     current node view
+	 */
+	public static void updateMapNodesPosition(CyNode current_node, View<CyNode> nodeView) {
+
+		double current_posX = nodeView.getVisualProperty(BasicVisualLexicon.NODE_X_LOCATION);
+		double current_posY = nodeView.getVisualProperty(BasicVisualLexicon.NODE_Y_LOCATION);
+		if (Util.mapLastNodesPosition.containsKey(current_node)) {
+			double last_posX = Util.mapLastNodesPosition.get(current_node).getFirst();
+			double last_posY = Util.mapLastNodesPosition.get(current_node).getSecond();
+			if (current_posX == last_posX && current_posY == last_posY)
+				return;
+			else
+				Util.mapLastNodesPosition.put(current_node, new Tuple2(current_posX, current_posY));
+		} else {
+			Util.mapLastNodesPosition.put(current_node, new Tuple2(current_posX, current_posY));
 		}
 	}
 
@@ -352,7 +376,7 @@ public class Util {
 	 * @param bendFactory             bend factory
 	 * @param lexicon                 lexicon
 	 * @param proteinLength           current protein length
-	 * @param intraLinks              all intralinks
+	 * @param intraLinks              all intra-links
 	 * @param interLinks              all interlinks
 	 * @param taskMonitor             task monitor
 	 * @param textLabel_status_result display current status
@@ -730,6 +754,9 @@ public class Util {
 		StringBuilder sb_domains = new StringBuilder();
 		for (final GeneDomain geneDomain : geneList) {
 
+			if (geneDomain.proteinDomains.size() == 0) {
+				continue;
+			}
 			CyNode node = getNode(myNetwork, geneDomain.geneName);
 			if (node != null) {
 				for (ProteinDomain domain : geneDomain.proteinDomains) {

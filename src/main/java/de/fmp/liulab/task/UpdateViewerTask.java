@@ -1,7 +1,6 @@
 package de.fmp.liulab.task;
 
 import java.util.ArrayList;
-import java.util.Map;
 
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.model.CyNetwork;
@@ -10,7 +9,6 @@ import org.cytoscape.model.CyRow;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.View;
 import org.cytoscape.view.model.VisualLexicon;
-import org.cytoscape.view.presentation.property.BasicVisualLexicon;
 import org.cytoscape.view.presentation.property.values.BendFactory;
 import org.cytoscape.view.presentation.property.values.HandleFactory;
 import org.cytoscape.view.vizmap.VisualStyle;
@@ -40,7 +38,6 @@ public class UpdateViewerTask extends AbstractTask {
 	private CyNode node;
 
 	private boolean IsIntraLink = false;
-	private Map<CyNode, Tuple2<Double, Double>> mapLastNodesPosition;
 
 	/**
 	 * Constructor
@@ -54,8 +51,7 @@ public class UpdateViewerTask extends AbstractTask {
 	 * @param mapLastNodesPosition map of nodes position
 	 */
 	public UpdateViewerTask(CyApplicationManager cyApplicationManager, HandleFactory handleFactory,
-			BendFactory bendFactory, CyNetwork myNetwork, CyNetworkView netView, CyNode node,
-			Map<CyNode, Tuple2<Double, Double>> mapLastNodesPosition) {
+			BendFactory bendFactory, CyNetwork myNetwork, CyNetworkView netView, CyNode node) {
 
 		this.cyApplicationManager = cyApplicationManager;
 
@@ -66,7 +62,6 @@ public class UpdateViewerTask extends AbstractTask {
 		this.netView = netView;
 		this.node = node;
 
-		this.mapLastNodesPosition = mapLastNodesPosition;
 	}
 
 	@Override
@@ -83,18 +78,13 @@ public class UpdateViewerTask extends AbstractTask {
 	private void updateNodesAndEdges(final CyNode current_node, TaskMonitor taskMonitor) {
 
 		MainSingleNodeTask.isPlotDone = false;
-		
+
 		double current_scaling_factor = myNetwork.getRow(current_node).get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME,
 				Double.class);
 		View<CyNode> nodeView = netView.getNodeView(current_node);
 
 		if (current_scaling_factor != 1)
-			this.updateMapNodesPosition(current_node, nodeView);
-
-		Util.stopUpdateViewer = false;
-		Tuple2 inter_and_intralinks = Util.getAllLinksFromAdjacentEdgesNode(current_node, myNetwork);
-		MainSingleNodeTask.interLinks = (ArrayList<CrossLink>) inter_and_intralinks.getFirst();
-		MainSingleNodeTask.intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
+			Util.updateMapNodesPosition(current_node, nodeView);
 
 		CyRow proteinA_node_row = myNetwork.getRow(current_node);
 		Object length_other_protein_a = proteinA_node_row.getRaw("length_protein_a");
@@ -120,6 +110,11 @@ public class UpdateViewerTask extends AbstractTask {
 			lexicon = LoadProteinDomainTask.lexicon;
 		if (lexicon == null)
 			return;
+
+		Util.stopUpdateViewer = false;
+		Tuple2 inter_and_intralinks = Util.getAllLinksFromAdjacentEdgesNode(current_node, myNetwork);
+		MainSingleNodeTask.interLinks = (ArrayList<CrossLink>) inter_and_intralinks.getFirst();
+		MainSingleNodeTask.intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
 
 		if (MainSingleNodeTask.interLinks.size() > 0) { // The selectedNode has interlinks
 			IsIntraLink = false;
@@ -147,33 +142,7 @@ public class UpdateViewerTask extends AbstractTask {
 			Util.updateAllAssiciatedInterlinkNodes(myNetwork, cyApplicationManager, netView, handleFactory, bendFactory,
 					current_node);// Check if all associated nodes are
 									// unmodified
-			if (mapLastNodesPosition.containsKey(current_node))
-				mapLastNodesPosition.remove(current_node);
-		} else {
-			if (mapLastNodesPosition.containsKey(current_node))
-				mapLastNodesPosition.remove(current_node);
-		}
-	}
-
-	/**
-	 * Method responsible for updating Map Nodes Position
-	 * 
-	 * @param current_node current node
-	 * @param nodeView     current node view
-	 */
-	private void updateMapNodesPosition(CyNode current_node, View<CyNode> nodeView) {
-
-		double current_posX = nodeView.getVisualProperty(BasicVisualLexicon.NODE_X_LOCATION);
-		double current_posY = nodeView.getVisualProperty(BasicVisualLexicon.NODE_Y_LOCATION);
-		if (mapLastNodesPosition.containsKey(current_node)) {
-			double last_posX = mapLastNodesPosition.get(current_node).getFirst();
-			double last_posY = mapLastNodesPosition.get(current_node).getSecond();
-			if (current_posX == last_posX && current_posY == last_posY)
-				return;
-			else
-				mapLastNodesPosition.put(current_node, new Tuple2(current_posX, current_posY));
-		} else {
-			mapLastNodesPosition.put(current_node, new Tuple2(current_posX, current_posY));
+			MainSingleNodeTask.isPlotDone = true;
 		}
 	}
 

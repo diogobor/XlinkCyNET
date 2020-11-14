@@ -313,6 +313,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		if (Util.node_label_factor_size != 1)
 			resizeProtein(taskMonitor);
+		
+		Util.updateMapNodesPosition(node, nodeView);
 
 		// Apply the change to the view
 		style.apply(netView);
@@ -348,7 +350,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Resizing edges...");
 		isPlotDone = Util.addOrUpdateEdgesToNetwork(myNetwork, node, style, netView, nodeView, handleFactory,
-				bendFactory, lexicon, Util.getProteinLengthScalingFactor(), intraLinks, interLinks, taskMonitor, null);
+				bendFactory, lexicon, Util.getProteinLength(), intraLinks, interLinks, taskMonitor, null);
 	}
 
 	/**
@@ -953,7 +955,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 						okButton.setEnabled(true);
 						proteinDomainServerButton.setEnabled(true);
-
+						Util.updateMapNodesPosition(node, nodeView);
+						
 						mainFrame.dispose();
 					}
 				};

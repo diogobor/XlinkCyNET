@@ -138,8 +138,9 @@ public class CyActivator extends AbstractCyActivator {
 		// #### LISTENER ######
 
 		UpdateViewerTaskFactory updateViewerTaskFactory = new UpdateViewerTaskFactory();
-		ViewChangedListener updateViewListener = new UpdateViewListener(
-				cyApplicationManager, handleFactory, bendFactory, vmmServiceRef, dialogTaskManager, proteinScalingFactorTableTaskFactory, updateViewerTaskFactory);
+		ViewChangedListener updateViewListener = new UpdateViewListener(cyApplicationManager, handleFactory,
+				bendFactory, vmmServiceRef, dialogTaskManager, proteinScalingFactorTableTaskFactory,
+				updateViewerTaskFactory);
 
 		registerService(bc, updateViewListener, ViewChangedListener.class, new Properties());
 		registerService(bc, updateViewListener, RowsSetListener.class, new Properties());
