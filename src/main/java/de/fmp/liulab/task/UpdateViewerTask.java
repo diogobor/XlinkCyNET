@@ -80,7 +80,9 @@ public class UpdateViewerTask extends AbstractTask {
 		MainSingleNodeTask.isPlotDone = false;
 
 		double current_scaling_factor = myNetwork.getRow(current_node).get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME,
-				Double.class);
+				Double.class) != null
+						? myNetwork.getRow(current_node).get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME, Double.class)
+						: 1.0;
 		View<CyNode> nodeView = netView.getNodeView(current_node);
 
 		if (current_scaling_factor != 1)

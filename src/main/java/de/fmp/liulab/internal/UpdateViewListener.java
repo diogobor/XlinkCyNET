@@ -62,9 +62,12 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 	private ProteinScalingFactorHorizontalExpansionTableTaskFactory proteinScalingFactorHorizontalExpansionTableTaskFactory;
 	private UpdateViewerTaskFactory updateViewerTaskFactory;
 
-	private CyNode selectedNode;
+	private CyNode selectedNode;;
+	private CyNode current_node;
 
 	public static boolean isNodeModified = false;
+
+	private List<Long> nodes_suids = new ArrayList<Long>();
 
 	/**
 	 * Constructor
@@ -102,6 +105,7 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 
 		myNetwork = cyApplicationManager.getCurrentNetwork();
 		netView = cyApplicationManager.getCurrentNetworkView();
+		nodes_suids.clear();
 
 		try {
 			// First see if this even has anything to do with selections
@@ -162,20 +166,38 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 			if (nodeSuidList.size() == 0)// It means no CyNode has been selected
 				return;
 
+			List<CyNode> nodes_to_be_updated = new ArrayList<CyNode>();
 			// Check if all selected nodes have been modified
 			for (final CyNode _node : nodes) {
+
+				String node_name = myNetwork.getRow(_node).get(CyNetwork.NAME, String.class);
 				// Check if the node exists in the network
+
 				Optional<CyNode> isNodePresent = nodeSuidList.stream().filter(new Predicate<CyNode>() {
 					public boolean test(CyNode o) {
 						return o.getSUID() == _node.getSUID();
 					}
 				}).findFirst();
 				if (!isNodePresent.isPresent()) {
-					return;
+					if (!(node_name.contains("Source") || node_name.contains("Target")))
+						return;
+				}
+
+				if (node_name.contains("Source") || node_name.contains("Target")) {
+					nodes_to_be_updated.add(_node);
+				} else {
+					Optional<Long> isNodePresent_SUID = nodes_suids.stream().filter(new Predicate<Long>() {
+						public boolean test(Long o) {
+							return o == _node.getSUID();
+						}
+					}).findFirst();
+					if (!isNodePresent_SUID.isPresent()) {
+						nodes_to_be_updated.add(_node);
+					}
 				}
 			}
 
-			updateNodesAndEdges(nodes);
+			updateNodesAndEdges(nodes_to_be_updated);
 
 		} catch (Exception exception) {
 		}
@@ -192,7 +214,17 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 		if (!_iterator_CyNode.hasNext())
 			return;
 
-		CyNode current_node = _iterator_CyNode.next();
+		current_node = _iterator_CyNode.next();
+
+		String node_name = myNetwork.getRow(current_node).get(CyNetwork.NAME, String.class);
+		while (node_name.contains("Source") || node_name.contains("Target")) {
+			if (_iterator_CyNode.hasNext()) {
+				current_node = _iterator_CyNode.next();
+				node_name = myNetwork.getRow(current_node).get(CyNetwork.NAME, String.class);
+			} else
+				return;
+		}
+
 		View<CyNode> nodeView = netView.getNodeView(current_node);
 		double current_posX = nodeView.getVisualProperty(BasicVisualLexicon.NODE_X_LOCATION);
 		double current_posY = nodeView.getVisualProperty(BasicVisualLexicon.NODE_Y_LOCATION);
@@ -206,6 +238,8 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 		if (!Util.stopUpdateViewer) {
 			if (this.dialogTaskManager != null && this.updateViewerTaskFactory != null) {
 
+				nodes_suids.add(current_node.getSUID());
+
 				TaskIterator ti = this.updateViewerTaskFactory.createTaskIterator(cyApplicationManager, handleFactory,
 						bendFactory, myNetwork, netView, current_node);
 
@@ -218,8 +252,10 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 
 					@Override
 					public void allFinished(FinishStatus finishStatus) {
-						if (!_iterator_CyNode.hasNext())
+						if (!_iterator_CyNode.hasNext()) {
+							nodes_suids.remove(current_node.getSUID());
 							return;
+						}
 
 						final List<CyNode> remainingList = new ArrayList<CyNode>();
 						_iterator_CyNode.forEachRemaining(new Consumer<CyNode>() {
@@ -229,6 +265,7 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 							}
 						});
 						updateNodesAndEdges(remainingList);
+						nodes_suids.remove(current_node.getSUID());
 					}
 				};
 
@@ -249,6 +286,7 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 		MainSingleNodeTask.interLinks = null;
 		MainSingleNodeTask.intraLinks = null;
 		Util.mapLastNodesPosition.clear();
+		nodes_suids.clear();
 
 		try {
 
