@@ -25,14 +25,14 @@ public class UpdateViewerTaskFactory extends AbstractTaskFactory {
 
 	/**
 	 * Create iterator
+	 * 
 	 * @param cyApplicationManager main app manager
 	 * @param handleFactory handle factory
 	 * @param bendFactory bend factory
 	 * @param myNetwork current network
 	 * @param netView current network view
 	 * @param node current node
-	 * @param mapLastNodesPosition maps of nodes position
-	 * @return
+	 * @return task iterator
 	 */
 	public TaskIterator createTaskIterator(CyApplicationManager cyApplicationManager, HandleFactory handleFactory,
 			BendFactory bendFactory, CyNetwork myNetwork, CyNetworkView netView, CyNode node) {

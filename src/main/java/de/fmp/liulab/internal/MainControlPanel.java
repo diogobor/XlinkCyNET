@@ -62,7 +62,9 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	private Properties XlinkCyNETProps;
 
 	/**
-	 * Constructor
+	 * Constructor 
+	 * @param XlinkCyNETProps setting properties
+	 * @param cm configuration manager
 	 */
 	public MainControlPanel(Properties XlinkCyNETProps, ConfigurationManager cm) {
 

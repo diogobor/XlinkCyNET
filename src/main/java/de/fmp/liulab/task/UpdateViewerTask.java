@@ -48,7 +48,6 @@ public class UpdateViewerTask extends AbstractTask {
 	 * @param myNetwork            current network
 	 * @param netView              current network view
 	 * @param node                 current node
-	 * @param mapLastNodesPosition map of nodes position
 	 */
 	public UpdateViewerTask(CyApplicationManager cyApplicationManager, HandleFactory handleFactory,
 			BendFactory bendFactory, CyNetwork myNetwork, CyNetworkView netView, CyNode node) {

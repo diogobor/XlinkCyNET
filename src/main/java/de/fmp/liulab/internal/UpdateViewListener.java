@@ -82,6 +82,7 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 	 * @param proteinScalingFactorHorizontalExpansionTableTaskFactory protein length
 	 *                                                                scaling factor
 	 *                                                                factory
+	 * @param updateViewerTaskFactory								  update viewer task factory                                                                
 	 */
 	public UpdateViewListener(CyApplicationManager cyApplicationManager, HandleFactory handleFactory,
 			BendFactory bendFactory, VisualMappingManager vmmServiceRef, DialogTaskManager dialogTaskManager,
