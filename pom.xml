@@ -16,7 +16,7 @@
 	<groupId>de.fmp.liulab</groupId>
 	<artifactId>XlinkCyNET</artifactId>
 	<packaging>bundle</packaging>
-	<version>1.0.6.8</version>
+	<version>1.0.7</version>
 
 	<name>XlinkCyNET</name>
 
