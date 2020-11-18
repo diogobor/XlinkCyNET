@@ -6,7 +6,7 @@
 	<properties>
 		<bundle.symbolicName>XlinkCyNET</bundle.symbolicName>
 		<bundle.namespace>de.fmp.liulab.internal</bundle.namespace>
-		<bundle.version>1.0.6</bundle.version>
+		<bundle.version>1.0.7</bundle.version>
 		<cytoscape.api.version>3.8.0</cytoscape.api.version>
 		<maven-compiler-plugin.version>2.0.2</maven-compiler-plugin.version>
 		<maven-bundle-plugin.version>2.3.4</maven-bundle-plugin.version>
