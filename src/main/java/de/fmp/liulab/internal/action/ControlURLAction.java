@@ -43,7 +43,7 @@ public class ControlURLAction extends AbstractCyAction {
 	 */
 	public void actionPerformed(ActionEvent e) {
 
-		String msg = "<html><p><b>Developed by The Liu Lab:</b></p><p><b>Diogo Borges</b> (diogobor@gmail.com)</p><p><b>Fan Liu</b> (fliu@fmp-berlin.de)</p><br/><p><b>Version:</b> "
+		String msg = "<html><p><b>Developed by The Liu Lab:</b></p><p><b>Diogo Borges</b> (diogobor@gmail.com)</p><p><b>Ying Zhu</b> (zhu@fmp-berlin.de)</p><p><b>Fan Liu</b> (fliu@fmp-berlin.de)</p><br/><p><b>Version:</b> "
 				+ version + "</p></html>";
 
 		JOptionPane.showMessageDialog(null, msg, "XlinkCyNET - About", JOptionPane.INFORMATION_MESSAGE,
