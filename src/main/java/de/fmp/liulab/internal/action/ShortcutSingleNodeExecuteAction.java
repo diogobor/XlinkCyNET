@@ -19,7 +19,7 @@ import org.cytoscape.work.swing.DialogTaskManager;
  */
 public class ShortcutSingleNodeExecuteAction extends AbstractCyAction {
 
-	private static final String MENU_NAME = "Apply layout";
+	private static final String MENU_NAME = "Apply/Restore layout";
 	private static final String MENU_CATEGORY = "Apps.XlinkCyNET";
 	private static final long serialVersionUID = 1L;
 	private DialogTaskManager dialogTaskManager;

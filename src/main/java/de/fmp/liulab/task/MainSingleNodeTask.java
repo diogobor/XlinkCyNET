@@ -1051,6 +1051,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		nodeView.clearValueLock(BasicVisualLexicon.NODE_WIDTH);
 		nodeView.clearValueLock(BasicVisualLexicon.NODE_TRANSPARENCY);
 		nodeView.clearValueLock(BasicVisualLexicon.NODE_PAINT);
+		nodeView.clearValueLock(BasicVisualLexicon.NODE_FILL_COLOR);
 		nodeView.clearValueLock(BasicVisualLexicon.NODE_LABEL_COLOR);
 		nodeView.clearValueLock(BasicVisualLexicon.NODE_SELECTED_PAINT);
 		nodeView.clearValueLock(BasicVisualLexicon.NODE_BORDER_WIDTH);

@@ -18,7 +18,7 @@ import org.cytoscape.util.swing.OpenBrowser;
  */
 public class ControlURLAction extends AbstractCyAction {
 
-	private static final String MENU_NAME = "About";
+	private static final String MENU_NAME = "About XlinkCyNET";
 	private static final String MENU_CATEGORY = "Apps.XlinkCyNET";
 	private static final long serialVersionUID = 1L;
 	private OpenBrowser openBrowser;

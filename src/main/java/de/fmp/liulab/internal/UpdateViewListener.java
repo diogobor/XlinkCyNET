@@ -265,8 +265,8 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 								remainingList.add(key);
 							}
 						});
-						updateNodesAndEdges(remainingList);
 						nodes_suids.remove(current_node.getSUID());
+						updateNodesAndEdges(remainingList);
 					}
 				};
 

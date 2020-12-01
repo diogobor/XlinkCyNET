@@ -31,6 +31,7 @@ import de.fmp.liulab.internal.action.ControlURLAction;
 import de.fmp.liulab.internal.action.ExportProteinDomainsAction;
 import de.fmp.liulab.internal.action.LoadProteinDomainsAction;
 import de.fmp.liulab.internal.action.MainPanelAction;
+import de.fmp.liulab.internal.action.ReadMeAction;
 import de.fmp.liulab.internal.action.SetDomainColorAction;
 import de.fmp.liulab.internal.action.ShortcutSingleNodeExecuteAction;
 import de.fmp.liulab.internal.action.ShortcutWindowSingleNodeLayout;
@@ -64,6 +65,7 @@ public class CyActivator extends AbstractCyActivator {
 		OpenBrowser openBrowser = getService(bc, OpenBrowser.class);
 		String version = bc.getBundle().getVersion().toString();
 		ControlURLAction controlURLAction = new ControlURLAction(openBrowser, version);
+		ReadMeAction readMe = new ReadMeAction(openBrowser);
 		// ###############
 
 		CyApplicationManager cyApplicationManager = getService(bc, CyApplicationManager.class);
@@ -166,8 +168,9 @@ public class CyActivator extends AbstractCyActivator {
 		registerService(bc, mainControlPanel, CytoPanelComponent.class, new Properties());
 		registerService(bc, panelAction, CyAction.class, new Properties());
 
+		registerService(bc, readMe, CyAction.class, new Properties());
 		registerService(bc, controlURLAction, CyAction.class, new Properties());
-
+		
 		registerAllServices(bc, myNodeViewContextMenuFactory, myNodeViewContextMenuFactoryProps);
 
 	}

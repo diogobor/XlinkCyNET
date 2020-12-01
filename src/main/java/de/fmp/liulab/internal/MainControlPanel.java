@@ -698,7 +698,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		offset_x += 10;
 		SpinnerModel model_node = new SpinnerNumberModel(Util.node_label_font_size.intValue(), // initial value
 				0, // min
-				30, // max
+				100, // max
 				1); // step
 		final JSpinner spinner_node = new JSpinner(model_node);
 		spinner_node.setBounds(offset_x, offset_y, 60, 20);

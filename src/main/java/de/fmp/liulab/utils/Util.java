@@ -320,13 +320,7 @@ public class Util {
 			// If the property is supported by this rendering engine,
 			// use the serialization string value to create the actual property value
 
-			int ptn_label_length = myNetwork.getDefaultNodeTable().getRow(node.getSUID()).getRaw(CyNetwork.NAME)
-					.toString().length();
-
-			float current_node_font_size = nodeView.getVisualProperty(BasicVisualLexicon.NODE_LABEL_FONT_SIZE);
-			ptn_label_length *= (current_node_font_size - 3);
-			ObjectPosition position = (ObjectPosition) vp_label_position
-					.parseSerializableString("W,W,c,-" + ptn_label_length + ".00,0.00");
+			ObjectPosition position = (ObjectPosition) vp_label_position.parseSerializableString("W,E,r,-10.00,0.00");
 
 			// If the parsed value is ok, apply it to the visual style
 			// as default value or a visual mapping
@@ -1570,6 +1564,7 @@ public class Util {
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_TRANSPARENCY, 200);
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_BORDER_TRANSPARENCY, Util.node_border_opacity);
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_PAINT, Color.WHITE);
+		nodeView.setLockedValue(BasicVisualLexicon.NODE_FILL_COLOR, Color.WHITE);
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_LABEL_COLOR, Color.GRAY);
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_LABEL_FONT_SIZE, Util.node_label_font_size);
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_SELECTED_PAINT, new Color(131, 131, 131, 70));
@@ -1598,12 +1593,9 @@ public class Util {
 			// If the property is supported by this rendering engine,
 			// use the serialization string value to create the actual property value
 
-			int ptn_label_length = myNetwork.getDefaultNodeTable().getRow(node.getSUID()).getRaw(CyNetwork.NAME)
-					.toString().length();
-			ptn_label_length *= (Util.node_label_font_size - 3);
 			Object position = null;
 			if (Util.isProtein_expansion_horizontal)
-				position = vp_label_position.parseSerializableString("W,W,c,-" + ptn_label_length + ".00,0.00");
+				position = vp_label_position.parseSerializableString("W,E,r,-10.00,0.00");
 			else
 				position = (ObjectPosition) vp_label_position.parseSerializableString("N,S,c,0.00,0.00");
 
