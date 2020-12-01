@@ -302,7 +302,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		getProteinDomains(node);
 
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting protein domains to node...");
-		setNodeDomainColors();
+		setNodeDomainColors(taskMonitor);
 		taskMonitor.setProgress(0.75);
 
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Defining styles for cross-links...");
@@ -313,7 +313,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		if (Util.node_label_factor_size != 1)
 			resizeProtein(taskMonitor);
-		
+
 		Util.updateMapNodesPosition(node, nodeView);
 
 		// Apply the change to the view
@@ -324,6 +324,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 	/**
 	 * Update domain annotations in the cytoscape node table
+	 * 
 	 * @param taskMonitor
 	 * @param proteinDomainList
 	 */
@@ -340,6 +341,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 	/**
 	 * Resize protein node
+	 * 
 	 * @param taskMonitor task monitor
 	 */
 	private void resizeProtein(final TaskMonitor taskMonitor) {
@@ -930,7 +932,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 						textLabel_status_result.setText("Setting protein domains to node...");
 						taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting protein domains to node...");
-						setNodeDomainColors();
+						setNodeDomainColors(taskMonitor);
 						taskMonitor.setProgress(0.75);
 
 						update_protein_domain_table(taskMonitor, myProteinDomains);
@@ -956,7 +958,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 						okButton.setEnabled(true);
 						proteinDomainServerButton.setEnabled(true);
 						Util.updateMapNodesPosition(node, nodeView);
-						
+
 						mainFrame.dispose();
 					}
 				};
@@ -1151,7 +1153,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	/**
 	 * Set all domains to a node
 	 */
-	private void setNodeDomainColors() {
+	private void setNodeDomainColors(final TaskMonitor taskMonitor) {
 		// ######################### NODE_COLOR_LINEAR_GRADIENT ######################
 		boolean hasDomain = false;
 		StringBuilder sb_domains = new StringBuilder();
@@ -1178,8 +1180,11 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 				if (startId > Util.getProteinLength())
 					continue;
-				if (endId > Util.getProteinLength())
+				if (endId > Util.getProteinLength()) {
+					taskMonitor.showMessage(TaskMonitor.Level.ERROR, "ERROR Domain: " + domain.name
+							+ " - The position of the final residue is greater than the length of the protein.");
 					endId = (int) Util.getProteinLength();
+				}
 
 				float initial_range = ((float) startId / Util.getProteinLength());
 				float initial_range_white = initial_range - 0.0001f >= 0.0 ? initial_range - 0.0001f : initial_range;
@@ -1240,7 +1245,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		String protein_name = myNetwork.getDefaultNodeTable().getRow(node.getSUID()).getRaw(CyNetwork.NAME).toString();
 
 		if (hasDomain) {
-			if(myProteinDomains.size() > 1)
+			if (myProteinDomains.size() > 1)
 				nodeView.setLockedValue(BasicVisualLexicon.NODE_TOOLTIP,
 						"<html><p><b>Protein:</b></p><p>" + protein_name + " [1 - " + (int) Util.getProteinLength()
 								+ "]</p><br/><p><b>Domains:</i></p>" + sb_domains.toString() + "</html>");
