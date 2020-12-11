@@ -56,15 +56,18 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	private JSpinner spinner_opacity_edge_label;
 	private JSpinner spinner_opacity_edge_link;
 	private JSpinner spinner_width_edge_link;
+	private JSpinner spinner_score_intralink;
+	private JSpinner spinner_score_interlink;
 
 	private JCheckBox show_links_legend;
 
 	private Properties XlinkCyNETProps;
 
 	/**
-	 * Constructor 
+	 * Constructor
+	 * 
 	 * @param XlinkCyNETProps setting properties
-	 * @param cm configuration manager
+	 * @param cm              configuration manager
 	 */
 	public MainControlPanel(Properties XlinkCyNETProps, ConfigurationManager cm) {
 
@@ -162,7 +165,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		Util.NodeBorderColor = stringToColor(propertyValue);
 
 	}
-	
+
 	/**
 	 * Converter string to color
 	 * 
@@ -211,7 +214,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		link_legend_panel = new JPanel();
 		link_legend_panel.setBackground(Color.WHITE);
 		link_legend_panel.setBorder(BorderFactory.createTitledBorder("Legend"));
-		link_legend_panel.setBounds(10, 140, 250, 120);
+		link_legend_panel.setBounds(10, 200, 250, 120);
 		link_legend_panel.setLayout(null);
 		link_panel.add(link_legend_panel);
 
@@ -251,14 +254,17 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 		if (Util.showIntraLinks) {
 			intraLinkColorButton.setEnabled(true);
+			spinner_score_intralink.setEnabled(true);
 		} else {
 			intraLinkColorButton.setEnabled(false);
+			spinner_score_intralink.setEnabled(true);
 		}
 		show_intra_link.addItemListener(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				if (e.getStateChange() == ItemEvent.SELECTED) {// checkbox has been selected
 					intraLinkColorButton.setEnabled(true);
+					spinner_score_intralink.setEnabled(true);
 					Util.showIntraLinks = true;
 					XlinkCyNETProps.setProperty("xlinkcynet.showIntraLinks", "true");
 
@@ -270,6 +276,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 				} else {
 					intraLinkColorButton.setEnabled(false);
+					spinner_score_intralink.setEnabled(false);
 					Util.showIntraLinks = false;
 					XlinkCyNETProps.setProperty("xlinkcynet.showIntraLinks", "false");
 
@@ -300,14 +307,17 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 		if (Util.showInterLinks) {
 			interLinkColorButton.setEnabled(true);
+			spinner_score_interlink.setEnabled(true);
 		} else {
 			interLinkColorButton.setEnabled(false);
+			spinner_score_interlink.setEnabled(false);
 		}
 		show_inter_link.addItemListener(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				if (e.getStateChange() == ItemEvent.SELECTED) {// checkbox has been selected
 					interLinkColorButton.setEnabled(true);
+					spinner_score_interlink.setEnabled(true);
 					Util.showInterLinks = true;
 					XlinkCyNETProps.setProperty("xlinkcynet.showInterLinks", "true");
 
@@ -319,6 +329,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 				} else {
 					interLinkColorButton.setEnabled(false);
+					spinner_score_interlink.setEnabled(false);
 					Util.showInterLinks = false;
 					XlinkCyNETProps.setProperty("xlinkcynet.showInterLinks", "false");
 
@@ -389,6 +400,18 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		width_edge_link.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		width_edge_link.setBounds(10, offset_y, 450, 100);
 		link_panel.add(width_edge_link);
+		offset_y += 30;
+
+		JLabel score_intralink = new JLabel("Intralink score:");
+		score_intralink.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
+		score_intralink.setBounds(10, offset_y, 450, 100);
+		link_panel.add(score_intralink);
+		offset_y += 30;
+
+		JLabel score_interlink = new JLabel("Interlink score:");
+		score_interlink.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
+		score_interlink.setBounds(10, offset_y, 450, 100);
+		link_panel.add(score_interlink);
 
 		offset_y = 10;
 		JLabel font_size_links = new JLabel("Font size:");
@@ -426,6 +449,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		width_node_border.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		width_node_border.setBounds(10, offset_y, 450, 100);
 		node_border_panel.add(width_node_border);
+		offset_y += 30;
 
 	}
 
@@ -628,7 +652,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		SpinnerModel width_edge_link = new SpinnerNumberModel(Util.edge_link_width, // initial
 				// value
 				1, // min
-				10, // max
+				12, // max
 				0.1); // step
 		spinner_width_edge_link = new JSpinner(width_edge_link);
 		spinner_width_edge_link.setBounds(offset_x, offset_y, 60, 20);
@@ -646,6 +670,50 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		});
 		spinner_width_edge_link.setToolTipText("Set a value between 1 and 10.");
 		link_panel.add(spinner_width_edge_link);
+		offset_y += 30;
+
+		SpinnerModel model_intralink_spinner = new SpinnerNumberModel(Util.intralink_threshold_score, // initial
+				// value
+				1, // min
+				100, // max
+				0.1); // step
+		spinner_score_intralink = new JSpinner(model_intralink_spinner);
+		spinner_score_intralink.setBounds(offset_x, offset_y, 60, 20);
+		JComponent comp_score_intra_link = spinner_score_intralink.getEditor();
+		JFormattedTextField field_score_intra_link = (JFormattedTextField) comp_score_intra_link.getComponent(0);
+		DefaultFormatter formatter_score_intra_link = (DefaultFormatter) field_score_intra_link.getFormatter();
+		formatter_score_intra_link.setCommitsOnValidEdit(true);
+		spinner_score_intralink.addChangeListener(new ChangeListener() {
+
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				Util.intralink_threshold_score = (double) spinner_score_intralink.getValue();
+				XlinkCyNETProps.setProperty("xlinkcynet.intralink_threshold_score", String.valueOf(Util.intralink_threshold_score));
+			}
+		});
+		link_panel.add(spinner_score_intralink);
+		offset_y += 30;
+
+		SpinnerModel model_interlink_spinner = new SpinnerNumberModel(Util.interlink_threshold_score, // initial
+				// value
+				1, // min
+				100, // max
+				0.1); // step
+		spinner_score_interlink = new JSpinner(model_interlink_spinner);
+		spinner_score_interlink.setBounds(offset_x, offset_y, 60, 20);
+		JComponent comp_score_inter_link = spinner_score_interlink.getEditor();
+		JFormattedTextField field_score_inter_link = (JFormattedTextField) comp_score_inter_link.getComponent(0);
+		DefaultFormatter formatter_score_inter_link = (DefaultFormatter) field_score_inter_link.getFormatter();
+		formatter_score_inter_link.setCommitsOnValidEdit(true);
+		spinner_score_interlink.addChangeListener(new ChangeListener() {
+
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				Util.interlink_threshold_score = (double) spinner_score_interlink.getValue();
+				XlinkCyNETProps.setProperty("xlinkcynet.interlink_threshold_score", String.valueOf(Util.interlink_threshold_score));
+			}
+		});
+		link_panel.add(spinner_score_interlink);
 
 		offset_y = 50;
 		offset_x -= 10;

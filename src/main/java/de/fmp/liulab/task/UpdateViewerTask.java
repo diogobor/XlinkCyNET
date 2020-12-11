@@ -99,7 +99,7 @@ public class UpdateViewerTask extends AbstractTask {
 		}
 
 		Util.setProteinLength((float) ((Number) length_other_protein_a).doubleValue());
-
+		
 		VisualStyle style = MainSingleNodeTask.style;
 		if (style == null)
 			style = LoadProteinDomainTask.style;

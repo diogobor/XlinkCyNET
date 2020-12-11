@@ -10,13 +10,17 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.swing.AbstractListModel;
 import javax.swing.JLabel;
@@ -79,6 +83,8 @@ public class Util {
 	private static String XL_PROTEIN_B_A = "pro_site_ba";
 	private static String PROTEIN_A = "protein_a";
 	private static String PROTEIN_B = "protein_b";
+	private static String XL_SCORE_AB = "score_ab";
+	private static String XL_SCORE_BA = "score_ba";
 
 	private static String OS = System.getProperty("os.name").toLowerCase();
 	private final static float OFFSET_BEND = 2;
@@ -101,13 +107,17 @@ public class Util {
 	public static boolean isProtein_expansion_horizontal = true;
 	public static boolean isProteinDomainPfam = false;
 	public static boolean stopUpdateViewer = false;
+	public static double intralink_threshold_score = 10;
+	public static double interlink_threshold_score = 10;
+	public static double intralink_current_score = -1;
+	public static double interlink_current_score = -1;
 
 	// Map<Network name, Map<Protein - Node SUID, List<ProteinDomain>>
 	public static Map<String, Map<Long, List<ProteinDomain>>> proteinDomainsMap = new HashMap<String, Map<Long, List<ProteinDomain>>>();
 	public static Map<String, Color> proteinDomainsColorMap = new HashMap<String, Color>();
 	public static List<java.awt.Color> available_domain_colors = new ArrayList<Color>();
 
-	public static Map<CyNode, Tuple2<Double, Double>> mapLastNodesPosition = new HashMap<CyNode, Tuple2<Double, Double>>();
+	public static Map<CyNode, Tuple2> mapLastNodesPosition = new HashMap<CyNode, Tuple2>();
 
 	private static float proteinLength;
 
@@ -150,8 +160,8 @@ public class Util {
 		double current_posX = nodeView.getVisualProperty(BasicVisualLexicon.NODE_X_LOCATION);
 		double current_posY = nodeView.getVisualProperty(BasicVisualLexicon.NODE_Y_LOCATION);
 		if (Util.mapLastNodesPosition.containsKey(current_node)) {
-			double last_posX = Util.mapLastNodesPosition.get(current_node).getFirst();
-			double last_posY = Util.mapLastNodesPosition.get(current_node).getSecond();
+			double last_posX = (double) Util.mapLastNodesPosition.get(current_node).getFirst();
+			double last_posY = (double) Util.mapLastNodesPosition.get(current_node).getSecond();
 			if (current_posX == last_posX && current_posY == last_posY)
 				return;
 			else
@@ -473,6 +483,7 @@ public class Util {
 					}
 				}
 			} catch (Exception e) {
+				System.out.println(e.getMessage());
 			} finally {
 				if (taskMonitor != null) {
 					summary_processed++;
@@ -542,7 +553,7 @@ public class Util {
 				final String egde_name_added_by_app = "Edge" + countEdge + " [Source: "
 						+ intraLinks.get(countEdge).protein_a + " (" + intraLinks.get(countEdge).pos_site_a
 						+ ")] [Target: " + intraLinks.get(countEdge).protein_b + " ("
-						+ intraLinks.get(countEdge).pos_site_b + ")]";
+						+ intraLinks.get(countEdge).pos_site_b + ")] - Score: " + intraLinks.get(countEdge).score;
 
 				CyEdge current_edge = getEdge(myNetwork, egde_name_added_by_app);
 				if (current_edge == null) {// Add a new edge if does not exist
@@ -687,12 +698,19 @@ public class Util {
 					bend.insertHandleAt(0, h);
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_BEND, bend);
 
+					if (intraLinks.get(countEdge).score != Double.NaN
+							&& intraLinks.get(countEdge).score < intralink_threshold_score) {
+						newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+						newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, 0);
+					}
+
 				} else { // Update edge position
 
 					View<CyEdge> edgeView = netView.getEdgeView(current_edge);
 					edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
 					updateIntraLinkEdgesPosition(myNetwork, netView, original_node, edgeView, intraLinks, countEdge,
 							center_position_node, initial_positionX_node, initial_positionY_node);
+
 				}
 			}
 		} else {// restore intralinks
@@ -954,7 +972,8 @@ public class Util {
 			final String egde_name_added_by_app = "[Source: " + current_inter_links.get(countEdge).protein_a + " ("
 					+ current_inter_links.get(countEdge).pos_site_a + ")] [Target: "
 					+ current_inter_links.get(countEdge).protein_b + " ("
-					+ current_inter_links.get(countEdge).pos_site_b + ")] - Edge" + countEdge;
+					+ current_inter_links.get(countEdge).pos_site_b + ")] - Score:"
+					+ current_inter_links.get(countEdge).score + " - Edge" + countEdge;
 
 			CyEdge newEdge = getEdge(myNetwork, egde_name_added_by_app);
 			if (newEdge == null) {// Add a new edge if does not exist
@@ -1102,6 +1121,12 @@ public class Util {
 					if (edge_curved_obj != null) {
 						newEdgeView.setLockedValue(vp_edge_curved, edge_curved_obj);
 					}
+				}
+
+				if (current_inter_links.get(countEdge).score != Double.NaN
+						&& current_inter_links.get(countEdge).score < interlink_threshold_score) {// hide interlink
+					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, 0);
 				}
 			}
 		}
@@ -1299,22 +1324,34 @@ public class Util {
 			}
 		}
 
-		newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
-
-		// #### UPDATE EDGE STYLE ####
-		newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_PAINT, InterLinksColor);
-		newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TRANSPARENCY, edge_link_opacity);
-		newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_WIDTH, edge_link_width);
-		// ###########################
-
-		// ### DISPLAY LINK LEGEND ###
-		if (showLinksLegend) {
-			newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, edge_label_opacity);
-			newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_FONT_SIZE, edge_label_font_size);
-		} else {
+		// ### DISPLAY LINK ###
+		String score_edge_str = edgeNameArr[edgeNameArr.length - 1];
+		String[] score_edge_splitted = score_edge_str.split("Score:");
+		String[] score_edge = score_edge_splitted[1].split("-");
+		if (Double.parseDouble(score_edge[0]) < Util.interlink_threshold_score) {
+			newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+			newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TRANSPARENCY, 0);
 			newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, 0);
 		}
-		// ###########################
+		else {
+			newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+			
+			// #### UPDATE EDGE STYLE ####
+			newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_PAINT, InterLinksColor);
+			newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TRANSPARENCY, edge_link_opacity);
+			newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_WIDTH, edge_link_width);
+			// ###########################
+
+			// ### DISPLAY LINK LEGEND ###
+			if (showLinksLegend) {
+				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, edge_label_opacity);
+				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_FONT_SIZE, edge_label_font_size);
+			} else {
+				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, 0);
+			}
+			// ###########################
+		}
+		// ####################
 	}
 
 	/**
@@ -1431,6 +1468,14 @@ public class Util {
 			edgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, 0);
 		}
 		// ###########################
+
+		if (intraLinks.get(countEdge).score != Double.NaN
+				&& intraLinks.get(countEdge).score < intralink_threshold_score)// hide
+																				// intralink
+		{
+			edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+			edgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, 0);
+		}
 	}
 
 	/**
@@ -1831,6 +1876,13 @@ public class Util {
 		if (proteinDomainTableScrollPanel != null)
 			proteinDomainTableScrollPanel.setRowHeaderView(rowHeader);
 	}
+	
+    //Utility function
+    public static <T> Predicate<T> distinctByKey(Function<? super T, Object> keyExtractor) 
+    {
+        Map<Object, Boolean> map = new ConcurrentHashMap<>();
+        return t -> map.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
+    }
 
 	/**
 	 * Get all links from adjacent edges of a node
@@ -1839,7 +1891,7 @@ public class Util {
 	 * @param myNetwork current network
 	 * @return all intra and interlinks
 	 */
-	public static Tuple2<ArrayList<CrossLink>, ArrayList<CrossLink>> getAllLinksFromAdjacentEdgesNode(CyNode node,
+	public static Tuple2 getAllLinksFromAdjacentEdgesNode(CyNode node,
 			CyNetwork myNetwork) {
 
 		if (node == null || myNetwork == null) {
@@ -1857,63 +1909,132 @@ public class Util {
 			else
 				nodeSuidList.add(sourceNode.getSUID());
 		}
-
+		
+		Set<Tuple2> cross_links_with_score = new HashSet<Tuple2>();
 		Set<String> cross_links_set = new HashSet<String>();
+
 		for (Long nodeSUID : nodeSuidList) {
 			CyNode currentNode = myNetwork.getNode(nodeSUID);
 
 			CyRow myCurrentRow = myNetwork.getRow(currentNode);
 
 			if (myCurrentRow.getRaw(XL_PROTEIN_A_B) != null) {
-				cross_links_set.addAll(Arrays.asList(myCurrentRow.getRaw(XL_PROTEIN_A_B).toString().split("#")));
+				if (myCurrentRow.getRaw(XL_SCORE_AB) != null) {
+
+					List<String> xls = Arrays.asList(myCurrentRow.getRaw(XL_PROTEIN_A_B).toString().split("#"));
+					List<String> scores = Arrays.asList(myCurrentRow.getRaw(XL_SCORE_AB).toString().split("#"));
+					for (int i = 0; i < xls.size(); i++) {
+						cross_links_with_score.add(new Tuple2(xls.get(i), scores.get(i)));
+					}
+
+				} else {
+					cross_links_set.addAll(Arrays.asList(myCurrentRow.getRaw(XL_PROTEIN_A_B).toString().split("#")));
+
+				}
 			}
 			if (myCurrentRow.getRaw(XL_PROTEIN_B_A) != null) {
-				cross_links_set.addAll(Arrays.asList(myCurrentRow.getRaw(XL_PROTEIN_B_A).toString().split("#")));
+				if (myCurrentRow.getRaw(XL_SCORE_BA) != null) {
+
+					List<String> xls = Arrays.asList(myCurrentRow.getRaw(XL_PROTEIN_B_A).toString().split("#"));
+					List<String> scores = Arrays.asList(myCurrentRow.getRaw(XL_SCORE_BA).toString().split("#"));
+					for (int i = 0; i < xls.size(); i++) {
+						cross_links_with_score.add(new Tuple2(xls.get(i), scores.get(i)));
+					}
+
+				} else {
+					cross_links_set.addAll(Arrays.asList(myCurrentRow.getRaw(XL_PROTEIN_B_A).toString().split("#")));
+				}
 			}
 		}
 
 		// ############ GET ALL EDGES THAT BELONG TO THE SELECTED NODE #############
 
+		List<CrossLink> interLinks = new ArrayList<CrossLink>();
+		List<CrossLink> intraLinks = new ArrayList<CrossLink>();
 		final String selected_node_name = myNetwork.getDefaultNodeTable().getRow(node.getSUID()).getRaw(CyNetwork.NAME)
 				.toString();
 
-		// Get only links that belong to the selected node
-		cross_links_set.removeIf(new Predicate<String>() {
+		if (cross_links_with_score.size() > 0) {
 
-			public boolean test(String xl) {
-				if (xl.isBlank() || xl.isEmpty() || xl.equals("0") || xl.equals("NA"))
-					return true;
-				String[] current_xl = xl.split(selected_node_name);
-				return (current_xl.length == 1);
-			}
-		});
+			// Get only links that belong to the selected node
+			cross_links_with_score.removeIf(new Predicate<Tuple2>() {
 
-		List<CrossLink> interLinks = new ArrayList<CrossLink>();
-		List<CrossLink> intraLinks = new ArrayList<CrossLink>();
-
-		for (String xl : cross_links_set) {
-
-			try {
-				String[] current_xl = splitLinks(xl, selected_node_name);// xl.split("-");
-
-				if (current_xl[0].equals(current_xl[2])) {// it's intralink
-
-					int pos_a = Integer.parseInt(current_xl[1]);
-					int pos_b = Integer.parseInt(current_xl[3]);
-					if (pos_a > pos_b) {
-						int tmp_ = pos_a;
-						pos_a = pos_b;
-						pos_b = tmp_;
-					}
-					intraLinks.add(new CrossLink(current_xl[0], current_xl[2], pos_a, pos_b));
-
-				} else {// it's interlink
-
-					interLinks.add(new CrossLink(current_xl[0], current_xl[2], Integer.parseInt(current_xl[1]),
-							Integer.parseInt(current_xl[3])));
-
+				public boolean test(Tuple2 xl) {
+					if (((String)xl.getFirst()).isBlank() || ((String)xl.getFirst()).isEmpty() || ((String)xl.getFirst()).equals("0")
+							|| ((String)xl.getFirst()).equals("NA") || ((String)xl.getSecond()).isBlank() || ((String)xl.getSecond()).isEmpty()
+							|| ((String)xl.getSecond()).equals("0") || ((String)xl.getSecond()).equals("NA"))
+						return true;
+					String[] current_xl = ((String)xl.getFirst()).split(selected_node_name);
+					return (current_xl.length == 1);
 				}
-			} catch (Exception e) {
+			});
+			
+			for (Tuple2 xl : cross_links_with_score.stream() 
+					  .filter(distinctByKey(p -> p.getFirst())) 
+					  .collect(Collectors.toList())) {
+
+				try {
+					String[] current_xl = splitLinks(((String)xl.getFirst()), selected_node_name);// xl.split("-");
+
+					if (current_xl[0].equals(current_xl[2])) {// it's intralink
+
+						int pos_a = Integer.parseInt(current_xl[1]);
+						int pos_b = Integer.parseInt(current_xl[3]);
+						if (pos_a > pos_b) {
+							int tmp_ = pos_a;
+							pos_a = pos_b;
+							pos_b = tmp_;
+						}
+						intraLinks.add(new CrossLink(current_xl[0], current_xl[2], pos_a, pos_b,
+								Double.parseDouble(((String)xl.getSecond()))));
+
+					} else {// it's interlink
+
+						interLinks.add(new CrossLink(current_xl[0], current_xl[2], Integer.parseInt(current_xl[1]),
+								Integer.parseInt(current_xl[3]), Double.parseDouble(((String)xl.getSecond()))));
+
+					}
+				} catch (Exception e) {
+				}
+			}
+
+		} else {
+
+			// Get only links that belong to the selected node
+			cross_links_set.removeIf(new Predicate<String>() {
+
+				public boolean test(String xl) {
+					if (xl.isBlank() || xl.isEmpty() || xl.equals("0") || xl.equals("NA"))
+						return true;
+					String[] current_xl = xl.split(selected_node_name);
+					return (current_xl.length == 1);
+				}
+			});
+
+			for (String xl : cross_links_set) {
+
+				try {
+					String[] current_xl = splitLinks(xl, selected_node_name);// xl.split("-");
+
+					if (current_xl[0].equals(current_xl[2])) {// it's intralink
+
+						int pos_a = Integer.parseInt(current_xl[1]);
+						int pos_b = Integer.parseInt(current_xl[3]);
+						if (pos_a > pos_b) {
+							int tmp_ = pos_a;
+							pos_a = pos_b;
+							pos_b = tmp_;
+						}
+						intraLinks.add(new CrossLink(current_xl[0], current_xl[2], pos_a, pos_b));
+
+					} else {// it's interlink
+
+						interLinks.add(new CrossLink(current_xl[0], current_xl[2], Integer.parseInt(current_xl[1]),
+								Integer.parseInt(current_xl[3])));
+
+					}
+				} catch (Exception e) {
+				}
 			}
 		}
 

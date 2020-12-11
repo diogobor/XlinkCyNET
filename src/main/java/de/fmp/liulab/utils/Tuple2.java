@@ -7,21 +7,21 @@ package de.fmp.liulab.utils;
  * @param <K> first param
  * @param <V> second param
  */
-public class Tuple2<K, V> {
+public class Tuple2 {
 	 
-    private K first;
-    private V second;
+    private Object first;
+    private Object second;
   
-    public Tuple2(K first, V second){
+    public Tuple2(Object first, Object second){
         this.first = first;
         this.second = second;
     }
  
-    public K getFirst() {
+    public Object getFirst() {
     	return first;
     }
     
-    public V getSecond() {
+    public Object getSecond() {
     	return second;
     }
 }

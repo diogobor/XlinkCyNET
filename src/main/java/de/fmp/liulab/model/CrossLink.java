@@ -2,6 +2,7 @@ package de.fmp.liulab.model;
 
 /**
  * Model class for Cross links
+ * 
  * @author borges.diogo
  *
  */
@@ -10,16 +11,35 @@ public class CrossLink implements Comparable<CrossLink> {
 	public String protein_b;
 	public int pos_site_a;
 	public int pos_site_b;
+	public double score;
 
 	/**
 	 * Empty Constructor
 	 */
 	public CrossLink() {
-		
+
+	}
+
+	/**
+	 * Constructor with score
+	 * 
+	 * @param ptn_a protein a name
+	 * @param ptn_b protein b name
+	 * @param pos_a position a
+	 * @param pos_b position b
+	 * @param score a
+	 */
+	public CrossLink(String ptn_a, String ptn_b, int pos_a, int pos_b, double score) {
+		this.protein_a = ptn_a;
+		this.protein_b = ptn_b;
+		this.pos_site_a = pos_a;
+		this.pos_site_b = pos_b;
+		this.score = score;
 	}
 	
 	/**
-	 * Constructor
+	 * Constructor without score
+	 * 
 	 * @param ptn_a protein a name
 	 * @param ptn_b protein b name
 	 * @param pos_a position a
@@ -30,6 +50,7 @@ public class CrossLink implements Comparable<CrossLink> {
 		this.protein_b = ptn_b;
 		this.pos_site_a = pos_a;
 		this.pos_site_b = pos_b;
+		this.score = Double.NaN;
 	}
 
 	/**

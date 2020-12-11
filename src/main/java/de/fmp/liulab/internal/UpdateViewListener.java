@@ -230,8 +230,8 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 		double current_posX = nodeView.getVisualProperty(BasicVisualLexicon.NODE_X_LOCATION);
 		double current_posY = nodeView.getVisualProperty(BasicVisualLexicon.NODE_Y_LOCATION);
 		if (Util.mapLastNodesPosition.containsKey(current_node)) {
-			double last_posX = Util.mapLastNodesPosition.get(current_node).getFirst();
-			double last_posY = Util.mapLastNodesPosition.get(current_node).getSecond();
+			double last_posX = (double) Util.mapLastNodesPosition.get(current_node).getFirst();
+			double last_posY = (double) Util.mapLastNodesPosition.get(current_node).getSecond();
 			if (current_posX == last_posX && current_posY == last_posY)
 				return;
 		}
