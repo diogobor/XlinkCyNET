@@ -699,7 +699,7 @@ public class Util {
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_BEND, bend);
 
 					if (intraLinks.get(countEdge).score != Double.NaN
-							&& intraLinks.get(countEdge).score < intralink_threshold_score) {
+							&& -Math.log(intraLinks.get(countEdge).score) < intralink_threshold_score) {
 						newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
 						newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, 0);
 					}
@@ -1124,7 +1124,7 @@ public class Util {
 				}
 
 				if (current_inter_links.get(countEdge).score != Double.NaN
-						&& current_inter_links.get(countEdge).score < interlink_threshold_score) {// hide interlink
+						&& -Math.log(current_inter_links.get(countEdge).score) < interlink_threshold_score) {// hide interlink
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, 0);
 				}
@@ -1327,8 +1327,8 @@ public class Util {
 		// ### DISPLAY LINK ###
 		String score_edge_str = edgeNameArr[edgeNameArr.length - 1];
 		String[] score_edge_splitted = score_edge_str.split("Score:");
-		String[] score_edge = score_edge_splitted[1].split("-");
-		if (Double.parseDouble(score_edge[0]) < Util.interlink_threshold_score) {
+		String[] score_edge = score_edge_splitted[1].split("- Edge");
+		if (-Math.log(Double.parseDouble(score_edge[0])) < Util.interlink_threshold_score) {
 			newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
 			newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TRANSPARENCY, 0);
 			newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, 0);
@@ -1470,7 +1470,7 @@ public class Util {
 		// ###########################
 
 		if (intraLinks.get(countEdge).score != Double.NaN
-				&& intraLinks.get(countEdge).score < intralink_threshold_score)// hide
+				&& -Math.log(intraLinks.get(countEdge).score) < intralink_threshold_score)// hide
 																				// intralink
 		{
 			edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
