@@ -99,7 +99,7 @@ public class UpdateViewerTask extends AbstractTask {
 		}
 
 		Util.setProteinLength((float) ((Number) length_other_protein_a).doubleValue());
-		
+
 		VisualStyle style = MainSingleNodeTask.style;
 		if (style == null)
 			style = LoadProteinDomainTask.style;
@@ -144,7 +144,13 @@ public class UpdateViewerTask extends AbstractTask {
 					current_node);// Check if all associated nodes are
 									// unmodified
 			MainSingleNodeTask.isPlotDone = true;
-		}
+		} 
+//		else {// Nodes are not modified -> check comb_score to display edges or not
+//
+//			Util.checkUnmodifiedEdgeToDisplay(myNetwork, cyApplicationManager, netView, handleFactory, bendFactory,
+//					current_node);
+//			MainSingleNodeTask.isPlotDone = true;
+//		}
 	}
 
 	/**

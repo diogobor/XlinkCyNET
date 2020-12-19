@@ -16,6 +16,7 @@ import org.cytoscape.model.events.RowsSetListener;
 import org.cytoscape.property.CyProperty;
 import org.cytoscape.service.util.AbstractCyActivator;
 import org.cytoscape.util.swing.OpenBrowser;
+import org.cytoscape.view.model.CyNetworkViewManager;
 import org.cytoscape.view.model.events.ViewChangedListener;
 import org.cytoscape.view.presentation.customgraphics.CyCustomGraphics2Factory;
 import org.cytoscape.view.presentation.property.values.BendFactory;
@@ -139,10 +140,11 @@ public class CyActivator extends AbstractCyActivator {
 
 		// #### LISTENER ######
 
+		CyNetworkViewManager cyNetworkViewManagerServiceRef = getService(bc, CyNetworkViewManager.class);
 		UpdateViewerTaskFactory updateViewerTaskFactory = new UpdateViewerTaskFactory();
 		ViewChangedListener updateViewListener = new UpdateViewListener(cyApplicationManager, handleFactory,
 				bendFactory, vmmServiceRef, dialogTaskManager, proteinScalingFactorTableTaskFactory,
-				updateViewerTaskFactory);
+				updateViewerTaskFactory, cyNetworkViewManagerServiceRef);
 
 		registerService(bc, updateViewListener, ViewChangedListener.class, new Properties());
 		registerService(bc, updateViewListener, RowsSetListener.class, new Properties());
@@ -170,7 +172,7 @@ public class CyActivator extends AbstractCyActivator {
 
 		registerService(bc, readMe, CyAction.class, new Properties());
 		registerService(bc, controlURLAction, CyAction.class, new Properties());
-		
+
 		registerAllServices(bc, myNodeViewContextMenuFactory, myNodeViewContextMenuFactoryProps);
 
 	}

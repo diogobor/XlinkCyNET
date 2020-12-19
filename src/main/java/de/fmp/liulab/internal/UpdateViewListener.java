@@ -2,6 +2,7 @@ package de.fmp.liulab.internal;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -22,6 +23,7 @@ import org.cytoscape.model.events.RowSetRecord;
 import org.cytoscape.model.events.RowsSetEvent;
 import org.cytoscape.model.events.RowsSetListener;
 import org.cytoscape.view.model.CyNetworkView;
+import org.cytoscape.view.model.CyNetworkViewManager;
 import org.cytoscape.view.model.View;
 import org.cytoscape.view.model.events.ViewChangeRecord;
 import org.cytoscape.view.model.events.ViewChangedEvent;
@@ -53,10 +55,11 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 
 	private CyApplicationManager cyApplicationManager;
 	private CyNetwork myNetwork;
-	private static CyNetworkView netView;
+	private CyNetworkView netView;
 	private HandleFactory handleFactory;
 	private BendFactory bendFactory;
 	private VisualStyle style;
+	private CyNetworkViewManager networkViewManager;
 
 	private DialogTaskManager dialogTaskManager;
 	private ProteinScalingFactorHorizontalExpansionTableTaskFactory proteinScalingFactorHorizontalExpansionTableTaskFactory;
@@ -82,12 +85,15 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 	 * @param proteinScalingFactorHorizontalExpansionTableTaskFactory protein length
 	 *                                                                scaling factor
 	 *                                                                factory
-	 * @param updateViewerTaskFactory								  update viewer task factory                                                                
+	 * @param updateViewerTaskFactory                                 update viewer
+	 *                                                                task factory
+	 * @param networkViewManager                                      networkview
+	 *                                                                manager
 	 */
 	public UpdateViewListener(CyApplicationManager cyApplicationManager, HandleFactory handleFactory,
 			BendFactory bendFactory, VisualMappingManager vmmServiceRef, DialogTaskManager dialogTaskManager,
 			ProteinScalingFactorHorizontalExpansionTableTaskFactory proteinScalingFactorHorizontalExpansionTableTaskFactory,
-			UpdateViewerTaskFactory updateViewerTaskFactory) {
+			UpdateViewerTaskFactory updateViewerTaskFactory, CyNetworkViewManager networkViewManager) {
 		this.cyApplicationManager = cyApplicationManager;
 		this.handleFactory = handleFactory;
 		this.bendFactory = bendFactory;
@@ -95,7 +101,7 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 		this.dialogTaskManager = dialogTaskManager;
 		this.proteinScalingFactorHorizontalExpansionTableTaskFactory = proteinScalingFactorHorizontalExpansionTableTaskFactory;
 		this.updateViewerTaskFactory = updateViewerTaskFactory;
-
+		this.networkViewManager = networkViewManager;
 	}
 
 	/**
@@ -105,7 +111,11 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 	public void handleEvent(RowsSetEvent e) {
 
 		myNetwork = cyApplicationManager.getCurrentNetwork();
-		netView = cyApplicationManager.getCurrentNetworkView();
+		Collection<CyNetworkView> views = networkViewManager.getNetworkViews(myNetwork);
+		if (views.size() != 0)
+			netView = views.iterator().next();
+		else
+			return;
 		nodes_suids.clear();
 
 		try {
@@ -151,7 +161,11 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 				return;
 
 			myNetwork = cyApplicationManager.getCurrentNetwork();
-			netView = cyApplicationManager.getCurrentNetworkView();
+			Collection<CyNetworkView> views = networkViewManager.getNetworkViews(myNetwork);
+			if (views.size() != 0)
+				netView = views.iterator().next();
+			else
+				return;
 
 			List<CyNode> nodes = CyTableUtil.getNodesInState(myNetwork, CyNetwork.SELECTED, true);
 
@@ -295,11 +309,23 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 			if (cyApplicationManager == null)
 				return;
 			myNetwork = cyApplicationManager.getCurrentNetwork();
-			netView = cyApplicationManager.getCurrentNetworkView();
+			if (myNetwork == null)
+				return;
+
+			Collection<CyNetworkView> views = networkViewManager.getNetworkViews(myNetwork);
+			if (views.size() != 0)
+				netView = views.iterator().next();
+			else
+				return;
+
 			if (netView == null)
 				return;
 			if (cyApplicationManager.getCurrentRenderingEngine() == null)
 				return;
+
+			// Load network and netview to XlinkCyNET setting to update the edges plot
+			MainControlPanel.myNetwork = myNetwork;
+			MainControlPanel.netView = netView;
 
 			// Create protein scaling factor table
 			if (this.dialogTaskManager != null
@@ -338,7 +364,12 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 					isNodeModified = false;
 				}
 			}
-		} catch (Exception exception) {
+
+			Util.filterUnselectedEdges(myNetwork, netView);
+
+		} catch (
+
+		Exception exception) {
 		} finally {
 
 			MainSingleNodeTask.isPlotDone = true;

@@ -10,7 +10,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,6 +36,7 @@ import org.cytoscape.model.CyIdentifiable;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyRow;
+import org.cytoscape.model.CyTableUtil;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.View;
 import org.cytoscape.view.model.VisualLexicon;
@@ -85,6 +85,7 @@ public class Util {
 	private static String PROTEIN_B = "protein_b";
 	private static String XL_SCORE_AB = "score_ab";
 	private static String XL_SCORE_BA = "score_ba";
+	public static String XL_COMB_SCORE = "score_cmb";
 
 	private static String OS = System.getProperty("os.name").toLowerCase();
 	private final static float OFFSET_BEND = 2;
@@ -107,10 +108,9 @@ public class Util {
 	public static boolean isProtein_expansion_horizontal = true;
 	public static boolean isProteinDomainPfam = false;
 	public static boolean stopUpdateViewer = false;
-	public static double intralink_threshold_score = 10;
-	public static double interlink_threshold_score = 10;
-	public static double intralink_current_score = -1;
-	public static double interlink_current_score = -1;
+	public static double intralink_threshold_score = 0;
+	public static double interlink_threshold_score = 0;
+	public static double combinedlink_threshold_score = 0;
 
 	// Map<Network name, Map<Protein - Node SUID, List<ProteinDomain>>
 	public static Map<String, Map<Long, List<ProteinDomain>>> proteinDomainsMap = new HashMap<String, Map<Long, List<ProteinDomain>>>();
@@ -590,9 +590,20 @@ public class Util {
 
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL, "[" + intraLinks.get(countEdge).pos_site_a
 							+ "] - [" + intraLinks.get(countEdge).pos_site_b + "]");
-					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TOOLTIP,
-							"[" + intraLinks.get(countEdge).pos_site_a + "] - [" + intraLinks.get(countEdge).pos_site_b
-									+ "]");
+
+					double score = intraLinks.get(countEdge).score;
+					double log_score = round(-Math.log10(intraLinks.get(countEdge).score), 2);
+					String tooltip = "";
+
+					if (score == Double.NaN) {
+						tooltip = "<html><p>[" + intraLinks.get(countEdge).pos_site_a + "] - ["
+								+ intraLinks.get(countEdge).pos_site_b + "]</p></html>";
+					} else {
+						tooltip = "<html><p>[" + intraLinks.get(countEdge).pos_site_a + "] - ["
+								+ intraLinks.get(countEdge).pos_site_b + "]</p><p><i>Score: " + score
+								+ " (-Log(score): " + log_score + ")</i></p></html>";
+					}
+					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TOOLTIP, tooltip);
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_FONT_SIZE, edge_label_font_size);
 
 					if (showLinksLegend) {
@@ -699,7 +710,7 @@ public class Util {
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_BEND, bend);
 
 					if (intraLinks.get(countEdge).score != Double.NaN
-							&& -Math.log(intraLinks.get(countEdge).score) < intralink_threshold_score) {
+							&& -Math.log10(intraLinks.get(countEdge).score) < intralink_threshold_score) {
 						newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
 						newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, 0);
 					}
@@ -1020,11 +1031,23 @@ public class Util {
 
 				}
 
-				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TOOLTIP,
-						current_inter_links.get(countEdge).protein_a + " ["
-								+ current_inter_links.get(countEdge).pos_site_a + "] - "
-								+ current_inter_links.get(countEdge).protein_b + " ["
-								+ current_inter_links.get(countEdge).pos_site_b + "]");
+				double score = current_inter_links.get(countEdge).score;
+				double log_score = round(-Math.log10(current_inter_links.get(countEdge).score), 2);
+				String tooltip = "";
+
+				if (score == Double.NaN) {
+					tooltip = "<html><p>" + current_inter_links.get(countEdge).protein_a + " ["
+							+ current_inter_links.get(countEdge).pos_site_a + "] - "
+							+ current_inter_links.get(countEdge).protein_b + " ["
+							+ current_inter_links.get(countEdge).pos_site_b + "]</p></html>";
+				} else {
+					tooltip = "<html><p>" + current_inter_links.get(countEdge).protein_a + " ["
+							+ current_inter_links.get(countEdge).pos_site_a + "] - "
+							+ current_inter_links.get(countEdge).protein_b + " ["
+							+ current_inter_links.get(countEdge).pos_site_b + "]</p><p><i>Score: " + score
+							+ " (-Log(score): " + log_score + ")</i></p></html>";
+				}
+				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TOOLTIP, tooltip);
 
 				if (showLinksLegend) {
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, edge_label_opacity);
@@ -1124,7 +1147,8 @@ public class Util {
 				}
 
 				if (current_inter_links.get(countEdge).score != Double.NaN
-						&& -Math.log(current_inter_links.get(countEdge).score) < interlink_threshold_score) {// hide interlink
+						&& -Math.log10(current_inter_links.get(countEdge).score) < interlink_threshold_score) {// hide
+																												// interlink
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, 0);
 				}
@@ -1328,14 +1352,13 @@ public class Util {
 		String score_edge_str = edgeNameArr[edgeNameArr.length - 1];
 		String[] score_edge_splitted = score_edge_str.split("Score:");
 		String[] score_edge = score_edge_splitted[1].split("- Edge");
-		if (-Math.log(Double.parseDouble(score_edge[0])) < Util.interlink_threshold_score) {
+		if (-Math.log10(Double.parseDouble(score_edge[0])) < Util.interlink_threshold_score) {
 			newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
 			newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TRANSPARENCY, 0);
 			newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, 0);
-		}
-		else {
+		} else {
 			newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
-			
+
 			// #### UPDATE EDGE STYLE ####
 			newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_PAINT, InterLinksColor);
 			newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TRANSPARENCY, edge_link_opacity);
@@ -1470,13 +1493,66 @@ public class Util {
 		// ###########################
 
 		if (intraLinks.get(countEdge).score != Double.NaN
-				&& -Math.log(intraLinks.get(countEdge).score) < intralink_threshold_score)// hide
-																				// intralink
+				&& -Math.log10(intraLinks.get(countEdge).score) < intralink_threshold_score)// hide
+		// intralink
 		{
 			edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
 			edgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, 0);
 		}
 	}
+
+	/**
+	 * Check and display the edges based on comb_score
+	 * 
+	 * @param myNetwork            current network
+	 * @param cyApplicationManager main app manager
+	 * @param netView              current network view
+	 * @param handleFactory        handle factory
+	 * @param bendFactory          bend factory
+	 * @param current_node         current node
+	 */
+//	public static void checkUnmodifiedEdgeToDisplay(CyNetwork myNetwork, CyApplicationManager cyApplicationManager,
+//			CyNetworkView netView, HandleFactory handleFactory, BendFactory bendFactory, CyNode current_node) {
+//
+//		if (myNetwork == null) {
+//			if (cyApplicationManager != null) {
+//				myNetwork = cyApplicationManager.getCurrentNetwork();
+//				netView = cyApplicationManager.getCurrentNetworkView();
+//			}
+//		}
+//
+//		VisualStyle style = MainSingleNodeTask.style;
+//		if (style == null)
+//			style = LoadProteinDomainTask.style;
+//
+//		if (style == null)
+//			return;
+//
+//		VisualLexicon lexicon = MainSingleNodeTask.lexicon;
+//		if (lexicon == null)
+//			lexicon = LoadProteinDomainTask.lexicon;
+//
+//		if (lexicon == null)
+//			return;
+//
+//		for (CyEdge edge : myNetwork.getAdjacentEdgeIterable(current_node, CyEdge.Type.ANY)) {
+//
+//			CyRow myCurrentRow = myNetwork.getDefaultEdgeTable().getRow(edge.getSUID());
+//			double comb_score = -1;
+//
+//			if (myCurrentRow.getRaw(XL_COMB_SCORE) != null) {
+//				comb_score = Double.parseDouble(myCurrentRow.getRaw(XL_COMB_SCORE).toString());
+//				comb_score = -Math.log10(comb_score);
+//
+//				View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
+//				if (comb_score < combinedlink_threshold_score) {
+//					currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+//				} else {
+//					currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+//				}
+//			}
+//		}
+//	}
 
 	/**
 	 * Check and update all edges of associated nodes
@@ -1574,11 +1650,64 @@ public class Util {
 							MainSingleNodeTask.intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
 						}
 					}
+//					else {
+//						
+//						checkUnmodifiedEdgeToDisplay(myNetwork, cyApplicationManager, netView, handleFactory, bendFactory,
+//								current_node);
+//						
+//					}
 				}
 			} catch (Exception e) {
 				continue;
 			}
 
+		}
+	}
+
+	/**
+	 * Method responsible for updating edges based on the score
+	 * 
+	 * @param myNetwork current network
+	 * @param netView   current network view
+	 */
+	public static void filterUnselectedEdges(CyNetwork myNetwork, CyNetworkView netView) {
+		List<CyEdge> unSelectedEdges = CyTableUtil.getEdgesInState(myNetwork, CyNetwork.SELECTED, false);
+		if (unSelectedEdges.size() > 1) {
+			// Display edge score in all edges
+			for (CyEdge edge : unSelectedEdges) {
+
+				CyNode sourceNode = myNetwork.getEdge(edge.getSUID()).getSource();
+				CyNode targetNode = myNetwork.getEdge(edge.getSUID()).getTarget();
+
+				if (Util.IsNodeModified(myNetwork, netView, sourceNode)
+						|| Util.IsNodeModified(myNetwork, netView, targetNode))
+					continue;
+
+				CyRow myCurrentRow = myNetwork.getDefaultEdgeTable().getRow(edge.getSUID());
+				if (myCurrentRow.getRaw(Util.XL_COMB_SCORE) != null) {
+					double comb_score = Double.parseDouble(myCurrentRow.getRaw(Util.XL_COMB_SCORE).toString());
+					double log_comb_score = Util.round(-Math.log10(comb_score), 2);
+
+					View<CyEdge> edgeView = netView.getEdgeView(edge);
+					if (edgeView.getVisualProperty(BasicVisualLexicon.EDGE_TOOLTIP).isBlank()
+							|| edgeView.getVisualProperty(BasicVisualLexicon.EDGE_TOOLTIP).isEmpty()) {
+
+						String tooltip = "<html><p><i>Score: " + comb_score + "</p><p>-Log(score): " + log_comb_score
+								+ "</i></p></html>";
+						edgeView.setLockedValue(BasicVisualLexicon.EDGE_TOOLTIP, tooltip);
+					}
+
+					if (log_comb_score < Util.combinedlink_threshold_score) {
+						edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+					} else {
+						edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+					}
+				} else if (!myCurrentRow.getRaw(CyNetwork.NAME).toString().contains("[Source")) {
+					break;// There is no score information to be displayed in the original edge.
+				}
+			}
+			// Apply the change to the view
+			netView.updateView();
 		}
 	}
 
@@ -1729,7 +1858,8 @@ public class Util {
 		for (CyEdge edge : myNetwork.getAdjacentEdgeIterable(current_node, CyEdge.Type.ANY)) {
 
 			// Check if the edge was inserted by this app
-			String edge_name = myNetwork.getDefaultEdgeTable().getRow(edge.getSUID()).get(CyNetwork.NAME, String.class);
+			CyRow myCurrentRow = myNetwork.getDefaultEdgeTable().getRow(edge.getSUID());
+			String edge_name = myCurrentRow.get(CyNetwork.NAME, String.class);
 
 			CyNode sourceNode = myNetwork.getEdge(edge.getSUID()).getSource();
 			CyNode targetNode = myNetwork.getEdge(edge.getSUID()).getTarget();
@@ -1741,23 +1871,33 @@ public class Util {
 			}
 			IsModified_source_node = IsNodeModified(myNetwork, netView, sourceNode);
 			IsModified_target_node = IsNodeModified(myNetwork, netView, targetNode);
+
+			double comb_score = -1;
+			if (myCurrentRow.getRaw(XL_COMB_SCORE) != null) {
+				comb_score = Double.parseDouble(myCurrentRow.getRaw(XL_COMB_SCORE).toString());
+				comb_score = -Math.log10(comb_score);
+			}
+			View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
 			if (!edge_name.startsWith("[Source:")) {// original edges
 
 				if (IsIntraLink) {
-					View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
-					currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+
+					if (comb_score < combinedlink_threshold_score) {
+						currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+					} else {
+						currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+					}
+
 				} else if (!IsModified_source_node && !IsModified_target_node) {
-					View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
-					currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+					if (comb_score < combinedlink_threshold_score) {
+						currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+					} else {
+						currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+					}
 				}
 			} else { // created edges
 
-				if (IsIntraLink) {
-					View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
-					currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
-
-				} else if (!IsModified_source_node && !IsModified_target_node) {
-					View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
+				if (IsIntraLink || (!IsModified_source_node && !IsModified_target_node)) {
 					currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
 				}
 			}
@@ -1876,13 +2016,12 @@ public class Util {
 		if (proteinDomainTableScrollPanel != null)
 			proteinDomainTableScrollPanel.setRowHeaderView(rowHeader);
 	}
-	
-    //Utility function
-    public static <T> Predicate<T> distinctByKey(Function<? super T, Object> keyExtractor) 
-    {
-        Map<Object, Boolean> map = new ConcurrentHashMap<>();
-        return t -> map.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
-    }
+
+	// Utility function
+	public static <T> Predicate<T> distinctByKey(Function<? super T, Object> keyExtractor) {
+		Map<Object, Boolean> map = new ConcurrentHashMap<>();
+		return t -> map.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
+	}
 
 	/**
 	 * Get all links from adjacent edges of a node
@@ -1891,8 +2030,7 @@ public class Util {
 	 * @param myNetwork current network
 	 * @return all intra and interlinks
 	 */
-	public static Tuple2 getAllLinksFromAdjacentEdgesNode(CyNode node,
-			CyNetwork myNetwork) {
+	public static Tuple2 getAllLinksFromAdjacentEdgesNode(CyNode node, CyNetwork myNetwork) {
 
 		if (node == null || myNetwork == null) {
 			return new Tuple2(new ArrayList<CrossLink>(), new ArrayList<CrossLink>());
@@ -1909,7 +2047,7 @@ public class Util {
 			else
 				nodeSuidList.add(sourceNode.getSUID());
 		}
-		
+
 		Set<Tuple2> cross_links_with_score = new HashSet<Tuple2>();
 		Set<String> cross_links_set = new HashSet<String>();
 
@@ -1960,21 +2098,21 @@ public class Util {
 			cross_links_with_score.removeIf(new Predicate<Tuple2>() {
 
 				public boolean test(Tuple2 xl) {
-					if (((String)xl.getFirst()).isBlank() || ((String)xl.getFirst()).isEmpty() || ((String)xl.getFirst()).equals("0")
-							|| ((String)xl.getFirst()).equals("NA") || ((String)xl.getSecond()).isBlank() || ((String)xl.getSecond()).isEmpty()
-							|| ((String)xl.getSecond()).equals("0") || ((String)xl.getSecond()).equals("NA"))
+					if (((String) xl.getFirst()).isBlank() || ((String) xl.getFirst()).isEmpty()
+							|| ((String) xl.getFirst()).equals("0") || ((String) xl.getFirst()).equals("NA")
+							|| ((String) xl.getSecond()).isBlank() || ((String) xl.getSecond()).isEmpty()
+							|| ((String) xl.getSecond()).equals("0") || ((String) xl.getSecond()).equals("NA"))
 						return true;
-					String[] current_xl = ((String)xl.getFirst()).split(selected_node_name);
+					String[] current_xl = ((String) xl.getFirst()).split(selected_node_name);
 					return (current_xl.length == 1);
 				}
 			});
-			
-			for (Tuple2 xl : cross_links_with_score.stream() 
-					  .filter(distinctByKey(p -> p.getFirst())) 
-					  .collect(Collectors.toList())) {
+
+			for (Tuple2 xl : cross_links_with_score.stream().filter(distinctByKey(p -> p.getFirst()))
+					.collect(Collectors.toList())) {
 
 				try {
-					String[] current_xl = splitLinks(((String)xl.getFirst()), selected_node_name);// xl.split("-");
+					String[] current_xl = splitLinks(((String) xl.getFirst()), selected_node_name);// xl.split("-");
 
 					if (current_xl[0].equals(current_xl[2])) {// it's intralink
 
@@ -1986,12 +2124,12 @@ public class Util {
 							pos_b = tmp_;
 						}
 						intraLinks.add(new CrossLink(current_xl[0], current_xl[2], pos_a, pos_b,
-								Double.parseDouble(((String)xl.getSecond()))));
+								Double.parseDouble(((String) xl.getSecond()))));
 
 					} else {// it's interlink
 
 						interLinks.add(new CrossLink(current_xl[0], current_xl[2], Integer.parseInt(current_xl[1]),
-								Integer.parseInt(current_xl[3]), Double.parseDouble(((String)xl.getSecond()))));
+								Integer.parseInt(current_xl[3]), Double.parseDouble(((String) xl.getSecond()))));
 
 					}
 				} catch (Exception e) {
@@ -2011,7 +2149,9 @@ public class Util {
 				}
 			});
 
-			for (String xl : cross_links_set) {
+			for (
+
+			String xl : cross_links_set) {
 
 				try {
 					String[] current_xl = splitLinks(xl, selected_node_name);// xl.split("-");
@@ -2372,5 +2512,22 @@ public class Util {
 	 */
 	public static boolean isUnix() {
 		return (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0);
+	}
+
+	/**
+	 * Round a double value
+	 * 
+	 * @param value
+	 * @param places
+	 * @return rounded value
+	 */
+	public static double round(double value, int places) {
+		if (places < 0)
+			throw new IllegalArgumentException();
+
+		long factor = (long) Math.pow(10, places);
+		value = value * factor;
+		long tmp = Math.round(value);
+		return (double) tmp / factor;
 	}
 }
