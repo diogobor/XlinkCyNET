@@ -125,6 +125,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	private static Thread applyLayoutThread;
 	private static JButton okButton;
 
+	private boolean IsCommand;
+
 	/**
 	 * Constructor
 	 * 
@@ -137,7 +139,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	 */
 	public MainSingleNodeTask(CyApplicationManager cyApplicationManager, final VisualMappingManager vmmServiceRef,
 			CyCustomGraphics2Factory<?> vgFactory, BendFactory bendFactory, HandleFactory handleFactory,
-			boolean forcedWindowOpen) {
+			boolean forcedWindowOpen, boolean isCommand) {
 
 		this.cyApplicationManager = cyApplicationManager;
 		this.netView = cyApplicationManager.getCurrentNetworkView();
@@ -149,6 +151,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		this.bendFactory = bendFactory;
 		this.handleFactory = handleFactory;
 		this.forcedWindowOpen = forcedWindowOpen;
+		this.IsCommand = isCommand;
 
 		// Initialize protein domain colors map if LoadProteinDomainTask has not been
 		// initialized
@@ -190,7 +193,18 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		}
 
 		checkSingleOrMultipleSelectedNodes(taskMonitor);
+		
+		if(IsCommand) {
+			this.unSelectNodes();
+		}
 
+	}
+	
+	private void unSelectNodes() {
+		List<CyNode> selectedNodes = CyTableUtil.getNodesInState(myNetwork, CyNetwork.SELECTED, true);
+		for (CyNode cyNode : selectedNodes) {
+			myNetwork.getRow(cyNode).set(CyNetwork.SELECTED, false);
+		}
 	}
 
 	/**

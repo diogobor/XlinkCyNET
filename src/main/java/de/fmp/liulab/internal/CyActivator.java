@@ -1,6 +1,11 @@
 package de.fmp.liulab.internal;
 
+import static org.cytoscape.work.ServiceProperties.COMMAND;
 import static org.cytoscape.work.ServiceProperties.COMMAND_DESCRIPTION;
+import static org.cytoscape.work.ServiceProperties.COMMAND_EXAMPLE_JSON;
+import static org.cytoscape.work.ServiceProperties.COMMAND_LONG_DESCRIPTION;
+import static org.cytoscape.work.ServiceProperties.COMMAND_NAMESPACE;
+import static org.cytoscape.work.ServiceProperties.COMMAND_SUPPORTS_JSON;
 import static org.cytoscape.work.ServiceProperties.PREFERRED_MENU;
 
 import java.util.Locale;
@@ -36,6 +41,8 @@ import de.fmp.liulab.internal.action.ReadMeAction;
 import de.fmp.liulab.internal.action.SetDomainColorAction;
 import de.fmp.liulab.internal.action.ShortcutSingleNodeExecuteAction;
 import de.fmp.liulab.internal.action.ShortcutWindowSingleNodeLayout;
+import de.fmp.liulab.task.ApplyStyleCommandTask;
+import de.fmp.liulab.task.ApplyStyleCommandTaskFactory;
 import de.fmp.liulab.task.LoadProteinDomainsTaskFactory;
 import de.fmp.liulab.task.MainSingleNodeTaskFactory;
 import de.fmp.liulab.task.ProteinScalingFactorHorizontalExpansionTableTaskFactory;
@@ -52,6 +59,7 @@ public class CyActivator extends AbstractCyActivator {
 
 	private Properties XlinkCyNETProps;
 	private ConfigurationManager cm;
+	public static final String XLINKCYNET_COMMAND_NAMESPACE = "xlinkcynet";
 
 	public CyActivator() {
 		super();
@@ -110,8 +118,6 @@ public class CyActivator extends AbstractCyActivator {
 
 		Properties myNodeViewContextMenuFactoryProps = new Properties();
 		myNodeViewContextMenuFactoryProps.put(PREFERRED_MENU, "Apps");
-		myNodeViewContextMenuFactoryProps.put(COMMAND_DESCRIPTION,
-				"XlinkCyNET :: App responsible for plotting cross-links of proteins.");
 		// Our menu item should only be enabled if at least one network
 		// view exists.
 		myNodeViewContextMenuFactoryProps.put(ServiceProperties.ENABLE_FOR, "networkAndView");
@@ -174,7 +180,23 @@ public class CyActivator extends AbstractCyActivator {
 		registerService(bc, controlURLAction, CyAction.class, new Properties());
 
 		registerAllServices(bc, myNodeViewContextMenuFactory, myNodeViewContextMenuFactoryProps);
+		// ###################
 
+		// ####### COMMANDS ########
+		// Register removeFile function
+		Properties applyStyleProperties = new Properties();
+		applyStyleProperties.setProperty(COMMAND_NAMESPACE, XLINKCYNET_COMMAND_NAMESPACE);
+		applyStyleProperties.setProperty(COMMAND, "applystyle");
+		applyStyleProperties.setProperty(COMMAND_DESCRIPTION, ApplyStyleCommandTaskFactory.DESCRIPTION);
+		applyStyleProperties.setProperty(COMMAND_LONG_DESCRIPTION, ApplyStyleCommandTaskFactory.LONG_DESCRIPTION);
+		applyStyleProperties.setProperty(COMMAND_EXAMPLE_JSON, ApplyStyleCommandTask.getExample());
+		applyStyleProperties.setProperty(COMMAND_SUPPORTS_JSON, "true");
+
+		TaskFactory applyStyleTaskFactory = new ApplyStyleCommandTaskFactory(cyApplicationManager,
+				(MainSingleNodeTaskFactory) mySingleNodeShortCutFactory, dialogTaskManager);
+		registerAllServices(bc, applyStyleTaskFactory, applyStyleProperties);
+
+		// #########################
 	}
 
 	private void init_default_params(BundleContext bc) {

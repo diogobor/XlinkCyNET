@@ -55,9 +55,15 @@ public class MainSingleNodeTaskFactory extends AbstractTaskFactory {
 	/**
 	 * Method responsible for initializing task
 	 */
+	@Override
 	public TaskIterator createTaskIterator() {
 		return new TaskIterator(new MainSingleNodeTask(cyApplicationManager, vmmServiceRef, vgFactory, bendFactory,
-				handleFactory, forcedWindowOpen));
+				handleFactory, forcedWindowOpen, false));
+	}
+
+	public TaskIterator createTaskIterator(boolean isCommand) {
+		return new TaskIterator(new MainSingleNodeTask(cyApplicationManager, vmmServiceRef, vgFactory, bendFactory,
+				handleFactory, forcedWindowOpen, isCommand));
 	}
 
 }

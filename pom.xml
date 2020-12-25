@@ -165,6 +165,13 @@
 			<artifactId>app-api</artifactId>
 			<version>${cytoscape.api.version}</version>
 		</dependency>
+		
+		<!-- third party -->
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.3</version>
+		</dependency>
 
 	</dependencies>
 </project>
