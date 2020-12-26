@@ -1,4 +1,4 @@
-package de.fmp.liulab.task;
+package de.fmp.liulab.task.command_lines;
 
 import org.cytoscape.util.swing.OpenBrowser;
 import org.cytoscape.work.ProvidesTitle;

@@ -1,9 +1,11 @@
-package de.fmp.liulab.task;
+package de.fmp.liulab.task.command_lines;
 
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.work.AbstractTaskFactory;
 import org.cytoscape.work.TaskIterator;
 import org.cytoscape.work.swing.DialogTaskManager;
+
+import de.fmp.liulab.task.MainSingleNodeTaskFactory;
 
 /**
  * Factory class responsible for calling apply/restore style task

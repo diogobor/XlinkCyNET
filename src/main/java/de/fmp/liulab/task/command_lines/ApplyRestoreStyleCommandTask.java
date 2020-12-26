@@ -1,4 +1,4 @@
-package de.fmp.liulab.task;
+package de.fmp.liulab.task.command_lines;
 
 import java.util.Arrays;
 import java.util.List;
@@ -12,6 +12,7 @@ import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.Tunable;
 import org.cytoscape.work.swing.DialogTaskManager;
 
+import de.fmp.liulab.task.MainSingleNodeTaskFactory;
 import de.fmp.liulab.utils.Util;
 
 /**

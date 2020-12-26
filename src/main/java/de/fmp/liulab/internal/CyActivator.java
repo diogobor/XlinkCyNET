@@ -41,17 +41,17 @@ import de.fmp.liulab.internal.action.ReadMeAction;
 import de.fmp.liulab.internal.action.SetDomainColorAction;
 import de.fmp.liulab.internal.action.ShortcutSingleNodeExecuteAction;
 import de.fmp.liulab.internal.action.ShortcutWindowSingleNodeLayout;
-import de.fmp.liulab.task.ApplyRestoreStyleCommandTask;
-import de.fmp.liulab.task.ApplyRestoreStyleCommandTaskFactory;
 import de.fmp.liulab.task.LoadProteinDomainsTaskFactory;
 import de.fmp.liulab.task.MainSingleNodeTaskFactory;
 import de.fmp.liulab.task.ProteinScalingFactorHorizontalExpansionTableTaskFactory;
-import de.fmp.liulab.task.ReadMeCommandTask;
-import de.fmp.liulab.task.ReadMeCommandTaskFactory;
 import de.fmp.liulab.task.SetDomainColorTaskFactory;
-import de.fmp.liulab.task.SetParametersCommandTask;
-import de.fmp.liulab.task.SetParametersCommandTaskFactory;
 import de.fmp.liulab.task.UpdateViewerTaskFactory;
+import de.fmp.liulab.task.command_lines.ApplyRestoreStyleCommandTask;
+import de.fmp.liulab.task.command_lines.ApplyRestoreStyleCommandTaskFactory;
+import de.fmp.liulab.task.command_lines.ReadMeCommandTask;
+import de.fmp.liulab.task.command_lines.ReadMeCommandTaskFactory;
+import de.fmp.liulab.task.command_lines.SetParametersCommandTask;
+import de.fmp.liulab.task.command_lines.SetParametersCommandTaskFactory;
 
 /**
  * Class responsible for initializing cytoscape methods

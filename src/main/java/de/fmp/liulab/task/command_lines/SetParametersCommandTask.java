@@ -1,4 +1,4 @@
-package de.fmp.liulab.task;
+package de.fmp.liulab.task.command_lines;
 
 import java.awt.Color;
 import java.lang.reflect.Field;
