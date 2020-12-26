@@ -41,12 +41,16 @@ import de.fmp.liulab.internal.action.ReadMeAction;
 import de.fmp.liulab.internal.action.SetDomainColorAction;
 import de.fmp.liulab.internal.action.ShortcutSingleNodeExecuteAction;
 import de.fmp.liulab.internal.action.ShortcutWindowSingleNodeLayout;
-import de.fmp.liulab.task.ApplyStyleCommandTask;
-import de.fmp.liulab.task.ApplyStyleCommandTaskFactory;
+import de.fmp.liulab.task.ApplyRestoreStyleCommandTask;
+import de.fmp.liulab.task.ApplyRestoreStyleCommandTaskFactory;
 import de.fmp.liulab.task.LoadProteinDomainsTaskFactory;
 import de.fmp.liulab.task.MainSingleNodeTaskFactory;
 import de.fmp.liulab.task.ProteinScalingFactorHorizontalExpansionTableTaskFactory;
+import de.fmp.liulab.task.ReadMeCommandTask;
+import de.fmp.liulab.task.ReadMeCommandTaskFactory;
 import de.fmp.liulab.task.SetDomainColorTaskFactory;
+import de.fmp.liulab.task.SetParametersCommandTask;
+import de.fmp.liulab.task.SetParametersCommandTaskFactory;
 import de.fmp.liulab.task.UpdateViewerTaskFactory;
 
 /**
@@ -75,6 +79,7 @@ public class CyActivator extends AbstractCyActivator {
 		String version = bc.getBundle().getVersion().toString();
 		ControlURLAction controlURLAction = new ControlURLAction(openBrowser, version);
 		ReadMeAction readMe = new ReadMeAction(openBrowser);
+
 		// ###############
 
 		CyApplicationManager cyApplicationManager = getService(bc, CyApplicationManager.class);
@@ -183,20 +188,54 @@ public class CyActivator extends AbstractCyActivator {
 		// ###################
 
 		// ####### COMMANDS ########
-		// Register removeFile function
-		Properties applyStyleProperties = new Properties();
-		applyStyleProperties.setProperty(COMMAND_NAMESPACE, XLINKCYNET_COMMAND_NAMESPACE);
-		applyStyleProperties.setProperty(COMMAND, "applystyle");
-		applyStyleProperties.setProperty(COMMAND_DESCRIPTION, ApplyStyleCommandTaskFactory.DESCRIPTION);
-		applyStyleProperties.setProperty(COMMAND_LONG_DESCRIPTION, ApplyStyleCommandTaskFactory.LONG_DESCRIPTION);
-		applyStyleProperties.setProperty(COMMAND_EXAMPLE_JSON, ApplyStyleCommandTask.getExample());
-		applyStyleProperties.setProperty(COMMAND_SUPPORTS_JSON, "true");
 
-		TaskFactory applyStyleTaskFactory = new ApplyStyleCommandTaskFactory(cyApplicationManager,
-				(MainSingleNodeTaskFactory) mySingleNodeShortCutFactory, dialogTaskManager);
-		registerAllServices(bc, applyStyleTaskFactory, applyStyleProperties);
+		init_commands(bc, cyApplicationManager, mySingleNodeShortCutFactory, dialogTaskManager,openBrowser);
 
 		// #########################
+	}
+
+	private void init_commands(BundleContext bc, CyApplicationManager cyApplicationManager,
+			TaskFactory mySingleNodeShortCutFactory, DialogTaskManager dialogTaskManager, OpenBrowser openBrowser) {
+
+		// Register Read Me function
+		Properties readmeProperties = new Properties();
+		readmeProperties.setProperty(COMMAND_NAMESPACE, XLINKCYNET_COMMAND_NAMESPACE);
+		readmeProperties.setProperty(COMMAND, "readMe");
+		readmeProperties.setProperty(COMMAND_DESCRIPTION, ReadMeCommandTaskFactory.DESCRIPTION);
+		readmeProperties.setProperty(COMMAND_LONG_DESCRIPTION, ReadMeCommandTaskFactory.LONG_DESCRIPTION);
+		readmeProperties.setProperty(COMMAND_EXAMPLE_JSON, ReadMeCommandTask.getExample());
+		readmeProperties.setProperty(COMMAND_SUPPORTS_JSON, "true");
+
+		TaskFactory readMeTaskFactory = new ReadMeCommandTaskFactory(openBrowser);
+		registerAllServices(bc, readMeTaskFactory, readmeProperties);
+
+		// Register apply / restore style function
+		Properties applyStyleRestoreProperties = new Properties();
+		applyStyleRestoreProperties.setProperty(COMMAND_NAMESPACE, XLINKCYNET_COMMAND_NAMESPACE);
+		applyStyleRestoreProperties.setProperty(COMMAND, "applyRestoreStyle");
+		applyStyleRestoreProperties.setProperty(COMMAND_DESCRIPTION, ApplyRestoreStyleCommandTaskFactory.DESCRIPTION);
+		applyStyleRestoreProperties.setProperty(COMMAND_LONG_DESCRIPTION,
+				ApplyRestoreStyleCommandTaskFactory.LONG_DESCRIPTION);
+		applyStyleRestoreProperties.setProperty(COMMAND_EXAMPLE_JSON, ApplyRestoreStyleCommandTask.getExample());
+		applyStyleRestoreProperties.setProperty(COMMAND_SUPPORTS_JSON, "true");
+
+		TaskFactory applyRestoreStyleTaskFactory = new ApplyRestoreStyleCommandTaskFactory(cyApplicationManager,
+				(MainSingleNodeTaskFactory) mySingleNodeShortCutFactory, dialogTaskManager);
+		registerAllServices(bc, applyRestoreStyleTaskFactory, applyStyleRestoreProperties);
+
+		// Register set parameters function
+		Properties setParametersProperties = new Properties();
+		setParametersProperties.setProperty(COMMAND_NAMESPACE, XLINKCYNET_COMMAND_NAMESPACE);
+		setParametersProperties.setProperty(COMMAND, "setParameters");
+		setParametersProperties.setProperty(COMMAND_DESCRIPTION, SetParametersCommandTaskFactory.DESCRIPTION);
+		setParametersProperties.setProperty(COMMAND_LONG_DESCRIPTION,
+				SetParametersCommandTaskFactory.LONG_DESCRIPTION);
+		setParametersProperties.setProperty(COMMAND_EXAMPLE_JSON, SetParametersCommandTask.getExample());
+		setParametersProperties.setProperty(COMMAND_SUPPORTS_JSON, "true");
+
+		TaskFactory setParametersTaskFactory = new SetParametersCommandTaskFactory();
+		registerAllServices(bc, setParametersTaskFactory, setParametersProperties);
+
 	}
 
 	private void init_default_params(BundleContext bc) {
