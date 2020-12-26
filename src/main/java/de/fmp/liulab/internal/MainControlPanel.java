@@ -30,7 +30,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.DefaultFormatter;
 
-import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.swing.CytoPanelComponent;
 import org.cytoscape.application.swing.CytoPanelName;
 import org.cytoscape.model.CyNetwork;
@@ -48,26 +47,31 @@ import de.fmp.liulab.utils.Util;
 public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 	private static final long serialVersionUID = 8292806967891823933L;
-	private static final Insets WEST_INSETS = new Insets(0, 0, 0, 0);
+	private static final Insets WEST_INSETS = new Insets(0, 0, 10, 0);
 	private JPanel link_panel;
 	private JPanel link_score_panel;
 	private JPanel link_legend_panel;
 	private JPanel node_panel;
 	private JPanel node_border_panel;
 
-	private JButton intraLinkColorButton;
-	private JButton interLinkColorButton;
-	private JButton borderNodeColorButton;
+	private static JButton intraLinkColorButton;
+	private static JButton interLinkColorButton;
+	private static JButton borderNodeColorButton;
+	private static JCheckBox show_inter_link;
+	private static JCheckBox show_intra_link;
 
-	private JSpinner spinner_link;
-	private JSpinner spinner_opacity_edge_label;
-	private JSpinner spinner_opacity_edge_link;
-	private JSpinner spinner_width_edge_link;
-	private JSpinner spinner_score_intralink;
-	private JSpinner spinner_score_interlink;
-	private JSpinner spinner_score_combinedlink;
+	private static JSpinner spinner_font_size_link_legend;
+	private static JSpinner spinner_opacity_edge_label;
+	private static JSpinner spinner_opacity_edge_link;
+	private static JSpinner spinner_width_edge_link;
+	private static JSpinner spinner_score_intralink;
+	private static JSpinner spinner_score_interlink;
+	private static JSpinner spinner_score_combinedlink;
+	private static JSpinner spinner_font_size_node;
+	private static JSpinner spinner_opacity_node_border;
+	private static JSpinner spinner_width_node_border;
 
-	private JCheckBox show_links_legend;
+	private static JCheckBox show_links_legend;
 
 	private Properties XlinkCyNETProps;
 
@@ -84,7 +88,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 		this.XlinkCyNETProps = XlinkCyNETProps;
 		this.load_default_parameters(cm);
-		setFrameObjects();
+		this.setFrameObjects();
 		this.setVisible(true);
 	}
 
@@ -174,19 +178,19 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		else
 			propertyValue = cm.getProperties().getProperty("xlinkcynet.NodeBorderColor");
 		Util.NodeBorderColor = stringToColor(propertyValue);
-		
+
 		if (cm == null)
 			propertyValue = ((Properties) XlinkCyNETProps).getProperty("xlinkcynet.intralink_threshold_score");
 		else
 			propertyValue = cm.getProperties().getProperty("xlinkcynet.intralink_threshold_score");
 		Util.intralink_threshold_score = Double.parseDouble(propertyValue);
-		
+
 		if (cm == null)
 			propertyValue = ((Properties) XlinkCyNETProps).getProperty("xlinkcynet.interlink_threshold_score");
 		else
 			propertyValue = cm.getProperties().getProperty("xlinkcynet.interlink_threshold_score");
 		Util.interlink_threshold_score = Double.parseDouble(propertyValue);
-		
+
 		if (cm == null)
 			propertyValue = ((Properties) XlinkCyNETProps).getProperty("xlinkcynet.combinedlink_threshold_score");
 		else
@@ -511,21 +515,21 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 				0, // min
 				30, // max
 				1); // step
-		spinner_link = new JSpinner(model_link);
-		spinner_link.setBounds(offset_x, offset_y, 60, 20);
-		JComponent comp_link = spinner_link.getEditor();
+		spinner_font_size_link_legend = new JSpinner(model_link);
+		spinner_font_size_link_legend.setBounds(offset_x, offset_y, 60, 20);
+		JComponent comp_link = spinner_font_size_link_legend.getEditor();
 		JFormattedTextField field_link = (JFormattedTextField) comp_link.getComponent(0);
 		DefaultFormatter formatter_link = (DefaultFormatter) field_link.getFormatter();
 		formatter_link.setCommitsOnValidEdit(true);
-		spinner_link.addChangeListener(new ChangeListener() {
+		spinner_font_size_link_legend.addChangeListener(new ChangeListener() {
 
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				Util.edge_label_font_size = (Integer) spinner_link.getValue();
+				Util.edge_label_font_size = (Integer) spinner_font_size_link_legend.getValue();
 				XlinkCyNETProps.setProperty("xlinkcynet.edge_label_font_size", Util.edge_label_font_size.toString());
 			}
 		});
-		link_legend_panel.add(spinner_link);
+		link_legend_panel.add(spinner_font_size_link_legend);
 		offset_y += 30;
 
 		SpinnerModel model_opacity_edge_label = new SpinnerNumberModel(Util.edge_label_opacity.intValue(), // initial
@@ -556,30 +560,30 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		show_links_legend.setSelected(Util.showLinksLegend);
 		show_links_legend.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		show_links_legend.setBounds(5, offset_y, 200, 20);
-		
-		if(!Util.showIntraLinks && !Util.showInterLinks) {
+
+		if (!Util.showIntraLinks && !Util.showInterLinks) {
 			show_links_legend.setEnabled(false);
 		} else {
 			show_links_legend.setEnabled(true);
 		}
-		
+
 		if (Util.showLinksLegend) {
-			spinner_link.setEnabled(true);
+			spinner_font_size_link_legend.setEnabled(true);
 			spinner_opacity_edge_label.setEnabled(true);
 		} else {
-			spinner_link.setEnabled(false);
+			spinner_font_size_link_legend.setEnabled(false);
 			spinner_opacity_edge_label.setEnabled(false);
 		}
 		show_links_legend.addItemListener(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				if (e.getStateChange() == ItemEvent.SELECTED) {// checkbox has been selected
-					spinner_link.setEnabled(true);
+					spinner_font_size_link_legend.setEnabled(true);
 					spinner_opacity_edge_label.setEnabled(true);
 					Util.showLinksLegend = true;
 					XlinkCyNETProps.setProperty("xlinkcynet.showLinksLegend", "true");
 				} else {
-					spinner_link.setEnabled(false);
+					spinner_font_size_link_legend.setEnabled(false);
 					spinner_opacity_edge_label.setEnabled(false);
 					Util.showLinksLegend = false;
 					XlinkCyNETProps.setProperty("xlinkcynet.showLinksLegend", "false");
@@ -599,10 +603,10 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	private void init_link_check_boxes_colors(int offset_x, int button_width) {
 
 		int offset_y = 20;
-		final JCheckBox show_inter_link = new JCheckBox("Display Interlink:");
+		show_inter_link = new JCheckBox("Display Interlink:");
 		show_inter_link.setSelected(Util.showInterLinks);
 
-		final JCheckBox show_intra_link = new JCheckBox("Display Intralink:");
+		show_intra_link = new JCheckBox("Display Intralink:");
 		show_intra_link.setBackground(Color.WHITE);
 		show_intra_link.setSelected(Util.showIntraLinks);
 		show_intra_link.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
@@ -735,21 +739,21 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 				0, // min
 				100, // max
 				1); // step
-		final JSpinner spinner_node = new JSpinner(model_node);
-		spinner_node.setBounds(offset_x, offset_y, 60, 20);
-		JComponent comp_node = spinner_node.getEditor();
+		spinner_font_size_node = new JSpinner(model_node);
+		spinner_font_size_node.setBounds(offset_x, offset_y, 60, 20);
+		JComponent comp_node = spinner_font_size_node.getEditor();
 		JFormattedTextField field_node = (JFormattedTextField) comp_node.getComponent(0);
 		DefaultFormatter formatter_node = (DefaultFormatter) field_node.getFormatter();
 		formatter_node.setCommitsOnValidEdit(true);
-		spinner_node.addChangeListener(new ChangeListener() {
+		spinner_font_size_node.addChangeListener(new ChangeListener() {
 
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				Util.node_label_font_size = (Integer) spinner_node.getValue();
+				Util.node_label_font_size = (Integer) spinner_font_size_node.getValue();
 				XlinkCyNETProps.setProperty("xlinkcynet.node_label_font_size", Util.node_label_font_size.toString());
 			}
 		});
-		node_panel.add(spinner_node);
+		node_panel.add(spinner_font_size_node);
 	}
 
 	/**
@@ -828,7 +832,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 				0, // min
 				255, // max
 				1); // step
-		final JSpinner spinner_opacity_node_border = new JSpinner(model_opacity_node_border);
+		spinner_opacity_node_border = new JSpinner(model_opacity_node_border);
 		spinner_opacity_node_border.setBounds(offset_x, offset_y, 60, 20);
 		JComponent comp_opacitiy_node_border = spinner_opacity_node_border.getEditor();
 		JFormattedTextField field_opacity_node_border = (JFormattedTextField) comp_opacitiy_node_border.getComponent(0);
@@ -851,7 +855,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 				1, // min
 				10, // max
 				0.1); // step
-		final JSpinner spinner_width_node_border = new JSpinner(width_node_border_spinner);
+		spinner_width_node_border = new JSpinner(width_node_border_spinner);
 		spinner_width_node_border.setBounds(offset_x, offset_y, 60, 20);
 		JComponent comp_width_node_border = spinner_width_node_border.getEditor();
 		JFormattedTextField field_width_node_border = (JFormattedTextField) comp_width_node_border.getComponent(0);
@@ -885,6 +889,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		c.ipady = ipady;
 		c.ipadx = ipdax;
 		c.insets = WEST_INSETS;
+		c.anchor = GridBagConstraints.NORTHWEST;
 		this.add(component, c);
 	}
 
@@ -908,11 +913,70 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		this.init_link_log_score_features(offset_x, button_width);
 		this.init_link_legend_features(offset_x, button_width);
 		this.init_link_check_boxes_colors(offset_x, button_width);
-		this.setGridBagConstraints(gridBagConstraint, 0, 505, 300, link_panel);
+		this.setGridBagConstraints(gridBagConstraint, 0, 405, 300, link_panel);
 
 		this.init_node_style_features(offset_x, button_width);
 		this.init_node_border_features(offset_x, button_width);
 		this.setGridBagConstraints(gridBagConstraint, 1, 190, 300, node_panel);
+
+	}
+
+	public static void updateParamsValue() {
+		
+		show_intra_link.setSelected(Util.showIntraLinks);
+		show_inter_link.setSelected(Util.showInterLinks);
+		if (Util.showIntraLinks) {
+			intraLinkColorButton.setEnabled(true);
+			spinner_score_intralink.setEnabled(true);
+		} else {
+
+			intraLinkColorButton.setEnabled(false);
+			spinner_score_intralink.setEnabled(false);
+		}
+
+		if (Util.showInterLinks) {
+			interLinkColorButton.setEnabled(true);
+			spinner_score_interlink.setEnabled(true);
+		} else {
+			interLinkColorButton.setEnabled(false);
+			spinner_score_interlink.setEnabled(false);
+		}
+
+		intraLinkColorButton.setBackground(Util.IntraLinksColor);
+		intraLinkColorButton.setForeground(Util.IntraLinksColor);
+
+		interLinkColorButton.setBackground(Util.InterLinksColor);
+		interLinkColorButton.setForeground(Util.InterLinksColor);
+
+		spinner_opacity_edge_link.setValue(Util.edge_link_opacity);
+		spinner_width_edge_link.setValue(Util.edge_link_width);
+
+		spinner_score_intralink.setValue(Util.intralink_threshold_score);
+		spinner_score_interlink.setValue(Util.interlink_threshold_score);
+		spinner_score_combinedlink.setValue(Util.combinedlink_threshold_score);
+
+		if (!Util.showIntraLinks && !Util.showInterLinks) {
+			show_links_legend.setEnabled(false);
+		} else {
+			show_links_legend.setEnabled(true);
+		}
+
+		if (Util.showLinksLegend) {
+			spinner_font_size_link_legend.setEnabled(true);
+			spinner_opacity_edge_label.setEnabled(true);
+		} else {
+			spinner_font_size_link_legend.setEnabled(false);
+			spinner_opacity_edge_label.setEnabled(false);
+		}
+
+		spinner_font_size_link_legend.setValue(Util.edge_label_font_size);
+		spinner_opacity_edge_label.setValue(Util.edge_label_opacity);
+
+		spinner_font_size_node.setValue(Util.node_label_font_size);
+		borderNodeColorButton.setBackground(Util.NodeBorderColor);
+		borderNodeColorButton.setForeground(Util.NodeBorderColor);
+		spinner_opacity_node_border.setValue(Util.node_border_opacity);
+		spinner_width_node_border.setValue(Util.node_border_width);
 
 	}
 

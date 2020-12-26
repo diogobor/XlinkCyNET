@@ -1,9 +1,13 @@
 package de.fmp.liulab.task;
 
+import java.awt.Color;
+import java.lang.reflect.Field;
+
 import org.cytoscape.work.ProvidesTitle;
 import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.Tunable;
 
+import de.fmp.liulab.internal.MainControlPanel;
 import de.fmp.liulab.utils.Util;
 
 /**
@@ -20,10 +24,16 @@ public class SetParametersCommandTask extends CyRESTAbstractTask {
 	}
 
 	@Tunable(description = "Display intralinks", longDescription = "Display or hide all identified intralinks", exampleStringValue = "true")
-	public boolean displayIntralinks = true;
+	public boolean displayIntralinks = Util.showIntraLinks;
+
+	@Tunable(description = "Intralinks color", longDescription = "Set a color to all identified intralinks", exampleStringValue = "#AAAAAA")
+	public String intralinksColor = null;
 
 	@Tunable(description = "Display interlinks", longDescription = "Display or hide all identified interlinks", exampleStringValue = "true")
-	public boolean displayInterlinks = true;
+	public boolean displayInterlinks = Util.showInterLinks;
+
+	@Tunable(description = "Interlinks color", longDescription = "Set a color to all identified interlinks", exampleStringValue = "#AAAAAA")
+	public String interlinksColor = null;
 
 	@Tunable(description = "Set opacity of cross-links", longDescription = "Set the opacity of all identified cross-links (range between 0 - transparent and 255 - opaque)", exampleStringValue = "120")
 	public Integer opacityLinks = Util.edge_link_opacity;
@@ -52,6 +62,9 @@ public class SetParametersCommandTask extends CyRESTAbstractTask {
 	@Tunable(description = "Set font size of nodes name", longDescription = "Set the font size of the name of all nodes", exampleStringValue = "PDE12")
 	public Integer fontSizeNodesName = Util.node_label_font_size;
 
+	@Tunable(description = "Node border color", longDescription = "Set a color to all nodes borders", exampleStringValue = "#AAAAAA")
+	public String nodeBorderColor = null;
+
 	@Tunable(description = "Set opacity of border nodes", longDescription = "Set the opacity of the border of all nodes (range between 0 - transparent and 255 - opaque)", exampleStringValue = "120")
 	public Integer opacityBorderNodes = Util.node_border_opacity;
 
@@ -72,17 +85,101 @@ public class SetParametersCommandTask extends CyRESTAbstractTask {
 
 		Util.showIntraLinks = this.displayIntralinks;
 		Util.showInterLinks = this.displayInterlinks;
-		Util.edge_link_opacity = this.opacityLinks;
-		Util.edge_link_width = this.widthLinks;
+
+		Color _linksColor;
+		if (this.intralinksColor != null) {
+			
+			try {
+				_linksColor = Color.decode(this.intralinksColor);
+
+			} catch (Exception e) {
+				try {
+					Field field = Class.forName("java.awt.Color").getField(this.intralinksColor);
+					_linksColor = (Color) field.get(null);
+				} catch (Exception e2) {
+					_linksColor = null; // Not defined
+				}
+			}
+			if (_linksColor != null)
+				Util.IntraLinksColor = _linksColor;
+		}
+
+		if (this.interlinksColor != null) {
+
+			try {
+				_linksColor = Color.decode(this.interlinksColor);
+			} catch (Exception e) {
+				try {
+					Field field = Class.forName("java.awt.Color").getField(this.interlinksColor);
+					_linksColor = (Color) field.get(null);
+				} catch (Exception e2) {
+					_linksColor = null; // Not defined
+				}
+			}
+
+			if (_linksColor != null)
+				Util.InterLinksColor = _linksColor;
+		}
+
+		if (this.opacityLinks > 255)
+			Util.edge_link_opacity = 255;
+		else if (this.opacityLinks < 0)
+			Util.edge_link_opacity = 0;
+		else
+			Util.edge_link_opacity = this.opacityLinks;
+
+		if (this.widthLinks > 10)
+			Util.edge_link_width = 10;
+		else if (this.widthLinks < 0)
+			Util.edge_link_width = 0;
+		else
+			Util.edge_link_width = this.widthLinks;
 		Util.showLinksLegend = this.displayLinksLegend;
 		Util.edge_label_font_size = this.fontSizeLinksLegend;
-		Util.edge_label_opacity = this.opacityLinksLegend;
+
+		if (this.opacityLinksLegend > 255)
+			Util.edge_label_opacity = 255;
+		else if (this.opacityLinksLegend < 0)
+			Util.edge_label_opacity = 0;
+		else
+			Util.edge_label_opacity = this.opacityLinksLegend;
 		Util.intralink_threshold_score = this.scoreIntralink;
 		Util.interlink_threshold_score = this.scoreInterlink;
 		Util.combinedlink_threshold_score = this.scorePPIlink;
 		Util.node_label_font_size = this.fontSizeNodesName;
-		Util.node_border_opacity = this.opacityBorderNodes;
-		Util.node_border_width = this.widthBorderNodes;
+		
+		if (this.nodeBorderColor != null) {
+
+			try {
+				_linksColor = Color.decode(this.nodeBorderColor);
+			} catch (Exception e) {
+				try {
+					Field field = Class.forName("java.awt.Color").getField(this.nodeBorderColor);
+					_linksColor = (Color) field.get(null);
+				} catch (Exception e2) {
+					_linksColor = null; // Not defined
+				}
+			}
+
+			if (_linksColor != null)
+				Util.NodeBorderColor = _linksColor;
+		}
+		
+		if (this.opacityBorderNodes > 255)
+			Util.node_border_opacity = 255;
+		else if (this.opacityBorderNodes < 0)
+			Util.node_border_opacity = 0;
+		else
+			Util.node_border_opacity = this.opacityBorderNodes;
+
+		if (this.widthBorderNodes > 10)
+			Util.node_border_width = 10;
+		else if (this.widthBorderNodes < 0)
+			Util.node_border_width = 0;
+		else
+			Util.node_border_width = this.widthBorderNodes;
+
+		MainControlPanel.updateParamsValue();
 
 	}
 
