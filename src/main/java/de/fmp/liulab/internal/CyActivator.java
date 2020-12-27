@@ -17,6 +17,7 @@ import org.cytoscape.application.swing.CyAction;
 import org.cytoscape.application.swing.CyNodeViewContextMenuFactory;
 import org.cytoscape.application.swing.CySwingApplication;
 import org.cytoscape.application.swing.CytoPanelComponent;
+import org.cytoscape.model.events.NetworkAddedListener;
 import org.cytoscape.model.events.RowsSetListener;
 import org.cytoscape.property.CyProperty;
 import org.cytoscape.service.util.AbstractCyActivator;
@@ -48,6 +49,8 @@ import de.fmp.liulab.task.SetDomainColorTaskFactory;
 import de.fmp.liulab.task.UpdateViewerTaskFactory;
 import de.fmp.liulab.task.command_lines.ApplyRestoreStyleCommandTask;
 import de.fmp.liulab.task.command_lines.ApplyRestoreStyleCommandTaskFactory;
+import de.fmp.liulab.task.command_lines.LoadProteinDomainsCommandTask;
+import de.fmp.liulab.task.command_lines.LoadProteinDomainsCommandTaskFactory;
 import de.fmp.liulab.task.command_lines.ReadMeCommandTask;
 import de.fmp.liulab.task.command_lines.ReadMeCommandTaskFactory;
 import de.fmp.liulab.task.command_lines.SetParametersCommandTask;
@@ -160,6 +163,7 @@ public class CyActivator extends AbstractCyActivator {
 		registerService(bc, updateViewListener, ViewChangedListener.class, new Properties());
 		registerService(bc, updateViewListener, RowsSetListener.class, new Properties());
 		registerService(bc, updateViewListener, SetCurrentNetworkListener.class, new Properties());
+		registerService(bc, updateViewListener, NetworkAddedListener.class, new Properties());
 		// #####################
 
 		// #### 2 - PANEL (SETTINGS) ####
@@ -189,7 +193,7 @@ public class CyActivator extends AbstractCyActivator {
 
 		// ####### COMMANDS ########
 
-		init_commands(bc, cyApplicationManager, mySingleNodeShortCutFactory, dialogTaskManager,openBrowser);
+		init_commands(bc, cyApplicationManager, mySingleNodeShortCutFactory, dialogTaskManager, openBrowser);
 
 		// #########################
 	}
@@ -228,13 +232,25 @@ public class CyActivator extends AbstractCyActivator {
 		setParametersProperties.setProperty(COMMAND_NAMESPACE, XLINKCYNET_COMMAND_NAMESPACE);
 		setParametersProperties.setProperty(COMMAND, "setParameters");
 		setParametersProperties.setProperty(COMMAND_DESCRIPTION, SetParametersCommandTaskFactory.DESCRIPTION);
-		setParametersProperties.setProperty(COMMAND_LONG_DESCRIPTION,
-				SetParametersCommandTaskFactory.LONG_DESCRIPTION);
+		setParametersProperties.setProperty(COMMAND_LONG_DESCRIPTION, SetParametersCommandTaskFactory.LONG_DESCRIPTION);
 		setParametersProperties.setProperty(COMMAND_EXAMPLE_JSON, SetParametersCommandTask.getExample());
 		setParametersProperties.setProperty(COMMAND_SUPPORTS_JSON, "true");
 
 		TaskFactory setParametersTaskFactory = new SetParametersCommandTaskFactory();
 		registerAllServices(bc, setParametersTaskFactory, setParametersProperties);
+
+		// Register load protein domains function
+		Properties loadProteinDomainsProperties = new Properties();
+		loadProteinDomainsProperties.setProperty(COMMAND_NAMESPACE, XLINKCYNET_COMMAND_NAMESPACE);
+		loadProteinDomainsProperties.setProperty(COMMAND, "loadProteinDomains");
+		loadProteinDomainsProperties.setProperty(COMMAND_DESCRIPTION, LoadProteinDomainsCommandTaskFactory.DESCRIPTION);
+		loadProteinDomainsProperties.setProperty(COMMAND_LONG_DESCRIPTION,
+				LoadProteinDomainsCommandTaskFactory.LONG_DESCRIPTION);
+		loadProteinDomainsProperties.setProperty(COMMAND_EXAMPLE_JSON, LoadProteinDomainsCommandTask.getExample());
+		loadProteinDomainsProperties.setProperty(COMMAND_SUPPORTS_JSON, "true");
+
+		TaskFactory loadProteinDomainsTaskFactory = new LoadProteinDomainsCommandTaskFactory(cyApplicationManager);
+		registerAllServices(bc, loadProteinDomainsTaskFactory, loadProteinDomainsProperties);
 
 	}
 

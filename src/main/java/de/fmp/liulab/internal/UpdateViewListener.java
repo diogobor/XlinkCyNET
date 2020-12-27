@@ -19,6 +19,8 @@ import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyRow;
 import org.cytoscape.model.CyTableUtil;
+import org.cytoscape.model.events.NetworkAddedEvent;
+import org.cytoscape.model.events.NetworkAddedListener;
 import org.cytoscape.model.events.RowSetRecord;
 import org.cytoscape.model.events.RowsSetEvent;
 import org.cytoscape.model.events.RowsSetListener;
@@ -51,7 +53,8 @@ import de.fmp.liulab.utils.Util;
  * @author borges.diogo
  *
  */
-public class UpdateViewListener implements ViewChangedListener, RowsSetListener, SetCurrentNetworkListener {
+public class UpdateViewListener
+		implements ViewChangedListener, RowsSetListener, SetCurrentNetworkListener, NetworkAddedListener {
 
 	private CyApplicationManager cyApplicationManager;
 	private CyNetwork myNetwork;
@@ -331,7 +334,7 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 			if (this.dialogTaskManager != null
 					&& this.proteinScalingFactorHorizontalExpansionTableTaskFactory != null) {
 				TaskIterator ti = this.proteinScalingFactorHorizontalExpansionTableTaskFactory
-						.createTaskIterator(myNetwork);
+						.createTaskIterator(myNetwork, false);
 				this.dialogTaskManager.execute(ti);
 			}
 
@@ -374,6 +377,24 @@ public class UpdateViewListener implements ViewChangedListener, RowsSetListener,
 
 			MainSingleNodeTask.isPlotDone = true;
 			LoadProteinDomainTask.isPlotDone = true;
+		}
+	}
+
+	/**
+	 * Method responsible for updating proteinScalingFactor after creating a network
+	 */
+	@Override
+	public void handleEvent(NetworkAddedEvent event) {
+
+		CyNetwork cyNetwork = event.getNetwork();
+		if (cyNetwork != null) {
+			// Create protein scaling factor table
+			if (this.dialogTaskManager != null
+					&& this.proteinScalingFactorHorizontalExpansionTableTaskFactory != null) {
+				TaskIterator ti = this.proteinScalingFactorHorizontalExpansionTableTaskFactory
+						.createTaskIterator(cyNetwork, true);
+				this.dialogTaskManager.execute(ti);
+			}
 		}
 	}
 }

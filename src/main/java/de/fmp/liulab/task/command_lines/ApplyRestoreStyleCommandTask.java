@@ -35,6 +35,12 @@ public class ApplyRestoreStyleCommandTask extends CyRESTAbstractTask {
 	@Tunable(description = "Node(s) to set/restore style", longDescription = "Give the node(s) name, separated by comma, that will be expanded or restored. (type 'all' to set style to all nodes)", exampleStringValue = "PDE12")
 	public String nodesName;
 
+	@Tunable(description = "Protein length scale factor", longDescription = "Set a scale factor (between 0 and 1) to the protein length.", exampleStringValue = "1")
+	public double proteinScalingFactor = Util.node_label_factor_size;
+
+	@Tunable(description = "Protein horizontal expasion", longDescription = "Set whether the protein will be expanded horizontally or not.", exampleStringValue = "1")
+	public boolean proteinHorizontalExpansion = Util.isProtein_expansion_horizontal;
+
 	/**
 	 * Constructor
 	 * 
@@ -56,6 +62,11 @@ public class ApplyRestoreStyleCommandTask extends CyRESTAbstractTask {
 
 		// Select nodes based on nodesName variable
 		this.selectNodes();
+
+		// Set scaling factor
+		Util.node_label_factor_size = proteinScalingFactor;
+		//Set protein expansion
+		Util.isProtein_expansion_horizontal = proteinHorizontalExpansion;
 
 		// Get the task iterator
 		TaskIterator ti = myFactory.createTaskIterator(true);

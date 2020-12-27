@@ -6,6 +6,7 @@ import org.cytoscape.work.TaskIterator;
 
 /**
  * Class responsible for calling the class to expand the protein bar
+ * 
  * @author diogobor
  *
  */
@@ -18,12 +19,15 @@ public class ProteinScalingFactorHorizontalExpansionTableTaskFactory extends Abs
 	}
 
 	/**
-	 * Method responsible for calling thee task 
-	 * @param myNetwork current network
+	 * Method responsible for calling the task
+	 * 
+	 * @param myNetwork                 current network
+	 * @param forcedHorizontalExpansion Force horizontal expansion param as true
 	 * @return return current task iterator
 	 */
-	public TaskIterator createTaskIterator(CyNetwork myNetwork) {
-		return new TaskIterator(new ProteinScalingFactorHorizontalExpansionTableTask(myNetwork));
+	public TaskIterator createTaskIterator(CyNetwork myNetwork, boolean forcedHorizontalExpansion) {
+		return new TaskIterator(
+				new ProteinScalingFactorHorizontalExpansionTableTask(myNetwork, forcedHorizontalExpansion));
 	}
 
 	@Override

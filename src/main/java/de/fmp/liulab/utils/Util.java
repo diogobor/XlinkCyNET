@@ -1882,14 +1882,19 @@ public class Util {
 
 				if (IsIntraLink) {
 
-					if (comb_score < combinedlink_threshold_score) {
+					if (comb_score == -1) {// There is no comb_score
+						currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+					} else if (comb_score < combinedlink_threshold_score) {
 						currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
 					} else {
 						currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
 					}
 
 				} else if (!IsModified_source_node && !IsModified_target_node) {
-					if (comb_score < combinedlink_threshold_score) {
+
+					if (comb_score == -1) {// There is no comb_score
+						currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+					} else if (comb_score < combinedlink_threshold_score) {
 						currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
 					} else {
 						currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);

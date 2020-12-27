@@ -70,17 +70,17 @@ import de.fmp.liulab.utils.Util;
  */
 public class LoadProteinDomainTask extends AbstractTask implements ActionListener {
 
-	private CyApplicationManager cyApplicationManager;
-	private CyNetwork myNetwork;
+	private static CyApplicationManager cyApplicationManager;
+	private static CyNetwork myNetwork;
 	private CyCustomGraphics2Factory vgFactory;
 
 	public static VisualLexicon lexicon;
 	public static VisualStyle style;
 
 	// Window
-	private JFrameWithoutMaxAndMinButton mainFrame;
+	private static JFrameWithoutMaxAndMinButton mainFrame;
 	private JPanel mainPanel;
-	private JLabel textLabel_status_result;
+	private static JLabel textLabel_status_result;
 	private MenuBar menuBar = new MenuBar();
 	private JPanel information_panel;
 
@@ -89,7 +89,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	public static DefaultTableModel tableDataModel;
 	private String[] columnNames = { "Node Name", "Domain(s)" };
 	private final Class[] columnClass = new Class[] { String.class, String.class };
-	private List<GeneDomain> geneListFromTable;
+	private static List<GeneDomain> geneListFromTable;
 	private String rowstring, value;
 	private Clipboard clipboard;
 	private StringSelection stsel;
@@ -372,12 +372,12 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	}
 
 	/**
-	 * Method responsible for getting protein domains from Pfam database for each
-	 * node
+	 * Method responsible for getting protein domains from Pfam or Supfam database
+	 * for each node
 	 * 
 	 * @param taskMonitor
 	 */
-	private void getPfamProteinDomainsForeachNode(final TaskMonitor taskMonitor) {
+	private void getPfamOrSupfamProteinDomainsForeachNode(final TaskMonitor taskMonitor) {
 
 		int old_progress = 0;
 		int summary_processed = 0;
@@ -452,7 +452,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 							public void run() {
 								pfamDoStop = false;
 								isPfamLoaded = false;
-								getPfamProteinDomainsForeachNode(taskMonitor);
+								getPfamOrSupfamProteinDomainsForeachNode(taskMonitor);
 
 								Object[][] data = null;
 								if (geneListFromTable.size() > 0)
@@ -521,56 +521,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 					if (concluedProcess) {
 						okButton.setEnabled(false);
 
-						storeDomainThread = new Thread() {
-
-							public void run() {
-
-								isPlotDone = false;
-								textLabel_status_result.setText("Checking nodes ...");
-								taskMonitor.showMessage(TaskMonitor.Level.INFO, "Checking nodes...");
-								String msgError = getNodesFromTable();
-								if (!msgError.isBlank() && !msgError.isEmpty()) {
-									textLabel_status_result.setText("ERROR: Check Task History.");
-									taskMonitor.showMessage(TaskMonitor.Level.ERROR, msgError);
-									okButton.setEnabled(true);
-									isPlotDone = true;
-									UpdateViewListener.isNodeModified = true;
-									isStoredDomains = true;
-
-								} else {
-									isStoredDomains = false;
-									textLabel_status_result.setText("Setting nodes information...");
-									taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting nodes information...");
-									try {
-										setNodesInformation(taskMonitor);
-										if (geneListFromTable.size() > 0) {
-											Util.update_ProteinDomainColumn(taskMonitor, myNetwork, geneListFromTable);
-
-										}
-
-										taskMonitor.setProgress(1.0);
-										taskMonitor.showMessage(TaskMonitor.Level.INFO,
-												"Protein domains have been loaded successfully!");
-
-										mainFrame.dispose();
-										JOptionPane.showMessageDialog(null,
-												"Protein domains have been loaded successfully!",
-												"XlinkCyNET - Protein domains", JOptionPane.INFORMATION_MESSAGE);
-
-									} catch (Exception e) {
-										textLabel_status_result.setText("ERROR: Check Task History.");
-										taskMonitor.showMessage(TaskMonitor.Level.ERROR, "ERROR: " + e.getMessage());
-									}
-
-									isPlotDone = true;
-									UpdateViewListener.isNodeModified = true;
-									isStoredDomains = true;
-									okButton.setEnabled(true);
-								}
-							}
-						};
-
-						storeDomainThread.start();
+						storeProteinDomains(taskMonitor, myNetwork, true);
 
 					}
 
@@ -600,6 +551,77 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 			}
 		});
 		mainPanel.add(cancelButton);
+	}
+
+	/**
+	 * Method responsible for storing protein domains
+	 * 
+	 * @param taskMonitor
+	 * @throws Exception
+	 */
+	public static void storeProteinDomains(TaskMonitor taskMonitor, final CyNetwork myNetwork, boolean isFromScreen)
+			throws Exception {
+
+		if (myNetwork == null) {
+			throw new Exception("ERROR: No network has been found.");
+		}
+
+		storeDomainThread = new Thread() {
+
+			public void run() {
+
+				isPlotDone = false;
+				if (isFromScreen)
+					textLabel_status_result.setText("Checking nodes ...");
+				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Checking nodes...");
+				String msgError = getNodesFromTable();
+				if (!msgError.isBlank() && !msgError.isEmpty()) {
+					textLabel_status_result.setText("ERROR: Check Task History.");
+					taskMonitor.showMessage(TaskMonitor.Level.ERROR, msgError);
+					if (isFromScreen)
+						okButton.setEnabled(true);
+					isPlotDone = true;
+					UpdateViewListener.isNodeModified = true;
+					isStoredDomains = true;
+
+				} else {
+					isStoredDomains = false;
+					if (isFromScreen)
+						textLabel_status_result.setText("Setting nodes information...");
+					taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting nodes information...");
+					try {
+						setNodesInformation(taskMonitor, myNetwork);
+						if (geneListFromTable.size() > 0) {
+							Util.update_ProteinDomainColumn(taskMonitor, myNetwork, geneListFromTable);
+
+						}
+
+						taskMonitor.setProgress(1.0);
+						taskMonitor.showMessage(TaskMonitor.Level.INFO,
+								"Protein domains have been loaded successfully!");
+
+						if (isFromScreen) {
+							mainFrame.dispose();
+							JOptionPane.showMessageDialog(null, "Protein domains have been loaded successfully!",
+									"XlinkCyNET - Protein domains", JOptionPane.INFORMATION_MESSAGE);
+						}
+
+					} catch (Exception e) {
+						if (isFromScreen)
+							textLabel_status_result.setText("ERROR: Check Task History.");
+						taskMonitor.showMessage(TaskMonitor.Level.ERROR, "ERROR: " + e.getMessage());
+					}
+
+					isPlotDone = true;
+					UpdateViewListener.isNodeModified = true;
+					isStoredDomains = true;
+					if (isFromScreen)
+						okButton.setEnabled(true);
+				}
+			}
+		};
+
+		storeDomainThread.start();
 	}
 
 	/**
@@ -685,11 +707,14 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	}
 
 	/**
-	 * Method responsible for setting information of all nodes
+	 * Method responsible for setting information to all nodes
 	 * 
 	 * @throws Exception
 	 */
-	private void setNodesInformation(final TaskMonitor taskMonitor) throws Exception {
+	private static void setNodesInformation(final TaskMonitor taskMonitor, final CyNetwork myNetwork) throws Exception {
+
+		if (myNetwork == null)
+			return;
 
 		// Initialize protein domain colors map if MainSingleNodeTask has not been
 		// initialized
@@ -716,7 +741,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 				currentNode = myNetwork.getNode(Long.parseLong(_node_row.getRaw(CyIdentifiable.SUID).toString()));
 
 				if (geneDomain.proteinDomains.size() > 0) {
-					this.updateProteinDomainsMap(currentNode, geneDomain.proteinDomains);
+					updateProteinDomainsMap(myNetwork, currentNode, geneDomain.proteinDomains);
 
 				}
 			}
@@ -726,7 +751,8 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 			if (new_progress > old_progress) {
 				old_progress = new_progress;
 
-				textLabel_status_result.setText("Storing protein domains: " + old_progress + "%");
+				if (textLabel_status_result != null)
+					textLabel_status_result.setText("Storing protein domains: " + old_progress + "%");
 				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Storing protein domains: " + old_progress + "%");
 			}
 		}
@@ -740,7 +766,8 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	 * @param node
 	 * @param myProteinDomains
 	 */
-	private void updateProteinDomainsMap(CyNode node, List<ProteinDomain> myProteinDomains) {
+	private static void updateProteinDomainsMap(CyNetwork myNetwork, CyNode node,
+			List<ProteinDomain> myProteinDomains) {
 		String network_name = myNetwork.toString();
 		if (Util.proteinDomainsMap.containsKey(network_name)) {
 
@@ -760,7 +787,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	/**
 	 * Get all nodes filled out in JTable
 	 */
-	private String getNodesFromTable() {
+	private static String getNodesFromTable() {
 
 		geneListFromTable = new ArrayList<GeneDomain>();
 		StringBuilder sbError = new StringBuilder();
@@ -803,7 +830,8 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 			if (new_progress > old_progress) {
 				old_progress = new_progress;
 
-				textLabel_status_result.setText("Checking nodes: " + old_progress + "%");
+				if (textLabel_status_result != null)
+					textLabel_status_result.setText("Checking nodes: " + old_progress + "%");
 			}
 
 		}

@@ -12,19 +12,24 @@ import de.fmp.liulab.utils.Util;
 
 /**
  * Class responsible for expanding the protein bar
+ * 
  * @author diogobor
  *
  */
 public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTask {
 
 	private CyNetwork myNetwork;
+	private boolean forcedHorizontalExpansion;
 
 	/**
 	 * Constructor
-	 * @param myNetwork current network
+	 * 
+	 * @param myNetwork                 current network
+	 * @param forcedHorizontalExpansion Force horizontal expansion param as true
 	 */
-	public ProteinScalingFactorHorizontalExpansionTableTask(CyNetwork myNetwork) {
+	public ProteinScalingFactorHorizontalExpansionTableTask(CyNetwork myNetwork, boolean forcedHorizontalExpansion) {
 		this.myNetwork = myNetwork;
+		this.forcedHorizontalExpansion = forcedHorizontalExpansion;
 	}
 
 	/**
@@ -55,7 +60,7 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 			}
 
 		}
-		
+
 		if (nodeTable.getColumn(Util.HORIZONTAL_EXPANSION_COLUMN_NAME) == null) {
 			nodeTable.createColumn(Util.HORIZONTAL_EXPANSION_COLUMN_NAME, Boolean.class, false);
 
@@ -66,14 +71,15 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 		} else { // The column exists, but it's necessary to check the cells
 			try {
 				for (CyRow row : myNetwork.getDefaultNodeTable().getAllRows()) {
-					if (row.get(Util.HORIZONTAL_EXPANSION_COLUMN_NAME, Boolean.class) == null)
+					if (forcedHorizontalExpansion
+							|| row.get(Util.HORIZONTAL_EXPANSION_COLUMN_NAME, Boolean.class) == null)
 						row.set(Util.HORIZONTAL_EXPANSION_COLUMN_NAME, true);
 				}
 			} catch (Exception e) {
 			}
 
 		}
-		
+
 		if (nodeTable.getColumn(Util.PROTEIN_DOMAIN_COLUMN) == null) {
 			nodeTable.createColumn(Util.PROTEIN_DOMAIN_COLUMN, String.class, false);
 
@@ -89,9 +95,6 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 				}
 			} catch (Exception e) {
 			}
-
 		}
-		
-		
 	}
 }
