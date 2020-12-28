@@ -595,13 +595,13 @@ public class Util {
 					double log_score = round(-Math.log10(intraLinks.get(countEdge).score), 2);
 					String tooltip = "";
 
-					if (score == Double.NaN) {
+					if (Double.isNaN(score)) {
 						tooltip = "<html><p>[" + intraLinks.get(countEdge).pos_site_a + "] - ["
 								+ intraLinks.get(countEdge).pos_site_b + "]</p></html>";
 					} else {
 						tooltip = "<html><p>[" + intraLinks.get(countEdge).pos_site_a + "] - ["
 								+ intraLinks.get(countEdge).pos_site_b + "]</p><p><i>Score: " + score
-								+ " (-Log(score): " + log_score + ")</i></p></html>";
+								+ "</p><p><i>-Log(score): " + log_score + "</i></p></html>";
 					}
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TOOLTIP, tooltip);
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_FONT_SIZE, edge_label_font_size);
@@ -1035,7 +1035,7 @@ public class Util {
 				double log_score = round(-Math.log10(current_inter_links.get(countEdge).score), 2);
 				String tooltip = "";
 
-				if (score == Double.NaN) {
+				if (Double.isNaN(score)) {
 					tooltip = "<html><p>" + current_inter_links.get(countEdge).protein_a + " ["
 							+ current_inter_links.get(countEdge).pos_site_a + "] - "
 							+ current_inter_links.get(countEdge).protein_b + " ["
@@ -1045,7 +1045,7 @@ public class Util {
 							+ current_inter_links.get(countEdge).pos_site_a + "] - "
 							+ current_inter_links.get(countEdge).protein_b + " ["
 							+ current_inter_links.get(countEdge).pos_site_b + "]</p><p><i>Score: " + score
-							+ " (-Log(score): " + log_score + ")</i></p></html>";
+							+ "</i></p><p><i>-Log(score): " + log_score + "</i></p></html>";
 				}
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TOOLTIP, tooltip);
 
@@ -1692,8 +1692,8 @@ public class Util {
 					if (edgeView.getVisualProperty(BasicVisualLexicon.EDGE_TOOLTIP).isBlank()
 							|| edgeView.getVisualProperty(BasicVisualLexicon.EDGE_TOOLTIP).isEmpty()) {
 
-						String tooltip = "<html><p><i>Score: " + comb_score + "</p><p>-Log(score): " + log_comb_score
-								+ "</i></p></html>";
+						String tooltip = "<html><p><i>Score: " + comb_score + "</i></p><p><i>-Log(score): "
+								+ log_comb_score + "</i></p></html>";
 						edgeView.setLockedValue(BasicVisualLexicon.EDGE_TOOLTIP, tooltip);
 					}
 
