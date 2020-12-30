@@ -57,6 +57,8 @@ import de.fmp.liulab.task.command_lines.ReadMeCommandTask;
 import de.fmp.liulab.task.command_lines.ReadMeCommandTaskFactory;
 import de.fmp.liulab.task.command_lines.SetParametersCommandTask;
 import de.fmp.liulab.task.command_lines.SetParametersCommandTaskFactory;
+import de.fmp.liulab.task.command_lines.SetProteinDomainsColorCommandTask;
+import de.fmp.liulab.task.command_lines.SetProteinDomainsColorCommandTaskFactory;
 
 /**
  * Class responsible for initializing cytoscape methods
@@ -254,7 +256,7 @@ public class CyActivator extends AbstractCyActivator {
 		TaskFactory loadProteinDomainsTaskFactory = new LoadProteinDomainsCommandTaskFactory(cyApplicationManager);
 		registerAllServices(bc, loadProteinDomainsTaskFactory, loadProteinDomainsProperties);
 
-		// Register load protein domains function
+		// Register export protein domains function
 		Properties exportProteinDomainsProperties = new Properties();
 		exportProteinDomainsProperties.setProperty(COMMAND_NAMESPACE, XLINKCYNET_COMMAND_NAMESPACE);
 		exportProteinDomainsProperties.setProperty(COMMAND, "exportProteinDomains");
@@ -268,6 +270,20 @@ public class CyActivator extends AbstractCyActivator {
 		TaskFactory exportProteinDomainsTaskFactory = new ExportProteinDomainsCommandTaskFactory(cyApplicationManager);
 		registerAllServices(bc, exportProteinDomainsTaskFactory, exportProteinDomainsProperties);
 
+		// Register set protein domains color function
+		Properties setProteinDomainsColorProperties = new Properties();
+		setProteinDomainsColorProperties.setProperty(COMMAND_NAMESPACE, XLINKCYNET_COMMAND_NAMESPACE);
+		setProteinDomainsColorProperties.setProperty(COMMAND, "setProteinDomainsColor");
+		setProteinDomainsColorProperties.setProperty(COMMAND_DESCRIPTION,
+				SetProteinDomainsColorCommandTaskFactory.DESCRIPTION);
+		setProteinDomainsColorProperties.setProperty(COMMAND_LONG_DESCRIPTION,
+				SetProteinDomainsColorCommandTaskFactory.LONG_DESCRIPTION);
+		setProteinDomainsColorProperties.setProperty(COMMAND_EXAMPLE_JSON,
+				SetProteinDomainsColorCommandTask.getExample());
+		setProteinDomainsColorProperties.setProperty(COMMAND_SUPPORTS_JSON, "true");
+
+		TaskFactory setProteinDomainsColorTaskFactory = new SetProteinDomainsColorCommandTaskFactory();
+		registerAllServices(bc, setProteinDomainsColorTaskFactory, setProteinDomainsColorProperties);
 	}
 
 	private void init_default_params(BundleContext bc) {

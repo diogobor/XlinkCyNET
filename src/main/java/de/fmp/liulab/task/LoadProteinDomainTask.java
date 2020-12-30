@@ -163,8 +163,10 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 	private void disposeMainFrame() {
 		mainFrame.dispose();
+
 		JOptionPane.showMessageDialog(null, "Protein domains have been loaded successfully!",
-				"XlinkCyNET - Protein domains", JOptionPane.INFORMATION_MESSAGE);
+				"XlinkCyNET - Protein domains", JOptionPane.INFORMATION_MESSAGE,
+				new ImageIcon(getClass().getResource("/images/logo.png")));
 	}
 
 	/**
@@ -926,10 +928,10 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		for (CyNode cyNode : allNodes) {
 
 			String nodeName = myNetwork.getRow(cyNode).get(CyNetwork.NAME, String.class);
-			
+
 			if (nodeName.contains("Target") || nodeName.contains("Source"))
 				continue;
-			
+
 			sb_data_to_be_stored.append(nodeName).append("\n");
 
 		}
