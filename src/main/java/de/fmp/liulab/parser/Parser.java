@@ -51,8 +51,10 @@ public class Parser {
 
 	/**
 	 * Method responsible for updating data model table
+	 * 
+	 * @throws Exception
 	 */
-	public void updateDataModel() {
+	public void updateDataModel() throws Exception {
 
 		StringBuilder sb_data_to_be_stored = new StringBuilder();
 
@@ -136,6 +138,9 @@ public class Parser {
 			} catch (Exception e) {
 			}
 		}
+
+		if (qtdParser.size() == 0)
+			throw new Exception("ERROR: There is an error reading the file.");
 
 		int countPtnDomain = 0;
 		String[] data_to_be_stored = sb_data_to_be_stored.toString().split("\n");

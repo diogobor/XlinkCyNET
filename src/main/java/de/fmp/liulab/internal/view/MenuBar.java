@@ -44,12 +44,17 @@ public class MenuBar implements ActionListener {
 				return;
 
 			parserFile = new Parser(chooseNetwork.getSelectedFile().toString());
-			parserFile.updateDataModel();
+			try {
+				parserFile.updateDataModel();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
 	/**
 	 * Get current menu bar
+	 * 
 	 * @return menu bar
 	 */
 	public JMenuBar getMenuBar() {
@@ -77,6 +82,7 @@ public class MenuBar implements ActionListener {
 
 	/**
 	 * Get current subMenu item: 'Import file'
+	 * 
 	 * @return current subMenu item
 	 */
 	protected JMenuItem getSubMenuImportNetwork() {
