@@ -49,6 +49,8 @@ import de.fmp.liulab.task.SetDomainColorTaskFactory;
 import de.fmp.liulab.task.UpdateViewerTaskFactory;
 import de.fmp.liulab.task.command_lines.ApplyRestoreStyleCommandTask;
 import de.fmp.liulab.task.command_lines.ApplyRestoreStyleCommandTaskFactory;
+import de.fmp.liulab.task.command_lines.ExportProteinDomainsCommandTask;
+import de.fmp.liulab.task.command_lines.ExportProteinDomainsCommandTaskFactory;
 import de.fmp.liulab.task.command_lines.LoadProteinDomainsCommandTask;
 import de.fmp.liulab.task.command_lines.LoadProteinDomainsCommandTaskFactory;
 import de.fmp.liulab.task.command_lines.ReadMeCommandTask;
@@ -251,6 +253,20 @@ public class CyActivator extends AbstractCyActivator {
 
 		TaskFactory loadProteinDomainsTaskFactory = new LoadProteinDomainsCommandTaskFactory(cyApplicationManager);
 		registerAllServices(bc, loadProteinDomainsTaskFactory, loadProteinDomainsProperties);
+
+		// Register load protein domains function
+		Properties exportProteinDomainsProperties = new Properties();
+		exportProteinDomainsProperties.setProperty(COMMAND_NAMESPACE, XLINKCYNET_COMMAND_NAMESPACE);
+		exportProteinDomainsProperties.setProperty(COMMAND, "exportProteinDomains");
+		exportProteinDomainsProperties.setProperty(COMMAND_DESCRIPTION,
+				ExportProteinDomainsCommandTaskFactory.DESCRIPTION);
+		exportProteinDomainsProperties.setProperty(COMMAND_LONG_DESCRIPTION,
+				ExportProteinDomainsCommandTaskFactory.LONG_DESCRIPTION);
+		exportProteinDomainsProperties.setProperty(COMMAND_EXAMPLE_JSON, ExportProteinDomainsCommandTask.getExample());
+		exportProteinDomainsProperties.setProperty(COMMAND_SUPPORTS_JSON, "true");
+
+		TaskFactory exportProteinDomainsTaskFactory = new ExportProteinDomainsCommandTaskFactory(cyApplicationManager);
+		registerAllServices(bc, exportProteinDomainsTaskFactory, exportProteinDomainsProperties);
 
 	}
 

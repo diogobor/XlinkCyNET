@@ -20,6 +20,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.swing.AbstractCyAction;
 import org.cytoscape.model.CyNetwork;
+import org.cytoscape.work.TaskMonitor;
 
 import de.fmp.liulab.internal.view.ExtensionFileFilter;
 import de.fmp.liulab.model.ProteinDomain;
@@ -81,13 +82,15 @@ public class ExportProteinDomainsAction extends AbstractCyAction {
 			if (!full_fileName.toLowerCase().endsWith(".csv")) {
 				full_fileName += ".csv";
 			}
-			this.createProteinDomainsFile(full_fileName);
+			createProteinDomainsFile(full_fileName, myNetwork, null);
 		}
 
 	}
 
 	/**
-	 * Returns the selected file from a JFileChooser, including the extension from the file filter.
+	 * Returns the selected file from a JFileChooser, including the extension from
+	 * the file filter.
+	 * 
 	 * @param c file chooser reference
 	 * @return return the file
 	 */
@@ -108,10 +111,13 @@ public class ExportProteinDomainsAction extends AbstractCyAction {
 	}
 
 	/**
-	 * Method responsible for creating the output file with all domains for the selected network
-	 * @param fileName file name
+	 * Method responsible for creating the output file with all domains for the
+	 * selected network
+	 * 
+	 * @param fileName  file name
+	 * @param myNetwork current network
 	 */
-	private void createProteinDomainsFile(String fileName) {
+	public static void createProteinDomainsFile(String fileName, CyNetwork myNetwork, TaskMonitor taskMonitor) {
 		try {
 
 			if (Util.proteinDomainsMap.containsKey(myNetwork.toString())) {
@@ -134,20 +140,34 @@ public class ExportProteinDomainsAction extends AbstractCyAction {
 				}
 
 				myWriter.close();
-				JOptionPane.showMessageDialog(null, "File has been saved successfully!",
-						"XlinkCyNET - Export protein domains", JOptionPane.INFORMATION_MESSAGE);
+				if (taskMonitor == null) {
+					JOptionPane.showMessageDialog(null, "File has been saved successfully!",
+							"XlinkCyNET - Export protein domains", JOptionPane.INFORMATION_MESSAGE);
+				} else {
+					taskMonitor.showMessage(TaskMonitor.Level.INFO, "File has been saved successfully!");
+				}
 
 			} else {// Network does not exists
-				JOptionPane.showMessageDialog(null, "Network has not been found!",
-						"XlinkCyNET - Export protein domains", JOptionPane.WARNING_MESSAGE);
+
+				if (taskMonitor == null) {
+					JOptionPane.showMessageDialog(null, "Network has not been found!",
+							"XlinkCyNET - Export protein domains", JOptionPane.WARNING_MESSAGE);
+				} else {
+					taskMonitor.showMessage(TaskMonitor.Level.WARN, "Network has not been found!");
+				}
 				return;
 			}
 
 		} catch (IOException e) {
 
-			String errorMsg = "<htmml><p>ERROR: It is not possible to save the file.</p><p>" + e.getMessage() + "</p></html>";
-			JOptionPane.showMessageDialog(null, errorMsg, "XlinkCyNET - Export protein domains",
-					JOptionPane.ERROR_MESSAGE);
+			if (taskMonitor == null) {
+				String errorMsg = "<htmml><p>ERROR: It is not possible to save the file.</p><p>" + e.getMessage()
+						+ "</p></html>";
+				JOptionPane.showMessageDialog(null, errorMsg, "XlinkCyNET - Export protein domains",
+						JOptionPane.ERROR_MESSAGE);
+			} else {
+				taskMonitor.showMessage(TaskMonitor.Level.ERROR, "ERROR: It is not possible to save the file.");
+			}
 
 		}
 	}
