@@ -310,17 +310,17 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	 */
 	private void init_link_style_features(int offset_x, int button_width) {
 
-		int offset_y = 42;
+		int offset_y = 72;
 
 		JLabel opacity_edge_link = new JLabel("Opacity:");
 		opacity_edge_link.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		opacity_edge_link.setBounds(10, offset_y, 450, 100);
+		opacity_edge_link.setBounds(10, offset_y, 100, 40);
 		link_panel.add(opacity_edge_link);
 		offset_y += 30;
 
 		JLabel width_edge_link_label = new JLabel("Width:");
 		width_edge_link_label.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		width_edge_link_label.setBounds(10, offset_y, 450, 100);
+		width_edge_link_label.setBounds(10, offset_y, 100, 40);
 		link_panel.add(width_edge_link_label);
 
 		offset_y = 85;
@@ -353,7 +353,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		SpinnerModel width_edge_link = new SpinnerNumberModel(Util.edge_link_width, // initial
 				// value
 				1, // min
-				12, // max
+				10, // max
 				0.1); // step
 		spinner_width_edge_link = new JSpinner(width_edge_link);
 		spinner_width_edge_link.setBounds(offset_x, offset_y, 60, 20);
@@ -382,7 +382,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	 */
 	private void init_link_log_score_features(int offset_x, int button_width) {
 
-		int offset_y = -20;
+		int offset_y = 10;
 		link_score_panel = new JPanel();
 		link_score_panel.setBackground(Color.WHITE);
 		link_score_panel.setBorder(BorderFactory.createTitledBorder("-Log(Score)"));
@@ -392,19 +392,19 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 		JLabel score_intralink = new JLabel("Intralink:");
 		score_intralink.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		score_intralink.setBounds(10, offset_y, 450, 100);
+		score_intralink.setBounds(10, offset_y, 100, 40);
 		link_score_panel.add(score_intralink);
 		offset_y += 30;
 
 		JLabel score_interlink = new JLabel("Interlink:");
 		score_interlink.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		score_interlink.setBounds(10, offset_y, 450, 100);
+		score_interlink.setBounds(10, offset_y, 100, 40);
 		link_score_panel.add(score_interlink);
 		offset_y += 30;
 
 		JLabel score_combinedlink = new JLabel("PPI link:");
 		score_combinedlink.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		score_combinedlink.setBounds(10, offset_y, 450, 100);
+		score_combinedlink.setBounds(10, offset_y, 100, 40);
 		link_score_panel.add(score_combinedlink);
 
 		offset_y = 20;
@@ -493,7 +493,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	 */
 	private void init_link_legend_features(int offset_x, int button_width) {
 
-		int offset_y = 10;
+		int offset_y = 40;
 		link_legend_panel = new JPanel();
 		link_legend_panel.setBackground(Color.WHITE);
 		link_legend_panel.setBorder(BorderFactory.createTitledBorder("Legend"));
@@ -503,13 +503,13 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 		JLabel font_size_links = new JLabel("Font size:");
 		font_size_links.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		font_size_links.setBounds(10, offset_y, 450, 100);
+		font_size_links.setBounds(10, offset_y, 100, 40);
 		link_legend_panel.add(font_size_links);
 		offset_y += 30;
 
 		JLabel opacity_edge_label = new JLabel("Opacity:");
 		opacity_edge_label.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		opacity_edge_label.setBounds(10, offset_y, 450, 100);
+		opacity_edge_label.setBounds(10, offset_y, 100, 40);
 		link_legend_panel.add(opacity_edge_label);
 
 		offset_y = 50;
@@ -519,7 +519,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 		SpinnerModel model_link = new SpinnerNumberModel(Util.edge_label_font_size.intValue(), // initial value
 				0, // min
-				30, // max
+				100, // max
 				1); // step
 		spinner_font_size_link_legend = new JSpinner(model_link);
 		spinner_font_size_link_legend.setBounds(offset_x, offset_y, 60, 20);
