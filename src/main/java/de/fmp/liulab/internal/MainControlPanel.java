@@ -47,7 +47,6 @@ import de.fmp.liulab.utils.Util;
 public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 	private static final long serialVersionUID = 8292806967891823933L;
-	private static final Insets WEST_INSETS = new Insets(0, 0, 10, 0);
 	private JPanel link_panel;
 	private JPanel link_score_panel;
 	private JPanel link_legend_panel;
@@ -517,7 +516,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		offset_x -= 10;
 		if (!Util.isWindows())// MacOS or Unix
 			offset_x -= 5;
-		
+
 		SpinnerModel model_link = new SpinnerNumberModel(Util.edge_label_font_size.intValue(), // initial value
 				0, // min
 				30, // max
@@ -894,13 +893,17 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	 * @param ipdax     pad x
 	 * @param component component to be added
 	 */
-	private void setGridBagConstraints(GridBagConstraints c, int gridy, int ipady, int ipdax, Component component) {
+	private void setGridBagConstraints(GridBagConstraints c, int gridy, int ipady, int ipdax, Component component,
+			boolean isOnTheTop) {
 		c.fill = GridBagConstraints.BOTH;
 		c.gridx = 0;
 		c.gridy = gridy;
 		c.ipady = ipady;
 		c.ipadx = ipdax;
-		c.insets = WEST_INSETS;
+		if (isOnTheTop)
+			c.insets = new Insets(-500, 0, 10, 0);
+		else
+			c.insets = new Insets(0, 0, 10, 0);
 		c.anchor = GridBagConstraints.NORTHWEST;
 		this.add(component, c);
 	}
@@ -928,11 +931,11 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		this.init_link_log_score_features(offset_x, button_width);
 		this.init_link_legend_features(offset_x, button_width);
 		this.init_link_check_boxes_colors(offset_x, button_width);
-		this.setGridBagConstraints(gridBagConstraint, 0, 405, ipdax, link_panel);
+		this.setGridBagConstraints(gridBagConstraint, 0, 405, ipdax, link_panel, true);
 
 		this.init_node_style_features(offset_x, button_width);
 		this.init_node_border_features(offset_x, button_width);
-		this.setGridBagConstraints(gridBagConstraint, 1, 190, ipdax, node_panel);
+		this.setGridBagConstraints(gridBagConstraint, 1, 190, ipdax, node_panel, false);
 
 	}
 
