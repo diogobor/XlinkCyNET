@@ -885,30 +885,6 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	}
 
 	/**
-	 * Method responsible for setting grid bag constraint
-	 * 
-	 * @param c         grid bag constraint
-	 * @param gridy     grid y
-	 * @param ipady     pad y
-	 * @param ipdax     pad x
-	 * @param component component to be added
-	 */
-	private void setGridBagConstraints(GridBagConstraints c, int gridy, int ipady, int ipdax, Component component,
-			boolean isOnTheTop) {
-		c.fill = GridBagConstraints.BOTH;
-		c.gridx = 0;
-		c.gridy = gridy;
-		c.ipady = ipady;
-		c.ipadx = ipdax;
-		if (isOnTheTop)
-			c.insets = new Insets(-500, 0, 10, 0);
-		else
-			c.insets = new Insets(0, 0, 10, 0);
-		c.anchor = GridBagConstraints.NORTHWEST;
-		this.add(component, c);
-	}
-
-	/**
 	 * Method responsible for putting objects to Panel
 	 */
 	private void setFrameObjects() {
@@ -925,18 +901,21 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			ipdax = 250;
 		}
 
-		GridBagConstraints gridBagConstraint = new GridBagConstraints();
 		this.init_link_color_buttons(offset_x, button_width);
 		this.init_link_style_features(offset_x, button_width);
 		this.init_link_log_score_features(offset_x, button_width);
 		this.init_link_legend_features(offset_x, button_width);
 		this.init_link_check_boxes_colors(offset_x, button_width);
-		this.setGridBagConstraints(gridBagConstraint, 0, 405, ipdax, link_panel, true);
+		
+		this.add(link_panel, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0,
+			      GridBagConstraints.NORTH, GridBagConstraints.VERTICAL, new Insets(10, 0, 10, 0), ipdax, 450));
 
 		this.init_node_style_features(offset_x, button_width);
 		this.init_node_border_features(offset_x, button_width);
-		this.setGridBagConstraints(gridBagConstraint, 1, 190, ipdax, node_panel, false);
-
+		
+		this.add(node_panel, new GridBagConstraints(0, 1, 1, 1, 2.0, 2.0,
+				GridBagConstraints.NORTH, GridBagConstraints.NORTH, new Insets(0, 0, 10, 0), ipdax, 190));
+		
 	}
 
 	public static void updateParamsValue() {
