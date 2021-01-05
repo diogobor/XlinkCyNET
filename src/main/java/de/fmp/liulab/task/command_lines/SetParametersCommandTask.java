@@ -26,13 +26,13 @@ public class SetParametersCommandTask extends CyRESTAbstractTask {
 	@Tunable(description = "Display intralinks", longDescription = "Display or hide all identified intralinks", exampleStringValue = "true")
 	public boolean displayIntralinks = Util.showIntraLinks;
 
-	@Tunable(description = "Intralinks color", longDescription = "Set a color to all identified intralinks", exampleStringValue = "#AAAAAA")
+	@Tunable(description = "Intralinks color", longDescription = "Set a color to all identified intralinks", exampleStringValue = "#FF0000 or FF0000 or red")
 	public String intralinksColor = null;
 
 	@Tunable(description = "Display interlinks", longDescription = "Display or hide all identified interlinks", exampleStringValue = "true")
 	public boolean displayInterlinks = Util.showInterLinks;
 
-	@Tunable(description = "Interlinks color", longDescription = "Set a color to all identified interlinks", exampleStringValue = "#AAAAAA")
+	@Tunable(description = "Interlinks color", longDescription = "Set a color to all identified interlinks", exampleStringValue = "#FF0000 or FF0000 or red")
 	public String interlinksColor = null;
 
 	@Tunable(description = "Set opacity of cross-links", longDescription = "Set the opacity of all identified cross-links (range between 0 - transparent and 255 - opaque)", exampleStringValue = "120")
@@ -62,7 +62,7 @@ public class SetParametersCommandTask extends CyRESTAbstractTask {
 	@Tunable(description = "Set font size of nodes name", longDescription = "Set the font size of the name of all nodes", exampleStringValue = "PDE12")
 	public Integer fontSizeNodesName = Util.node_label_font_size;
 
-	@Tunable(description = "Node border color", longDescription = "Set a color to all nodes borders", exampleStringValue = "#AAAAAA")
+	@Tunable(description = "Node border color", longDescription = "Set a color to all nodes borders", exampleStringValue = "#FF0000 or FF0000 or red")
 	public String nodeBorderColor = null;
 
 	@Tunable(description = "Set opacity of border nodes", longDescription = "Set the opacity of the border of all nodes (range between 0 - transparent and 255 - opaque)", exampleStringValue = "120")
@@ -79,6 +79,27 @@ public class SetParametersCommandTask extends CyRESTAbstractTask {
 	}
 
 	/**
+	 * Add "#" in the beginning of the string
+	 * 
+	 * @param value current string
+	 * @return new string with "#"
+	 */
+	private String addCharp(String value) {
+		boolean isValid = true;
+		byte[] tmp = value.getBytes();
+		for (int i = 0; i < 6; i++) {
+			if (tmp[i] < 48 || tmp[i] > 70) {
+				isValid = false;
+				break;
+			}
+		}
+		if (isValid) {
+			value = "#" + value;
+		}
+		return value;
+	}
+
+	/**
 	 * Run
 	 */
 	public void run(TaskMonitor taskMonitor) throws Exception {
@@ -88,7 +109,11 @@ public class SetParametersCommandTask extends CyRESTAbstractTask {
 
 		Color _linksColor;
 		if (this.intralinksColor != null) {
-			
+
+			if (this.intralinksColor.length() == 6 && !this.intralinksColor.startsWith("#")) {
+				this.intralinksColor = addCharp(this.intralinksColor);
+			}
+
 			try {
 				_linksColor = Color.decode(this.intralinksColor);
 
@@ -106,6 +131,10 @@ public class SetParametersCommandTask extends CyRESTAbstractTask {
 
 		if (this.interlinksColor != null) {
 
+			if (this.interlinksColor.length() == 6 && !this.interlinksColor.startsWith("#")) {
+				this.interlinksColor = addCharp(this.interlinksColor);
+			}
+			
 			try {
 				_linksColor = Color.decode(this.interlinksColor);
 			} catch (Exception e) {
@@ -147,9 +176,13 @@ public class SetParametersCommandTask extends CyRESTAbstractTask {
 		Util.interlink_threshold_score = this.scoreInterlink;
 		Util.combinedlink_threshold_score = this.scorePPIlink;
 		Util.node_label_font_size = this.fontSizeNodesName;
-		
+
 		if (this.nodeBorderColor != null) {
 
+			if (this.nodeBorderColor.length() == 6 && !this.nodeBorderColor.startsWith("#")) {
+				this.nodeBorderColor = addCharp(this.nodeBorderColor);
+			}
+			
 			try {
 				_linksColor = Color.decode(this.nodeBorderColor);
 			} catch (Exception e) {
@@ -164,7 +197,7 @@ public class SetParametersCommandTask extends CyRESTAbstractTask {
 			if (_linksColor != null)
 				Util.NodeBorderColor = _linksColor;
 		}
-		
+
 		if (this.opacityBorderNodes > 255)
 			Util.node_border_opacity = 255;
 		else if (this.opacityBorderNodes < 0)
