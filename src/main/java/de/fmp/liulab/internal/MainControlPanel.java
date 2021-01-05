@@ -410,6 +410,9 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 		offset_y = 20;
 		offset_x -= 10;
+		if (!Util.isWindows())// MacOS or Unix
+			offset_x -= 5;
+
 		SpinnerModel model_intralink_spinner = new SpinnerNumberModel(Util.intralink_threshold_score, // initial
 				// value
 				0, // min
@@ -512,6 +515,9 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 		offset_y = 50;
 		offset_x -= 10;
+		if (!Util.isWindows())// MacOS or Unix
+			offset_x -= 5;
+		
 		SpinnerModel model_link = new SpinnerNumberModel(Util.edge_label_font_size.intValue(), // initial value
 				0, // min
 				30, // max
@@ -735,6 +741,8 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		node_panel.add(font_size_node);
 
 		offset_y = 20;
+		if (!Util.isWindows())// MacOS or Unix
+			offset_x -= 5;
 		SpinnerModel model_node = new SpinnerNumberModel(Util.node_label_font_size.intValue(), // initial value
 				0, // min
 				100, // max
@@ -829,6 +837,8 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		node_border_panel.add(borderNodeColorButton);
 
 		offset_y = 50;
+		if (!Util.isWindows())// MacOS or Unix
+			offset_x -= 5;
 		SpinnerModel model_opacity_node_border = new SpinnerNumberModel(Util.node_border_opacity.intValue(), // initial
 				// value
 				0, // min
