@@ -511,6 +511,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		link_legend_panel.add(opacity_edge_label);
 
 		offset_y = 50;
+		offset_x -= 10;
 		SpinnerModel model_link = new SpinnerNumberModel(Util.edge_label_font_size.intValue(), // initial value
 				0, // min
 				30, // max
@@ -727,14 +728,13 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		node_panel.setBorder(BorderFactory.createTitledBorder("Node"));
 		node_panel.setLayout(null);
 
-		int offset_y = -20;
+		int offset_y = 10;
 		JLabel font_size_node = new JLabel("Font size:");
 		font_size_node.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		font_size_node.setBounds(10, offset_y, 450, 100);
+		font_size_node.setBounds(10, offset_y, 100, 40);
 		node_panel.add(font_size_node);
 
 		offset_y = 20;
-		offset_x += 10;
 		SpinnerModel model_node = new SpinnerNumberModel(Util.node_label_font_size.intValue(), // initial value
 				0, // min
 				100, // max
@@ -754,6 +754,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			}
 		});
 		node_panel.add(spinner_font_size_node);
+
 	}
 
 	/**
@@ -771,26 +772,26 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		node_border_panel.setLayout(null);
 		node_panel.add(node_border_panel);
 
-		int offset_y = -20;
+		int offset_y = 10;
 		JLabel textLabel_border_node_color = new JLabel("Color:");
 		textLabel_border_node_color.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_border_node_color.setBounds(10, offset_y, 450, 100);
+		textLabel_border_node_color.setBounds(10, offset_y, 50, 40);
 		node_border_panel.add(textLabel_border_node_color);
 		offset_y += 30;
 
 		JLabel opacity_node_border = new JLabel("Opacity:");
 		opacity_node_border.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		opacity_node_border.setBounds(10, offset_y, 450, 100);
+		opacity_node_border.setBounds(10, offset_y, 100, 40);
 		node_border_panel.add(opacity_node_border);
 		offset_y += 30;
 
 		JLabel width_node_border = new JLabel("Width:");
 		width_node_border.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		width_node_border.setBounds(10, offset_y, 450, 100);
+		width_node_border.setBounds(10, offset_y, 100, 40);
 		node_border_panel.add(width_node_border);
 
 		offset_y = 20;
-		offset_x -= 5;
+		offset_x -= 10;
 		borderNodeColorButton = new JButton();
 		borderNodeColorButton.setBounds(offset_x, offset_y, button_width, 15);
 		borderNodeColorButton.setBackground(Util.NodeBorderColor);
@@ -801,6 +802,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 				+ Util.NodeBorderColor.getGreen() + " B:" + Util.NodeBorderColor.getBlue() + " - "
 				+ String.format("#%02X%02X%02X", Util.NodeBorderColor.getRed(), Util.NodeBorderColor.getGreen(),
 						Util.NodeBorderColor.getBlue()));
+
 		borderNodeColorButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		borderNodeColorButton.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
@@ -823,10 +825,10 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 								Util.NodeBorderColor.getBlue()));
 			}
 		});
+
 		node_border_panel.add(borderNodeColorButton);
 
 		offset_y = 50;
-		offset_x -= 5;
 		SpinnerModel model_opacity_node_border = new SpinnerNumberModel(Util.node_border_opacity.intValue(), // initial
 				// value
 				0, // min
@@ -903,9 +905,12 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		this.setBackground(Color.WHITE);
 
 		int button_width = 38;
-		int offset_x = 145;
-		if (Util.isWindows())
+		int offset_x = 145;// MacOS and Unix
+		int ipdax = 300;// MacOS and Unix
+		if (Util.isWindows()) {
 			offset_x = 135;
+			ipdax = 250;
+		}
 
 		GridBagConstraints gridBagConstraint = new GridBagConstraints();
 		this.init_link_color_buttons(offset_x, button_width);
@@ -913,16 +918,16 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		this.init_link_log_score_features(offset_x, button_width);
 		this.init_link_legend_features(offset_x, button_width);
 		this.init_link_check_boxes_colors(offset_x, button_width);
-		this.setGridBagConstraints(gridBagConstraint, 0, 405, 300, link_panel);
+		this.setGridBagConstraints(gridBagConstraint, 0, 405, ipdax, link_panel);
 
 		this.init_node_style_features(offset_x, button_width);
 		this.init_node_border_features(offset_x, button_width);
-		this.setGridBagConstraints(gridBagConstraint, 1, 190, 300, node_panel);
+		this.setGridBagConstraints(gridBagConstraint, 1, 190, ipdax, node_panel);
 
 	}
 
 	public static void updateParamsValue() {
-		
+
 		show_intra_link.setSelected(Util.showIntraLinks);
 		show_inter_link.setSelected(Util.showInterLinks);
 		if (Util.showIntraLinks) {
