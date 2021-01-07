@@ -353,7 +353,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		SpinnerModel width_edge_link = new SpinnerNumberModel(Util.edge_link_width, // initial
 				// value
 				1, // min
-				10, // max
+				10.1, // max
 				0.1); // step
 		spinner_width_edge_link = new JSpinner(width_edge_link);
 		spinner_width_edge_link.setBounds(offset_x, offset_y, 60, 20);

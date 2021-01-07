@@ -2,6 +2,7 @@ package de.fmp.liulab.task;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Toolkit;
@@ -18,6 +19,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -65,6 +68,7 @@ import org.cytoscape.view.vizmap.VisualStyle;
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.TaskMonitor;
 
+import de.fmp.liulab.core.ProteinStructureManager;
 import de.fmp.liulab.internal.UpdateViewListener;
 import de.fmp.liulab.internal.view.JFrameWithoutMaxAndMinButton;
 import de.fmp.liulab.model.CrossLink;
@@ -193,13 +197,13 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		}
 
 		checkSingleOrMultipleSelectedNodes(taskMonitor);
-		
-		if(IsCommandLine) {
+
+		if (IsCommandLine) {
 			this.unSelectNodes();
 		}
 
 	}
-	
+
 	private void unSelectNodes() {
 		List<CyNode> selectedNodes = CyTableUtil.getNodesInState(myNetwork, CyNetwork.SELECTED, true);
 		for (CyNode cyNode : selectedNodes) {
@@ -634,14 +638,14 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		JLabel textLabel_Pfam = new JLabel("Search for domains:");
 		textLabel_Pfam.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_Pfam.setBounds(10, offset_y, 300, 100);
+		textLabel_Pfam.setBounds(10, offset_y, 150, 100);
 		mainPanel.add(textLabel_Pfam);
-		offset_y += 25;
+		offset_y += 55;
 
 		textLabel_status_result = new JLabel("???");
 		textLabel_status_result.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		textLabel_status_result.setForeground(new Color(159, 17, 17));
-		textLabel_status_result.setBounds(65, offset_y, 350, 100);
+		textLabel_status_result.setBounds(65, offset_y, 350, 40);
 
 		JPanel logo_panel = new JPanel();
 		logo_panel.setBorder(BorderFactory.createTitledBorder(""));
@@ -660,6 +664,16 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		jLabelIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/logo.png")));
 		logo_panel.add(jLabelIcon);
 
+		offset_y -= 25;
+		JLabel textLabel_PyMOL = new JLabel("Visualize structure (PyMOL):");
+		textLabel_PyMOL.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
+		if (Util.isWindows())
+			textLabel_PyMOL.setBounds(265, offset_y, 180, 40);
+		else
+			textLabel_PyMOL.setBounds(290, offset_y, 180, 40);
+		mainPanel.add(textLabel_PyMOL);
+
+		offset_y -= 5;
 		JLabel textLabel_status = new JLabel("Status:");
 		textLabel_status.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		textLabel_status.setBounds(10, offset_y, 50, 100);
@@ -713,6 +727,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		else
 			proteinDomainServerButton.setBounds(253, 160, 30, 30);
 		proteinDomainServerButton.setEnabled(true);
+		proteinDomainServerButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
 		proteinDomainServerButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
@@ -770,6 +785,54 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			}
 		});
 		mainPanel.add(proteinDomainServerButton);
+
+		Icon iconPyMOLBtn = new ImageIcon(getClass().getResource("/images/pyMOL_logo.png"));
+		JButton pyMOLButton = new JButton(iconPyMOLBtn);
+		if (Util.isWindows())
+			pyMOLButton.setBounds(455, 160, 30, 30);
+		else
+			pyMOLButton.setBounds(480, 160, 30, 30);
+
+		pyMOLButton.setEnabled(true);
+		pyMOLButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		pyMOLButton.setToolTipText("Open PyMOL");
+
+		pyMOLButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				taskMonitor.setTitle("Visualize protein structure");
+//				pyMOLButton.setEnabled(false);
+				try {
+					String proteinSequenceFromUniprot = Util.getProteinSequenceFromUniprot(myCurrentRow);
+					String proteinName = (String) myCurrentRow.getRaw(CyNetwork.NAME);
+					List<CrossLink> crosslinks = Stream.of(intraLinks, interLinks).flatMap(x -> x.stream())
+							.collect(Collectors.toList());
+
+					textLabel_status_result.setText("Generating PyMOL script...");
+					taskMonitor.showMessage(TaskMonitor.Level.INFO, "Generating PyMOL script...");
+					
+					int proteinOffsetInPDB = 0;
+					String protein_chain = "A";
+					Util.PDB_PATH = "/Users/diogobor/Downloads/pymol_example/c90_dimer.pdb";
+					String pdbFile = Util.PDB_PATH;
+					String tmpPyMOLScriptFile = ProteinStructureManager.createPyMOLScriptFile(proteinName, proteinSequenceFromUniprot, crosslinks,
+							taskMonitor, proteinOffsetInPDB, protein_chain, pdbFile);
+					
+					textLabel_status_result.setText("Executing PyMOL script...");
+					taskMonitor.showMessage(TaskMonitor.Level.INFO, "Executing PyMOL script...");
+					
+					String[] cmdArray = new String[2];
+					cmdArray[0] = "open \"/Applications/PyMOL.app\"";
+					cmdArray[1] = tmpPyMOLScriptFile;
+					
+					ProteinStructureManager.execUnix(cmdArray, taskMonitor);
+					
+					textLabel_status_result.setText("Done!");
+
+				} catch (Exception exception) {
+				}
+			}
+		});
+		mainPanel.add(pyMOLButton);
 
 		Object[][] data = new Object[1][5];
 		// create table model with data

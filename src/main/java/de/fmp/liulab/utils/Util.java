@@ -86,6 +86,8 @@ public class Util {
 	private static String XL_SCORE_AB = "score_ab";
 	private static String XL_SCORE_BA = "score_ba";
 	public static String XL_COMB_SCORE = "score_cmb";
+	public static String PYMOL_PATH = "\"/Applications/PyMOL.app\"";
+	public static String PDB_PATH = "\"/Applications/\"";
 
 	private static String OS = System.getProperty("os.name").toLowerCase();
 	private final static float OFFSET_BEND = 2;
@@ -2242,17 +2244,17 @@ public class Util {
 	}
 
 	/**
-	 * Get protein domains in PFam database
+	 * Method responsible for getting the proteinID from Cytoscape Table
 	 * 
-	 * @param myCurrentRow current row of the table
-	 * @return all protein domains
+	 * @param myCurrentRow current row
+	 * @return the proteinID
 	 */
-	public static ArrayList<ProteinDomain> getProteinDomains(CyRow myCurrentRow) {
+	private static String getProteinID(CyRow myCurrentRow) {
 		Object protein_a_name = myCurrentRow.getRaw(PROTEIN_A);
 		Object protein_b_name = myCurrentRow.getRaw(PROTEIN_B);
 
-		if (protein_a_name == null) {
-			if (protein_b_name == null)
+		if (protein_a_name == null || protein_a_name.toString().isBlank() || protein_a_name.toString().isEmpty()) {
+			if (protein_b_name == null || protein_b_name.toString().isBlank() || protein_b_name.toString().isEmpty())
 				protein_a_name = 10;
 			else
 				protein_a_name = protein_b_name;
@@ -2261,10 +2263,27 @@ public class Util {
 		String ptnID = protein_a_name.toString();
 		String[] cols = ptnID.split("\\|");
 
+		if (cols.length == 3) { // Correct format: sp|XXX|YYYY or tr|XXX|YYY
+			return cols[1];
+		} else {
+			return "";
+		}
+	}
+
+	/**
+	 * Get protein domains in PFam database
+	 * 
+	 * @param myCurrentRow current row of the table
+	 * @return all protein domains
+	 */
+	public static ArrayList<ProteinDomain> getProteinDomains(CyRow myCurrentRow) {
+
 		// ############ GET PROTEIN DOMAINS #################
 		ArrayList<ProteinDomain> proteinDomainsServer = new ArrayList<ProteinDomain>(0);
-		if (cols.length == 3) { // Correct format: sp|XXX|YYYY or tr|XXX|YYY
-			proteinDomainsServer = getProteinDomains(cols[1]);
+
+		String proteinID = getProteinID(myCurrentRow);
+		if (!(proteinID.isBlank() || proteinID.isEmpty())) {
+			proteinDomainsServer = getProteinDomains(proteinID);
 			Collections.sort(proteinDomainsServer);
 		}
 		// ############################### END ################################
@@ -2277,6 +2296,57 @@ public class Util {
 			return getProteinDomainsFromPfam(proteinID);
 		else
 			return getProteinDomainsFromSupfam(proteinID);
+	}
+
+	/**
+	 * Method responsible for getting protein sequence from Uniprot
+	 * 
+	 * @param myCurrentRow current row
+	 * @return protein sequence
+	 */
+	public static String getProteinSequenceFromUniprot(CyRow myCurrentRow) {
+
+		String proteinID = getProteinID(myCurrentRow);
+		if (proteinID.isBlank() || proteinID.isEmpty()) {
+			return "";
+		}
+
+		try {
+			String _url = "https://www.uniprot.org/uniprot/" + proteinID + ".fasta";
+			final URL url = new URL(_url);
+			final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setRequestMethod("POST");
+			connection.setDoOutput(true);
+			connection.setReadTimeout(1000);
+			connection.setConnectTimeout(1000);
+			connection.connect();
+
+			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+
+				// Get Response
+				InputStream inputStream = connection.getErrorStream(); // first check for error.
+				if (inputStream == null) {
+					inputStream = connection.getInputStream();
+				}
+				BufferedReader rd = new BufferedReader(new InputStreamReader(inputStream));
+				String line;
+				StringBuilder response = new StringBuilder();
+				while ((line = rd.readLine()) != null) {
+					if (line.startsWith(">"))
+						continue;
+					response.append(line);
+				}
+				rd.close();
+				return response.toString();
+
+			} else {
+				return "";
+			}
+
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			return "";
+		}
 	}
 
 	/**
