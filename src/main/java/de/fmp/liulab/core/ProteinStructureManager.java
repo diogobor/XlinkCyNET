@@ -48,7 +48,7 @@ public class ProteinStructureManager {
 		rt.exec(cmdA);
 	}
 
-	private static void execWindows(String[] cmdarray, TaskMonitor taskMonitor) throws IOException {
+	public static void execWindows(String[] cmdarray, TaskMonitor taskMonitor) throws IOException {
 		String cmd = cmdarray[0] + " " + cmdarray[1]; // should be exactly 2 elements
 		File rDir = new File(System.getProperty("user.dir")).getAbsoluteFile();
 		ProcessBuilder pb = new ProcessBuilder("cmd", "/C", cmdarray[0], cmdarray[1]);

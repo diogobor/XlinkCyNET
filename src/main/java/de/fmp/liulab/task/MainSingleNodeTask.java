@@ -824,11 +824,17 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Executing PyMOL script...");
 
 		String[] cmdArray = new String[2];
-		cmdArray[0] = "open \"/Applications/PyMOL.app\"";
+		if(Util.isWindows())
+			cmdArray[0] = "pymol";
+		else
+			cmdArray[0] = "open \"/Applications/PyMOL.app\"";
 		cmdArray[1] = pymolScriptFile;
 
 		try {
-			ProteinStructureManager.execUnix(cmdArray, taskMonitor);
+			if(Util.isWindows())
+				ProteinStructureManager.execWindows(cmdArray, taskMonitor);
+			else
+				ProteinStructureManager.execUnix(cmdArray, taskMonitor);
 		} catch (IOException e) {
 			textLabel_status_result.setText("WARNING: Check Task History.");
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Error when running PyMOL.");
@@ -1033,15 +1039,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 								return;
 							}
 
-//							String proteinSequenceFromUniprot = Util.getProteinSequenceFromUniprot(myCurrentRow);
-//							String proteinName = (String) myCurrentRow.getRaw(CyNetwork.NAME);
-//							List<CrossLink> crosslinks = Stream.of(intraLinks, interLinks).flatMap(x -> x.stream())
-//									.collect(Collectors.toList());
-
 							textLabel_status_result.setText("Getting PDB information from Uniprot...");
 							taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB information from Uniprot...");
-
-//							Util.PDB_PATH = "/Users/path/Downloads/pymol_example/c90_dimer.pdb";
 
 							Protein ptn = Util.getPDBidFromUniprot(myCurrentRow);
 							List<String> pdbIds = ptn.pdbIds;
