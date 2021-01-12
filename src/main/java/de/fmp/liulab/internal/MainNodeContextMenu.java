@@ -15,11 +15,11 @@ import org.cytoscape.work.TaskIterator;
 import org.cytoscape.work.swing.DialogTaskManager;
 
 /**
- * Class responsible for creating main context menu
+ * Class responsible for creating main node context menu
  * @author diogobor
  *
  */
-public class MainContextMenu implements CyNodeViewContextMenuFactory, ActionListener {
+public class MainNodeContextMenu implements CyNodeViewContextMenuFactory, ActionListener {
 	private TaskFactory myFactory;
 	private DialogTaskManager dialogTaskManager;
 
@@ -28,7 +28,7 @@ public class MainContextMenu implements CyNodeViewContextMenuFactory, ActionList
 	 * @param myFactory graphic instance
 	 * @param dialogTaskManager task manager
 	 */
-	public MainContextMenu(TaskFactory myFactory, DialogTaskManager dialogTaskManager) {
+	public MainNodeContextMenu(TaskFactory myFactory, DialogTaskManager dialogTaskManager) {
 		this.myFactory = myFactory;
 		this.dialogTaskManager = dialogTaskManager;
 	}

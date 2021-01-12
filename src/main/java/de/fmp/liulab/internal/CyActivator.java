@@ -14,6 +14,7 @@ import java.util.Properties;
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.events.SetCurrentNetworkListener;
 import org.cytoscape.application.swing.CyAction;
+import org.cytoscape.application.swing.CyEdgeViewContextMenuFactory;
 import org.cytoscape.application.swing.CyNodeViewContextMenuFactory;
 import org.cytoscape.application.swing.CySwingApplication;
 import org.cytoscape.application.swing.CytoPanelComponent;
@@ -43,6 +44,7 @@ import de.fmp.liulab.internal.action.SetDomainColorAction;
 import de.fmp.liulab.internal.action.ShortcutSingleNodeExecuteAction;
 import de.fmp.liulab.internal.action.ShortcutWindowSingleNodeLayout;
 import de.fmp.liulab.task.LoadProteinDomainsTaskFactory;
+import de.fmp.liulab.task.MainSingleEdgeTaskFactory;
 import de.fmp.liulab.task.MainSingleNodeTaskFactory;
 import de.fmp.liulab.task.ProteinScalingFactorHorizontalExpansionTableTaskFactory;
 import de.fmp.liulab.task.SetDomainColorTaskFactory;
@@ -128,11 +130,14 @@ public class CyActivator extends AbstractCyActivator {
 		registerServiceListener(bc, customChartListener, "addCustomGraphicsFactory", "removeCustomGraphicsFactory",
 				CyCustomGraphics2Factory.class);
 
-		Properties myNodeViewContextMenuFactoryProps = new Properties();
-		myNodeViewContextMenuFactoryProps.put(PREFERRED_MENU, "Apps");
 		// Our menu item should only be enabled if at least one network
 		// view exists.
+		Properties myNodeViewContextMenuFactoryProps = new Properties();
+		myNodeViewContextMenuFactoryProps.put(PREFERRED_MENU, "Apps");
 		myNodeViewContextMenuFactoryProps.put(ServiceProperties.ENABLE_FOR, "networkAndView");
+		Properties myEdgeViewContextMenuFactoryProps = new Properties();
+		myEdgeViewContextMenuFactoryProps.put(PREFERRED_MENU, "Apps.XlinkCyNET");
+		myEdgeViewContextMenuFactoryProps.put(ServiceProperties.ENABLE_FOR, "networkAndView");
 
 		TaskFactory mySingleNodeShortCutFactory = new MainSingleNodeTaskFactory(cyApplicationManager, vmmServiceRef,
 				customChartListener, bendFactory, handleFactory, false);
@@ -142,9 +147,14 @@ public class CyActivator extends AbstractCyActivator {
 
 		TaskFactory mySingleNodeContextMenuFactory = new MainSingleNodeTaskFactory(cyApplicationManager, vmmServiceRef,
 				customChartListener, bendFactory, handleFactory, true);
+		
+		TaskFactory mySingleEdgeContextMenuFactory = new MainSingleEdgeTaskFactory(cyApplicationManager, vmmServiceRef,
+				customChartListener, bendFactory, handleFactory, true);
 
-		CyNodeViewContextMenuFactory myNodeViewContextMenuFactory = new MainContextMenu(mySingleNodeContextMenuFactory,
-				dialogTaskManager);
+		CyNodeViewContextMenuFactory myNodeViewContextMenuFactory = new MainNodeContextMenu(
+				mySingleNodeContextMenuFactory, dialogTaskManager);
+		CyEdgeViewContextMenuFactory myEdgeViewContextMenuFactory = new MainEdgeContextMenu(
+				mySingleEdgeContextMenuFactory, dialogTaskManager);
 
 		ShortcutWindowSingleNodeLayout myShortcutWindowSingleNodeAction = new ShortcutWindowSingleNodeLayout(
 				dialogTaskManager, mySingleNodeContextMenuFactory);
@@ -193,6 +203,7 @@ public class CyActivator extends AbstractCyActivator {
 		registerService(bc, controlURLAction, CyAction.class, new Properties());
 
 		registerAllServices(bc, myNodeViewContextMenuFactory, myNodeViewContextMenuFactoryProps);
+		registerAllServices(bc, myEdgeViewContextMenuFactory, myEdgeViewContextMenuFactoryProps);
 		// ###################
 
 		// ####### COMMANDS ########

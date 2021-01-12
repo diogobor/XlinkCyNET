@@ -625,6 +625,7 @@ public class Util {
 						newEdgeView = netView.getEdgeView(newEdge);
 					}
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_PAINT, IntraLinksColor);
+					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_SELECTED_PAINT, Color.RED);
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TRANSPARENCY, edge_link_opacity);
 
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL, "[" + intraLinks.get(countEdge).pos_site_a
@@ -1042,6 +1043,7 @@ public class Util {
 					newEdgeView = netView.getEdgeView(newEdge);
 				}
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_PAINT, InterLinksColor);
+				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_SELECTED_PAINT, Color.RED);
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TRANSPARENCY, edge_link_opacity);
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_WIDTH, edge_link_width);
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TARGET_ARROW_SHAPE, ArrowShapeVisualProperty.NONE);
