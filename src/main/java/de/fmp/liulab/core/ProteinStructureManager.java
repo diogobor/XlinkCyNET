@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import org.cytoscape.work.TaskMonitor;
 
 import de.fmp.liulab.model.CrossLink;
+import de.fmp.liulab.model.Protein;
 import de.fmp.liulab.parser.ReaderWriterTextFile;
 import de.fmp.liulab.utils.Util;
 
@@ -30,6 +31,7 @@ import de.fmp.liulab.utils.Util;
 public class ProteinStructureManager {
 
 	private static ReaderWriterTextFile parserFile;
+	private static int proteinOffsetInPDB = -1;
 
 	public static void execUnix(String[] cmdarray, TaskMonitor taskMonitor) throws IOException {
 		// instead of calling command directly, we'll call the shell
@@ -90,34 +92,157 @@ public class ProteinStructureManager {
 	}
 
 	/**
-	 * Method responsible for creating PyMOL script (*.pml file) -> temp file
+	 * Create PDB file (temporary file)
 	 * 
-	 * @param prefix          node name (protein name)
-	 * @param proteinSequence protein sequence
-	 * @param taskMonitor     task monitor
+	 * @param pdbID       pdb ID
+	 * @param taskMonitor task monitor
 	 * @return file name
 	 */
-	public static String createPyMOLScriptFile(String prefix, String proteinSequence, List<CrossLink> crossLinks,
-			TaskMonitor taskMonitor, int proteinOffsetInPDB, String protein_chain, String pdbFile) {
+	public static String createPDBFile(String pdbID, TaskMonitor taskMonitor) {
 		// write this script to tmp file and return path
-		File f = getTmpFile(prefix, "pml", taskMonitor);
+		File f = getTmpFile(pdbID, "pdb", taskMonitor);
 		if (f == null) {
-			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Could not create temp file with label: " + prefix);
+			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Could not create temp file with label: " + pdbID);
 			return "";
 		}
 
 		FileWriter bw;
+		String finalStr = "";
 		try {
 			bw = new FileWriter(f);
-			String finalStr = createPyMOLScript(taskMonitor, proteinSequence, crossLinks, proteinOffsetInPDB,
-					protein_chain, pdbFile);
+			finalStr = Util.getPDBfileFromServer(pdbID);
+			if (finalStr.isBlank() || finalStr.isEmpty())
+				taskMonitor.showMessage(TaskMonitor.Level.ERROR,
+						"Error retrieving the PDB file for protein " + pdbID + ".");
 			bw.write(finalStr);
 			bw.flush();
 			bw.close();
 		} catch (IOException ex) {
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Problems while writing script to " + f.getAbsolutePath());
+			finalStr = "";
 		}
+
+		if (finalStr.isBlank() || finalStr.isEmpty())
+			return "ERROR";
 		return f.getAbsolutePath();
+	}
+
+	/**
+	 * Method responsible for creating PyMOL script (*.pml file) -> temp file
+	 * 
+	 * @param ptn                        protein
+	 * @param crossLinks                 crosslinks
+	 * @param taskMonitor                task monitor
+	 * @param pdbFile                    pdb file name
+	 * @param proteinSequenceFromPDBFile protein sequence in PDB file
+	 * @param HasMoreThanOneChain        it has more than one chain in PDB file
+	 * @param proteinChain               protein chain
+	 * @return pymol script file name
+	 */
+	public static String createPyMOLScriptFile(Protein ptn, List<CrossLink> crossLinks, TaskMonitor taskMonitor,
+			String pdbFile, String proteinSequenceFromPDBFile, boolean HasMoreThanOneChain, String proteinChain) {
+
+		// write this script to tmp file and return path
+		File f = getTmpFile(ptn.proteinID, "pml", taskMonitor);
+		if (f == null) {
+			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Could not create temp file with label: " + ptn.proteinID);
+			return "ERROR";
+		}
+
+		FileWriter bw;
+		String finalStr = "";
+		try {
+
+			if (proteinSequenceFromPDBFile.isBlank() || proteinSequenceFromPDBFile.isEmpty()) {
+				taskMonitor.showMessage(TaskMonitor.Level.ERROR, "No sequence has been found in PDB file.");
+				return "ERROR";
+			}
+
+			finalStr = createPyMOLScript(taskMonitor, ptn, crossLinks, pdbFile, HasMoreThanOneChain, proteinChain,
+					proteinSequenceFromPDBFile);
+
+			bw = new FileWriter(f);
+			bw.write(finalStr);
+			bw.flush();
+			bw.close();
+		} catch (IOException ex) {
+			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Problems while writing script to " + f.getAbsolutePath());
+			finalStr = "";
+		}
+
+		if (finalStr.isBlank() || finalStr.isEmpty())
+			return "ERROR";
+
+		return f.getAbsolutePath();
+	}
+
+	/**
+	 * Method responsible for creating PyMOL script (*.pml file) -> temp file when
+	 * the chain is unknown
+	 * 
+	 * @param ptn         protein
+	 * @param crossLinks  crosslinks
+	 * @param taskMonitor task monitor
+	 * @param pdbFile     pdb file name
+	 * @return return pymol file name or pdb chains
+	 */
+	public static String[] createPyMOLScriptFileUnknowChain(Protein ptn, List<CrossLink> crossLinks,
+			TaskMonitor taskMonitor, String pdbFile) {
+
+		// write this script to tmp file and return path
+		File f = getTmpFile(ptn.proteinID, "pml", taskMonitor);
+		if (f == null) {
+			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Could not create temp file with label: " + ptn.proteinID);
+			return new String[] { "ERROR" };
+		}
+
+		FileWriter bw;
+		String finalStr = "";
+		try {
+
+			taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting protein sequence from PDB file...");
+			
+			// [pdb protein sequence, protein chain, "true" -> there is more than one chain]
+			String[] returnPDB = getProteinSequenceAndChainFromPDBFile(pdbFile, ptn, taskMonitor);
+
+			String proteinSequenceFromPDBFile = returnPDB[0];
+			boolean HasMoreThanOneChain = returnPDB[2].equals("true") ? true : false;
+
+			String proteinChain = returnPDB[1];
+			if (proteinChain.startsWith("CHAINS:")) {
+				taskMonitor.showMessage(TaskMonitor.Level.WARN, "No chain does not match with protein description. Select one chain...");
+				f.delete();
+				// return String[0-> 'CHAINS'; 1-> HasMoreThanOneChain; 2-> chains: separated by
+				// '#']
+				return new String[] { "CHAINS", returnPDB[2], proteinChain };
+			}
+
+			if (proteinSequenceFromPDBFile.isBlank() || proteinSequenceFromPDBFile.isEmpty()) {
+				taskMonitor.showMessage(TaskMonitor.Level.ERROR, "No sequence has been found in PDB file.");
+				return new String[] { "ERROR" };
+			}
+
+			if (ptn.sequence.isBlank() || ptn.sequence.isEmpty()) {
+				taskMonitor.showMessage(TaskMonitor.Level.ERROR, "No sequence has been found in Uniprot.");
+				return new String[] { "ERROR" };
+			}
+
+			finalStr = createPyMOLScript(taskMonitor, ptn, crossLinks, pdbFile, HasMoreThanOneChain, proteinChain,
+					proteinSequenceFromPDBFile);
+
+			bw = new FileWriter(f);
+			bw.write(finalStr);
+			bw.flush();
+			bw.close();
+		} catch (IOException ex) {
+			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Problems while writing script to " + f.getAbsolutePath());
+			finalStr = "";
+		}
+
+		if (finalStr.isBlank() || finalStr.isEmpty())
+			return new String[] { "ERROR" };
+
+		return new String[] { f.getAbsolutePath() };
 	}
 
 	/**
@@ -144,39 +269,44 @@ public class ProteinStructureManager {
 	 * @param taskMonitor task monitor
 	 * @return script
 	 */
-	private static String createPyMOLScript(TaskMonitor taskMonitor, String proteinSequence, List<CrossLink> crossLinks,
-			int proteinOffsetInPDB, String protein_chain, String pdbFile) {
+	private static String createPyMOLScript(TaskMonitor taskMonitor, Protein ptn, List<CrossLink> crossLinks,
+			String pdbFile, boolean HasMoreThanOneChain, String proteinChain, String proteinSequenceFromPDBFile) {
 
+		// [0]-> Path
+		// [1]-> File name
+		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB file name...");
+		
 		String[] pdbFilePathName = getPDBFilePathName(pdbFile);
 		StringBuilder sbScript = new StringBuilder();
 		sbScript.append("cd " + pdbFilePathName[0] + "\n");
 		sbScript.append("load " + pdbFilePathName[1] + "\n");
 		sbScript.append("set ignore_case, 0\n");
+		sbScript.append("select chain_" + proteinChain + ", chain " + proteinChain + "\n");
+		sbScript.append("color green, chain " + proteinChain + "\n");
+		sbScript.append("hide all\n");
 
-		String proteinSequenceFromPDBFile = getProteinSequenceFromPDBFile(Util.PDB_PATH, protein_chain, taskMonitor);
-		if (proteinSequenceFromPDBFile.isBlank() || proteinSequenceFromPDBFile.isEmpty()) {
-			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "No sequence has been found in PDB file.");
-			return "";
-		}
-
-		if (proteinSequence.isBlank() || proteinSequence.isEmpty()) {
-			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "No sequence has been found in Uniprot.");
-			return "";
-		}
-
-		int offsetProtein = proteinSequence.indexOf(proteinSequenceFromPDBFile);
+		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Computing protein offset...");
+		
+		int offsetProtein = ptn.sequence.indexOf(proteinSequenceFromPDBFile);
 		offsetProtein = offsetProtein > -1 ? offsetProtein : 0;
 		String selectedResidueItem = "CA";
+
+		if ((proteinOffsetInPDB - 1) == offsetProtein) {
+			offsetProtein = 0;
+		} else if (offsetProtein > 0) {
+			offsetProtein = (proteinOffsetInPDB - 1) - offsetProtein;
+		}
 
 		StringBuilder sbDistances = new StringBuilder();
 		StringBuilder sbPositions = new StringBuilder();
 
 		for (CrossLink crossLink : crossLinks) {
-			int pos1 = crossLink.pos_site_a - offsetProtein + proteinOffsetInPDB;
-			int pos2 = crossLink.pos_site_b - offsetProtein + proteinOffsetInPDB;
+			int pos1 = crossLink.pos_site_a + offsetProtein;
+			int pos2 = crossLink.pos_site_b + offsetProtein;
 
-			sbDistances.append("" + pos1 + "/" + selectedResidueItem + ", " + pos2 + "/" + selectedResidueItem + "\n");
-			sbPositions.append(pos1 + "\n").append(pos2 + "\n");
+			sbDistances.append("" + proteinChain + "/" + pos1 + "/" + selectedResidueItem + ", " + proteinChain + "/"
+					+ pos2 + "/" + selectedResidueItem + "\n");
+			sbPositions.append(proteinChain + "/" + pos1 + "\n").append(proteinChain + "/" + pos2 + "\n");
 		}
 
 		ArrayList<String> distancesList = (ArrayList<String>) Arrays.asList(sbDistances.toString().split("[\\n]"))
@@ -197,10 +327,27 @@ public class ProteinStructureManager {
 		sbScript.append("set dash_color, [1.000, 1.000, 0.000]\n");
 		sbScript.append("set label_color, [1.000, 0.000, 0.000]\n");
 		sbScript.append("set label_size, 14\n");
-		sbScript.append("cmd.show_as(\"cartoon\", \"" + pdbFilePathName[1].substring(0, pdbFilePathName[1].length() - 4)
-				+ "\")\n");
-		sbScript.append("cmd.show_as(\"sticks\", \"a\")\n");
-		sbScript.append("cmd.disable('a')\n");
+		sbScript.append("deselect\n");
+		sbScript.append("show sticks, a\n");
+		sbScript.append("show cartoon, chain_" + proteinChain + "\n");
+		sbScript.append("zoom chain_" + proteinChain + "\n");
+		sbScript.append("deselect\n");
+
+//		if (HasMoreThanOneChain) {// There is more than one chain
+//
+//			sbScript.append("select chain_" + proteinChain + ", chain " + proteinChain + "\n");
+//			sbScript.append("hide all\n");
+//			sbScript.append("color gray30\n");
+//			sbScript.append("color red, chain " + proteinChain + "\n");
+//			sbScript.append("zoom chain_" + proteinChain + "\n");
+//			sbScript.append("deselect\n");
+//
+//		}
+//
+//		sbScript.append("cmd.show_as(\"cartoon\", \"" + pdbFilePathName[1].substring(0, pdbFilePathName[1].length() - 4)
+//				+ "\")\n");
+//		sbScript.append("cmd.show_as(\"sticks\", \"a\")\n");
+//		sbScript.append("cmd.disable('a')\n");
 
 		return sbScript.toString();
 	}
@@ -208,44 +355,25 @@ public class ProteinStructureManager {
 	/**
 	 * Get protein sequence from PDB file
 	 * 
-	 * @param fileName    file name
-	 * @param taskMonitor task monitor
-	 * @return sequence
+	 * @param fileName      file name
+	 * @param ptn           protein
+	 * @param taskMonitor   task monitor
+	 * @param protein_chain protein chain
+	 * @return protein sequence
 	 */
-	private static String getProteinSequenceFromPDBFile(String fileName, String protein_chain,
-			TaskMonitor taskMonitor) {
-
-		Map<ByteBuffer, Integer> ResiduesDict = new HashMap<ByteBuffer, Integer>();// e.g <GLU, E>
-		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 71, 76, 89 }), 71);// Glycine (G)
-		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 65, 76, 65 }), 65);// Alanine (A)
-		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 83, 69, 82 }), 83);// Serine (S)
-		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 80, 82, 79 }), 80);// Proline (P)
-		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 86, 65, 76 }), 86);// Valine (V)
-		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 84, 72, 82 }), 84);// Threonine (T)
-		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 67, 89, 83 }), 67);// Cystein (C)
-		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 73, 76, 69 }), 73);// Isoleucine (I)
-		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 76, 69, 85 }), 76);// Leucine (L)
-		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 65, 83, 78 }), 78);// Asparagine (N)
-		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 65, 83, 80 }), 68);// Aspartic Acid (D)
-		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 71, 76, 78 }), 81);// Glutamine (Q)
-		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 76, 89, 83 }), 75);// Lysine (K)
-		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 71, 76, 88 }), 90);// Glutamic Acid or Glutamine (Z)
-		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 71, 76, 85 }), 69);// Glutamic Acid (E)
-		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 77, 69, 84 }), 77);// Methionine (M)
-		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 72, 73, 83 }), 72);// Histidine (H)
-		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 80, 72, 69 }), 70);// Phenilanyne (F)
-		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 83, 68, 67 }), 85);// Selenocysteine (U)
-		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 65, 82, 71 }), 82);// Arginine (R)
-		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 84, 89, 82 }), 89);// Tyrosine (Y)
-		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 84, 82, 80 }), 87);// Tyrosine (Y)
+	public static String getProteinSequenceFromPDBFileWithSpecificChain(String fileName, Protein ptn,
+			TaskMonitor taskMonitor, String protein_chain) {
+		Map<ByteBuffer, Integer> ResiduesDict = Util.createResiduesDict();
 
 		StringBuilder sbSequence = new StringBuilder();
+
 		try {
 			parserFile = new ReaderWriterTextFile(fileName);
 			String line = "";
 			int lastInsertedResidue = 0;
 			int threshold = 10;// qtd aminoacids
 			int countAA = 0;
+			proteinOffsetInPDB = -1;
 
 			while (parserFile.hasLine()) {
 				line = parserFile.getLine();
@@ -253,6 +381,8 @@ public class ProteinStructureManager {
 
 					if (!line.startsWith("ATOM"))
 						continue;
+
+					// It starts with 'ATOM'
 
 					String[] cols = line.split("\\s+");
 
@@ -273,13 +403,168 @@ public class ProteinStructureManager {
 						}
 					}
 					lastInsertedResidue = newResidue;
+
+					if (proteinOffsetInPDB == -1) {
+						proteinOffsetInPDB = Integer.parseInt(cols[5]);
+					}
 				}
+
 			}
 		} catch (Exception e) {
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Problems while reading PDB file: " + fileName);
 		}
 
 		return sbSequence.toString();
+	}
+
+	/**
+	 * Get protein sequence and chain from PDB file
+	 * 
+	 * @param fileName    file name
+	 * @param taskMonitor task monitor
+	 * @return [sequence, protein chain, hasMoreThanOneChain]
+	 */
+	private static String[] getProteinSequenceAndChainFromPDBFile(String fileName, Protein ptn,
+			TaskMonitor taskMonitor) {
+
+		Map<ByteBuffer, Integer> ResiduesDict = Util.createResiduesDict();
+
+		StringBuilder sbSequence = new StringBuilder();
+		String protein_chain = "";
+		StringBuilder sbProteinChains = new StringBuilder();
+		sbProteinChains.append("CHAINS:");
+
+		boolean hasMoreThanOneChain = false;
+		int countChains = 0;
+
+		try {
+			parserFile = new ReaderWriterTextFile(fileName);
+			String line = "";
+			int lastInsertedResidue = 0;
+			int threshold = 10;// qtd aminoacids
+			int countAA = 0;
+			proteinOffsetInPDB = -1;
+
+			boolean isCompleteFullName = false;
+			StringBuilder sbProteinFullName = new StringBuilder();
+
+			while (parserFile.hasLine()) {
+				line = parserFile.getLine();
+				if (!(line.equals(""))) {
+
+					if (!line.startsWith("COMPND") && !line.startsWith("ATOM"))
+						continue;
+
+					if (line.startsWith("COMPND")) {
+						String[] cols = line.split("\\s+");
+
+						boolean isNumeric = false;
+						try {
+							Double.parseDouble(cols[1]);
+							isNumeric = true;
+						} catch (NumberFormatException nfe) {
+						}
+
+						if (isNumeric) {
+
+							// Get protein full name
+							if (cols[2].equals("MOLECULE:")) {
+
+								for (int i = 3; i < cols.length; i++) {
+									sbProteinFullName.append(cols[i] + " ");
+								}
+
+								if (cols[cols.length - 1].endsWith(";")) {
+									isCompleteFullName = true;
+									continue;
+								}
+
+							} else if (!isCompleteFullName) {
+								for (int i = 2; i < cols.length; i++) {
+									sbProteinFullName.append(cols[i] + " ");
+								}
+
+								if (cols[cols.length - 1].endsWith(";")) {
+									isCompleteFullName = true;
+									continue;
+								}
+							}
+
+							if (isCompleteFullName) {
+								if (cols[2].equals("CHAIN:")) {
+									countChains++;
+
+									String pdbProteinFullName_moleculeField = sbProteinFullName.toString()
+											.replace(';', ' ').trim();
+
+									String[] fullNames = pdbProteinFullName_moleculeField.split(",");
+									if (fullNames.length == 1) {
+										if (ptn.fullName.toLowerCase()
+												.equals(pdbProteinFullName_moleculeField.toLowerCase())) {
+											protein_chain = cols[3].toString().replace(';', ' ').trim();
+											continue;
+										}
+
+									} else { // There is more than one chain for this ptn full name
+
+										hasMoreThanOneChain = true;
+										for (String fullName : fullNames) {
+											if (ptn.fullName.toLowerCase().equals(fullName.toLowerCase().trim())) {
+												protein_chain = cols[3].toString().replace(';', ' ').trim()
+														.split(",")[0].trim();
+												break;
+											}
+										}
+									}
+									sbProteinChains.append(cols[3].toString().replace(';', ' ').trim() + "#");
+
+								}
+							}
+
+						} else {
+							continue;
+						}
+
+					} else {// It starts with 'ATOM'
+
+						String[] cols = line.split("\\s+");
+
+						if (!cols[4].equals(protein_chain))
+							continue;
+
+						byte[] pdbResidue = cols[3].getBytes();// Residue -> three characters
+						int newResidue = ResiduesDict.get(ByteBuffer.wrap(pdbResidue));
+
+						if (newResidue != lastInsertedResidue) {
+							byte[] _byte = new byte[1];
+							_byte[0] = (byte) newResidue;
+							String string = new String(_byte);
+							sbSequence.append(string);
+							countAA++;
+							if (countAA > threshold) {
+								break;
+							}
+						}
+						lastInsertedResidue = newResidue;
+
+						if (proteinOffsetInPDB == -1) {
+							proteinOffsetInPDB = Integer.parseInt(cols[5]);
+						}
+					}
+
+				}
+			}
+		} catch (Exception e) {
+			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Problems while reading PDB file: " + fileName);
+		}
+
+		if (protein_chain.isBlank() || protein_chain.isEmpty())
+			protein_chain = sbProteinChains.toString();
+
+		if (countChains > 1 || hasMoreThanOneChain) {
+			return new String[] { sbSequence.toString(), protein_chain, "true" };
+		} else
+			return new String[] { sbSequence.toString(), protein_chain, "false" };
 
 	}
 }

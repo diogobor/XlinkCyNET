@@ -1,5 +1,7 @@
 package de.fmp.liulab.internal.view;
 
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -23,8 +25,8 @@ public class JFrameWithoutMaxAndMinButton extends JDialog {
 
 	/**
 	 * 
-	 * @param frame main frame
-	 * @param title title of frame
+	 * @param frame         main frame
+	 * @param title         title of frame
 	 * @param originalFrame -1:Nothing, 0: MainSingleNode, 1: LoadProteinDomain
 	 */
 	public JFrameWithoutMaxAndMinButton(final JFrame frame, String title, final int originalFrame) {
@@ -39,6 +41,8 @@ public class JFrameWithoutMaxAndMinButton extends JDialog {
 				} else if (originalFrame == 1) {
 					if (LoadProteinDomainTask.cancelProcess())
 						frame.dispose();
+				} else if (originalFrame == -1) {
+					frame.dispose();
 				}
 			}
 		});

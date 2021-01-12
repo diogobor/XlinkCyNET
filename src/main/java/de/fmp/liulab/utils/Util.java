@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -53,6 +54,7 @@ import org.cytoscape.view.presentation.property.values.ObjectPosition;
 import org.cytoscape.view.vizmap.VisualStyle;
 import org.cytoscape.work.TaskMonitor;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
@@ -61,6 +63,7 @@ import de.fmp.liulab.internal.UpdateViewListener;
 import de.fmp.liulab.internal.view.JTableRowRenderer;
 import de.fmp.liulab.model.CrossLink;
 import de.fmp.liulab.model.GeneDomain;
+import de.fmp.liulab.model.Protein;
 import de.fmp.liulab.model.ProteinDomain;
 import de.fmp.liulab.task.LoadProteinDomainTask;
 import de.fmp.liulab.task.MainSingleNodeTask;
@@ -215,6 +218,40 @@ public class Util {
 			Util.available_domain_colors.add(Color.RED);
 			Util.available_domain_colors.add(Color.YELLOW);
 		}
+	}
+
+	/**
+	 * Create dictionary with residues
+	 * 
+	 * @return dictionary
+	 */
+	public static Map<ByteBuffer, Integer> createResiduesDict() {
+
+		Map<ByteBuffer, Integer> ResiduesDict = new HashMap<ByteBuffer, Integer>();// e.g <GLU, E>
+		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 71, 76, 89 }), 71);// Glycine (G)
+		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 65, 76, 65 }), 65);// Alanine (A)
+		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 83, 69, 82 }), 83);// Serine (S)
+		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 80, 82, 79 }), 80);// Proline (P)
+		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 86, 65, 76 }), 86);// Valine (V)
+		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 84, 72, 82 }), 84);// Threonine (T)
+		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 67, 89, 83 }), 67);// Cystein (C)
+		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 73, 76, 69 }), 73);// Isoleucine (I)
+		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 76, 69, 85 }), 76);// Leucine (L)
+		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 65, 83, 78 }), 78);// Asparagine (N)
+		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 65, 83, 80 }), 68);// Aspartic Acid (D)
+		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 71, 76, 78 }), 81);// Glutamine (Q)
+		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 76, 89, 83 }), 75);// Lysine (K)
+		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 71, 76, 88 }), 90);// Glutamic Acid or Glutamine (Z)
+		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 71, 76, 85 }), 69);// Glutamic Acid (E)
+		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 77, 69, 84 }), 77);// Methionine (M)
+		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 72, 73, 83 }), 72);// Histidine (H)
+		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 80, 72, 69 }), 70);// Phenilanyne (F)
+		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 83, 68, 67 }), 85);// Selenocysteine (U)
+		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 65, 82, 71 }), 82);// Arginine (R)
+		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 84, 89, 82 }), 89);// Tyrosine (Y)
+		ResiduesDict.put(ByteBuffer.wrap(new byte[] { 84, 82, 80 }), 87);// Tyrosine (Y)
+
+		return ResiduesDict;
 	}
 
 	/**
@@ -2296,6 +2333,158 @@ public class Util {
 			return getProteinDomainsFromPfam(proteinID);
 		else
 			return getProteinDomainsFromSupfam(proteinID);
+	}
+
+	public static String getPDBfileFromServer(String pdbID) {
+
+		try {
+			String _url = "https://files.rcsb.org/view/" + pdbID + ".pdb";
+			final URL url = new URL(_url);
+			final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setRequestMethod("POST");
+			connection.setDoOutput(true);
+			connection.setReadTimeout(1000);
+			connection.setConnectTimeout(1000);
+			connection.connect();
+
+			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+
+				// Get Response
+				InputStream inputStream = connection.getErrorStream(); // first check for error.
+				if (inputStream == null) {
+					inputStream = connection.getInputStream();
+				}
+				BufferedReader rd = new BufferedReader(new InputStreamReader(inputStream));
+				String line;
+				StringBuilder response = new StringBuilder();
+				while ((line = rd.readLine()) != null) {
+					response.append(line);
+					response.append('\r');
+				}
+				rd.close();
+				return response.toString();
+
+			} else {
+				return "";
+			}
+
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			return "";
+		}
+	}
+
+	/**
+	 * Get PDB IDs from Uniprot
+	 * 
+	 * @param myCurrentRow current row
+	 * @return pdb ids
+	 */
+	public static Protein getPDBidFromUniprot(CyRow myCurrentRow) {
+
+		String proteinID = getProteinID(myCurrentRow);
+		if (proteinID.isBlank() || proteinID.isEmpty()) {
+			return new Protein();
+		}
+
+		try {
+			String _url = "https://www.uniprot.org/uniprot/" + proteinID + ".xml";
+			final URL url = new URL(_url);
+			final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setRequestMethod("POST");
+			connection.setDoOutput(true);
+			connection.setReadTimeout(5000);
+			connection.setConnectTimeout(5000);
+			connection.connect();
+
+			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+
+				// Get Response
+				InputStream inputStream = connection.getErrorStream(); // first check for error.
+				if (inputStream == null) {
+					inputStream = connection.getInputStream();
+				}
+				BufferedReader rd = new BufferedReader(new InputStreamReader(inputStream));
+				String line;
+				StringBuilder response = new StringBuilder();
+				while ((line = rd.readLine()) != null) {
+					response.append(line);
+					response.append('\r');
+				}
+				rd.close();
+				String responseString = response.toString();
+
+				if (responseString.startsWith("<!DOCTYPE html PUBLIC"))
+					return new Protein();
+
+				// Use method to convert XML string content to XML Document object
+				Document doc = convertStringToXMLDocument(responseString);
+
+				if (doc == null)
+					return new Protein();
+
+				// check if exists error
+				NodeList xmlnodes = doc.getElementsByTagName("error");
+				if (xmlnodes.getLength() > 0) {
+					throw new Exception("XlinkCyNET ERROR: " + xmlnodes.item(0).getNodeValue());
+				}
+
+				xmlnodes = doc.getElementsByTagName("recommendedName");
+				if (xmlnodes.getLength() == 0) {
+					xmlnodes = doc.getElementsByTagName("submittedName");
+				}
+				NodeList nodes = xmlnodes.item(0).getChildNodes();
+
+				String fullName = "";
+				for (int i = 0; i < nodes.getLength(); i++) {
+					Node node = nodes.item(i);
+					if (node instanceof Element) {
+						if (node.getNodeName().equals("fullName")) {
+							Node nodeChild = node.getFirstChild();
+							fullName = nodeChild.getNodeValue();
+							break;
+						}
+					}
+				}
+
+				xmlnodes = doc.getElementsByTagName("dbReference");
+
+				Set<String> pDBids = new HashSet<String>();
+				for (int i = 0; i < xmlnodes.getLength(); i++) {
+					Node nNode = xmlnodes.item(i);
+					String pdbType = nNode.getAttributes().item(1).getNodeValue();
+					if (!pdbType.equals("PDB"))
+						continue;
+					pDBids.add(nNode.getAttributes().item(0).getNodeValue());
+
+				}
+
+				xmlnodes = doc.getElementsByTagName("sequence");
+
+				String ptnSequence = "";
+				for (int i = 0; i < xmlnodes.getLength(); i++) {
+					Node node = xmlnodes.item(i);
+					if (node instanceof Element) {
+						if (node.getAttributes().item(0).getNodeName().equals("checksum")) {
+							Node nodeChild = node.getFirstChild();
+							ptnSequence = nodeChild.getNodeValue();
+							break;
+						}
+					}
+				}
+
+				List<String> pdbIdsList = new ArrayList<String>(pDBids);
+				Protein ptn = new Protein(proteinID, fullName, ptnSequence, pdbIdsList);
+				return ptn;
+
+			} else {
+				return new Protein();
+			}
+
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			return new Protein();
+		}
 	}
 
 	/**

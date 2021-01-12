@@ -14,13 +14,13 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -42,6 +42,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
@@ -73,6 +74,7 @@ import de.fmp.liulab.internal.UpdateViewListener;
 import de.fmp.liulab.internal.view.JFrameWithoutMaxAndMinButton;
 import de.fmp.liulab.model.CrossLink;
 import de.fmp.liulab.model.GeneDomain;
+import de.fmp.liulab.model.Protein;
 import de.fmp.liulab.model.ProteinDomain;
 import de.fmp.liulab.utils.Tuple2;
 import de.fmp.liulab.utils.Util;
@@ -125,11 +127,14 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	public static CyNode node;
 
 	private Thread pfamThread;
+	private Thread pyMOLThread;
 	private JButton proteinDomainServerButton;
 	private static Thread applyLayoutThread;
 	private static JButton okButton;
 
 	private boolean IsCommandLine;
+
+	private JButton pyMOLButton;
 
 	/**
 	 * Constructor
@@ -688,6 +693,217 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	}
 
 	/**
+	 * Method responsible for creating a window to provide to the user a list with
+	 * all PBDs. Only one of them needs to be selected.
+	 * 
+	 * @param pdbIds      pdb IDs
+	 * @param msgINFO     output info
+	 * @param taskMonitor task monitor
+	 * @param ptn         protein
+	 */
+	private void getPDBInformation(List<String> pdbIds, String msgINFO, TaskMonitor taskMonitor, Protein ptn,
+			boolean processPDBfile, String pdbFile, boolean HasMoreThanOneChain) {
+
+		JFrameWithoutMaxAndMinButton pdbFrame = new JFrameWithoutMaxAndMinButton(new JFrame(), "XlinkCyNET", -1);
+
+		pdbFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		Dimension appSize = null;
+		if (Util.isWindows()) {
+			appSize = new Dimension(220, 345);
+		} else {
+			appSize = new Dimension(200, 325);
+		}
+		pdbFrame.setSize(appSize);
+		pdbFrame.setResizable(false);
+
+		JPanel pdbPanel = new JPanel();
+		if (processPDBfile)
+			pdbPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "PDB Information"));
+		else
+			pdbPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Protein Chain"));
+		pdbPanel.setLayout(null);
+		pdbPanel.setBounds(20, 20, 200, 325);
+		JLabel textLabel_title = new JLabel("Select one item:");
+		textLabel_title.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
+		textLabel_title.setBounds(10, 10, 100, 40);
+		pdbPanel.add(textLabel_title);
+
+		JList<String> list = new JList(pdbIds.toArray()); // data has type Object[]
+		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		list.setLayoutOrientation(JList.VERTICAL_WRAP);
+		list.setVisibleRowCount(-1);
+		list.setSelectedIndex(0);
+
+		JScrollPane listScroller = new JScrollPane(list);
+		listScroller = new JScrollPane();
+		listScroller.setBounds(10, 45, 178, 220);
+		listScroller.setViewportView(list);
+		pdbPanel.add(listScroller);
+
+		Icon iconBtnOk = new ImageIcon(getClass().getResource("/images/okBtn.png"));
+		JButton okButton = new JButton(iconBtnOk);
+		okButton.setText("OK");
+
+		if (Util.isWindows()) {
+			okButton.setBounds(30, 280, 140, 25);
+		} else {
+			okButton.setBounds(30, 270, 140, 25);
+		}
+		okButton.setEnabled(true);
+		okButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+		okButton.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent ae) {
+
+				pdbFrame.dispose();
+
+				String value = list.getSelectedValue();
+				if (processPDBfile)
+					processPDBFile(msgINFO, taskMonitor, value, ptn);
+				else
+					processPDBFileWithSpecificChain(taskMonitor, pdbFile, ptn, HasMoreThanOneChain, value);
+
+			}
+		});
+		pdbPanel.add(okButton);
+
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+		pdbFrame.setLocation((screenSize.width - appSize.width) / 2, (screenSize.height - appSize.height) / 2);
+
+		// Display the window
+		pdbFrame.add(pdbPanel);
+		pdbFrame.setLocationRelativeTo(null);
+		pdbFrame.setVisible(true);
+
+	}
+
+	/**
+	 * Method responsible for creating pymol script (*.pml) when the user selected a
+	 * specific protein chain
+	 * 
+	 * @param taskMonitor         task monitor
+	 * @param pdbFile             pdb file
+	 * @param ptn                 protein
+	 * @param HasMoreThanOneChain has more than one protein chain
+	 * @param proteinChain        protein chain
+	 */
+	private void processPDBFileWithSpecificChain(TaskMonitor taskMonitor, String pdbFile, Protein ptn,
+			boolean HasMoreThanOneChain, String proteinChain) {
+
+		String msgINFO = "Creating tmp PyMOL script file...";
+		textLabel_status_result.setText(msgINFO);
+		taskMonitor.showMessage(TaskMonitor.Level.INFO, msgINFO);
+
+		String proteinSequenceFromPDBFile = ProteinStructureManager
+				.getProteinSequenceFromPDBFileWithSpecificChain(pdbFile, ptn, taskMonitor, proteinChain);
+
+		String tmpPyMOLScriptFile = ProteinStructureManager.createPyMOLScriptFile(ptn, intraLinks, taskMonitor, pdbFile,
+				proteinSequenceFromPDBFile, HasMoreThanOneChain, proteinChain);
+
+		if (tmpPyMOLScriptFile.equals("ERROR")) {
+			textLabel_status_result.setText("ERROR: Check Task History.");
+			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Error creating PyMOL script file.");
+			pyMOLButton.setEnabled(true);
+			return;
+		}
+
+		executePyMOL(taskMonitor, tmpPyMOLScriptFile);
+
+	}
+
+	/**
+	 * Method responsible for executing PyMOL
+	 * 
+	 * @param taskMonitor     task monitor
+	 * @param pymolScriptFile pymol script file (*.pml)
+	 */
+	private void executePyMOL(TaskMonitor taskMonitor, String pymolScriptFile) {
+
+		textLabel_status_result.setText("Executing PyMOL script...");
+		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Executing PyMOL script...");
+
+		String[] cmdArray = new String[2];
+		cmdArray[0] = "open \"/Applications/PyMOL.app\"";
+		cmdArray[1] = pymolScriptFile;
+
+		try {
+			ProteinStructureManager.execUnix(cmdArray, taskMonitor);
+		} catch (IOException e) {
+			textLabel_status_result.setText("WARNING: Check Task History.");
+			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Error when running PyMOL.");
+		}
+
+		textLabel_status_result.setText("Done!");
+		pyMOLButton.setEnabled(true);
+	}
+
+	/**
+	 * Method responsible for creating and processing PDB file
+	 * 
+	 * @param msgINFO     output info
+	 * @param taskMonitor taskmonitor
+	 * @param pdbID       pdb ID
+	 * @param ptn         protein
+	 */
+	private void processPDBFile(String msgINFO, TaskMonitor taskMonitor, String pdbID, Protein ptn) {
+
+		msgINFO = "Creating tmp PDB file...";
+		textLabel_status_result.setText(msgINFO);
+		taskMonitor.showMessage(TaskMonitor.Level.INFO, msgINFO);
+
+		String pdbFile = ProteinStructureManager.createPDBFile(pdbID, taskMonitor);
+		if (pdbFile.equals("ERROR")) {
+
+			textLabel_status_result.setText("ERROR: Check Task History.");
+			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Error creating PDB file.");
+			pyMOLButton.setEnabled(true);
+			return;
+		}
+
+		msgINFO = "Creating tmp PyMOL script file...";
+		textLabel_status_result.setText(msgINFO);
+		taskMonitor.showMessage(TaskMonitor.Level.INFO, msgINFO);
+
+		// tmpPyMOLScriptFile[0-> PyMOL script file name]
+		String[] tmpPyMOLScriptFile = ProteinStructureManager.createPyMOLScriptFileUnknowChain(ptn, intraLinks,
+				taskMonitor, pdbFile);
+
+		if (tmpPyMOLScriptFile[0].equals("CHAINS")) {
+
+			// tmpPyMOLScriptFile[0-> 'CHAINS'; 1-> HasMoreThanOneChain; 2-> chains:
+			// separated by
+			// '#']
+
+			boolean HasMoreThanOneChain = tmpPyMOLScriptFile[1].equals("true");
+			String[] protein_chains = tmpPyMOLScriptFile[2].replace("CHAINS:", "").split("#");
+
+			List<String> protein_chainsList = Arrays.asList(protein_chains);
+			if (protein_chainsList.size() > 1) {
+
+				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB information...");
+				// Open a window to select only one protein chain
+				getPDBInformation(protein_chainsList, msgINFO, taskMonitor, ptn, false, pdbFile, HasMoreThanOneChain);
+			} else {
+				// There is only one protein chain
+				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Processing PDB file...");
+				processPDBFileWithSpecificChain(taskMonitor, pdbFile, ptn, HasMoreThanOneChain,
+						protein_chainsList.get(0));
+			}
+
+		} else if (tmpPyMOLScriptFile[0].equals("ERROR")) {
+			textLabel_status_result.setText("ERROR: Check Task History.");
+			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Error creating PyMOL script file.");
+			pyMOLButton.setEnabled(true);
+			return;
+
+		} else {
+
+			executePyMOL(taskMonitor, tmpPyMOLScriptFile[0]);
+		}
+	}
+
+	/**
 	 * Set all objects to the main Frame
 	 * 
 	 * @param taskMonitor
@@ -787,7 +1003,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		mainPanel.add(proteinDomainServerButton);
 
 		Icon iconPyMOLBtn = new ImageIcon(getClass().getResource("/images/pyMOL_logo.png"));
-		JButton pyMOLButton = new JButton(iconPyMOLBtn);
+		pyMOLButton = new JButton(iconPyMOLBtn);
 		if (Util.isWindows())
 			pyMOLButton.setBounds(455, 160, 30, 30);
 		else
@@ -800,33 +1016,66 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		pyMOLButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
 				taskMonitor.setTitle("Visualize protein structure");
-//				pyMOLButton.setEnabled(false);
-				try {
-					String proteinSequenceFromUniprot = Util.getProteinSequenceFromUniprot(myCurrentRow);
-					String proteinName = (String) myCurrentRow.getRaw(CyNetwork.NAME);
-					List<CrossLink> crosslinks = Stream.of(intraLinks, interLinks).flatMap(x -> x.stream())
-							.collect(Collectors.toList());
+				pyMOLButton.setEnabled(false);
 
-					textLabel_status_result.setText("Generating PyMOL script...");
-					taskMonitor.showMessage(TaskMonitor.Level.INFO, "Generating PyMOL script...");
-					
-					int proteinOffsetInPDB = 0;
-					String protein_chain = "A";
-					Util.PDB_PATH = "/Users/diogobor/Downloads/pymol_example/c90_dimer.pdb";
-					String pdbFile = Util.PDB_PATH;
-					String tmpPyMOLScriptFile = ProteinStructureManager.createPyMOLScriptFile(proteinName, proteinSequenceFromUniprot, crosslinks,
-							taskMonitor, proteinOffsetInPDB, protein_chain, pdbFile);
-					
-					textLabel_status_result.setText("Executing PyMOL script...");
-					taskMonitor.showMessage(TaskMonitor.Level.INFO, "Executing PyMOL script...");
-					
-					String[] cmdArray = new String[2];
-					cmdArray[0] = "open \"/Applications/PyMOL.app\"";
-					cmdArray[1] = tmpPyMOLScriptFile;
-					
-					ProteinStructureManager.execUnix(cmdArray, taskMonitor);
-					
-					textLabel_status_result.setText("Done!");
+				try {
+
+					pyMOLThread = new Thread() {
+						public void run() {
+
+							String msgINFO = "";
+
+							if (intraLinks.size() == 0) {
+								msgINFO = "There is no intralinks";
+								textLabel_status_result.setText(msgINFO + ".");
+								taskMonitor.showMessage(TaskMonitor.Level.WARN,
+										msgINFO + " to protein: " + (String) myCurrentRow.getRaw(CyNetwork.NAME));
+								return;
+							}
+
+//							String proteinSequenceFromUniprot = Util.getProteinSequenceFromUniprot(myCurrentRow);
+//							String proteinName = (String) myCurrentRow.getRaw(CyNetwork.NAME);
+//							List<CrossLink> crosslinks = Stream.of(intraLinks, interLinks).flatMap(x -> x.stream())
+//									.collect(Collectors.toList());
+
+							textLabel_status_result.setText("Getting PDB information from Uniprot...");
+							taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB information from Uniprot...");
+
+//							Util.PDB_PATH = "/Users/path/Downloads/pymol_example/c90_dimer.pdb";
+
+							Protein ptn = Util.getPDBidFromUniprot(myCurrentRow);
+							List<String> pdbIds = ptn.pdbIds;
+							if (pdbIds.size() > 0) {
+								String pdbID = pdbIds.get(0);
+
+								if (pdbIds.size() > 1) {
+
+									// Open a window to select only one PDB
+									getPDBInformation(pdbIds, msgINFO, taskMonitor, ptn, true, "", false);
+
+									try {
+										pyMOLThread.join();
+									} catch (InterruptedException e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
+									}
+								}
+
+								processPDBFile(msgINFO, taskMonitor, pdbID, ptn);
+
+							} else {
+
+								textLabel_status_result.setText("ERROR: Check Task History.");
+								taskMonitor.showMessage(TaskMonitor.Level.ERROR,
+										"There is no PDB to protein: " + ptn.proteinID);
+								pyMOLButton.setEnabled(true);
+								return;
+							}
+
+						}
+					};
+
+					pyMOLThread.start();
 
 				} catch (Exception exception) {
 				}
