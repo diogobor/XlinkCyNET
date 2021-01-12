@@ -201,7 +201,7 @@ public class ProteinStructureManager {
 		try {
 
 			taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting protein sequence from PDB file...");
-			
+
 			// [pdb protein sequence, protein chain, "true" -> there is more than one chain]
 			String[] returnPDB = getProteinSequenceAndChainFromPDBFile(pdbFile, ptn, taskMonitor);
 
@@ -210,7 +210,8 @@ public class ProteinStructureManager {
 
 			String proteinChain = returnPDB[1];
 			if (proteinChain.startsWith("CHAINS:")) {
-				taskMonitor.showMessage(TaskMonitor.Level.WARN, "No chain does not match with protein description. Select one chain...");
+				taskMonitor.showMessage(TaskMonitor.Level.WARN,
+						"No chain does not match with protein description. Select one chain...");
 				f.delete();
 				// return String[0-> 'CHAINS'; 1-> HasMoreThanOneChain; 2-> chains: separated by
 				// '#']
@@ -253,14 +254,20 @@ public class ProteinStructureManager {
 	 */
 	private static String[] getPDBFilePathName(String pdbFile) {
 		String separator = File.separator;
-		String[] pdbPathAndFileName = pdbFile.split(separator);
+		String[] pdbPathAndFileName = null;
+		if (Util.isWindows())
+			pdbPathAndFileName = pdbFile.split(separator + separator);
+		else
+			pdbPathAndFileName = pdbFile.split(separator);
 		StringBuilder pdbFilePath = new StringBuilder();
 		for (int i = 0; i < pdbPathAndFileName.length - 1; i++) {
 			pdbFilePath.append(pdbPathAndFileName[i] + separator);
+
 		}
 		String pdbFileName = pdbPathAndFileName[pdbPathAndFileName.length - 1];
+		String path = pdbFilePath.toString().substring(0, pdbFilePath.length() - 1);
 
-		return new String[] { pdbFilePath.toString(), pdbFileName };
+		return new String[] { path, pdbFileName };
 	}
 
 	/**
@@ -275,7 +282,7 @@ public class ProteinStructureManager {
 		// [0]-> Path
 		// [1]-> File name
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB file name...");
-		
+
 		String[] pdbFilePathName = getPDBFilePathName(pdbFile);
 		StringBuilder sbScript = new StringBuilder();
 		sbScript.append("cd " + pdbFilePathName[0] + "\n");
@@ -286,7 +293,7 @@ public class ProteinStructureManager {
 		sbScript.append("hide all\n");
 
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Computing protein offset...");
-		
+
 		int offsetProtein = ptn.sequence.indexOf(proteinSequenceFromPDBFile);
 		offsetProtein = offsetProtein > -1 ? offsetProtein : 0;
 		String selectedResidueItem = "CA";

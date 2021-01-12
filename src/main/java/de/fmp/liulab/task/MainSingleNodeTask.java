@@ -172,7 +172,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		mainFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		Dimension appSize = null;
 		if (Util.isWindows()) {
-			appSize = new Dimension(540, 395);
+			appSize = new Dimension(540, 405);
 		} else {
 			appSize = new Dimension(520, 375);
 		}
@@ -645,7 +645,11 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		textLabel_Pfam.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		textLabel_Pfam.setBounds(10, offset_y, 150, 100);
 		mainPanel.add(textLabel_Pfam);
-		offset_y += 55;
+
+		if (Util.isWindows())
+			offset_y += 65;
+		else
+			offset_y += 55;
 
 		textLabel_status_result = new JLabel("???");
 		textLabel_status_result.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
@@ -669,7 +673,11 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		jLabelIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/logo.png")));
 		logo_panel.add(jLabelIcon);
 
-		offset_y -= 25;
+		if(Util.isWindows())
+			offset_y -= 35;
+		else
+			offset_y -= 25;
+		
 		JLabel textLabel_PyMOL = new JLabel("Visualize structure (PyMOL):");
 		textLabel_PyMOL.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		if (Util.isWindows())
@@ -678,14 +686,20 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			textLabel_PyMOL.setBounds(290, offset_y, 180, 40);
 		mainPanel.add(textLabel_PyMOL);
 
-		offset_y -= 5;
+		if (Util.isWindows())
+			offset_y += 5;
+		else
+			offset_y -= 5;
 		JLabel textLabel_status = new JLabel("Status:");
 		textLabel_status.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		textLabel_status.setBounds(10, offset_y, 50, 100);
 		mainPanel.add(textLabel_status);
 		mainPanel.add(textLabel_status_result);
 
-		offset_y = 262;
+		if (Util.isWindows())
+			offset_y = 272;
+		else
+			offset_y = 262;
 		JLabel textLabel_required_fields = new JLabel("(*) Required fields");
 		textLabel_required_fields.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 10));
 		textLabel_required_fields.setBounds(10, offset_y, 150, 100);
@@ -824,14 +838,14 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Executing PyMOL script...");
 
 		String[] cmdArray = new String[2];
-		if(Util.isWindows())
+		if (Util.isWindows())
 			cmdArray[0] = "pymol";
 		else
 			cmdArray[0] = "open \"/Applications/PyMOL.app\"";
 		cmdArray[1] = pymolScriptFile;
 
 		try {
-			if(Util.isWindows())
+			if (Util.isWindows())
 				ProteinStructureManager.execWindows(cmdArray, taskMonitor);
 			else
 				ProteinStructureManager.execUnix(cmdArray, taskMonitor);
@@ -1107,7 +1121,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		mainProteinDomainTable = new JTable(tableDataModel);
 		// Create the scroll pane and add the table to it.
 		proteinDomainTableScrollPanel = new JScrollPane();
-		proteinDomainTableScrollPanel.setBounds(10, 215, 500, 90);
+		if (Util.isWindows())
+			proteinDomainTableScrollPanel.setBounds(10, 225, 500, 90);
+		else
+			proteinDomainTableScrollPanel.setBounds(10, 215, 500, 90);
 		proteinDomainTableScrollPanel.setViewportView(mainProteinDomainTable);
 		proteinDomainTableScrollPanel.setRowHeaderView(rowHeader);
 		mainPanel.add(proteinDomainTableScrollPanel);
@@ -1213,7 +1230,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		okButton.setText("OK");
 
 		if (Util.isWindows()) {
-			okButton.setBounds(30, 325, 220, 25);
+			okButton.setBounds(30, 335, 220, 25);
 		} else {
 			okButton.setBounds(30, 320, 220, 25);
 		}
@@ -1299,7 +1316,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		cancelButton.setText("Cancel");
 
 		if (Util.isWindows()) {
-			cancelButton.setBounds(265, 325, 220, 25);
+			cancelButton.setBounds(265, 335, 220, 25);
 		} else {
 			cancelButton.setBounds(265, 320, 220, 25);
 		}
@@ -1318,7 +1335,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		restoreStyleButton.setText("Restore style");
 
 		if (Util.isWindows()) {
-			restoreStyleButton.setBounds(390, 185, 120, 25);
+			restoreStyleButton.setBounds(390, 195, 120, 25);
 		} else {
 			restoreStyleButton.setBounds(390, 190, 120, 25);
 		}
