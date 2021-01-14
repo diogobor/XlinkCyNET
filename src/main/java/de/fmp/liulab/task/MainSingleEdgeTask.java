@@ -4,10 +4,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import javax.swing.JOptionPane;
 
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.model.CyEdge;
@@ -27,6 +30,7 @@ import org.cytoscape.work.TaskMonitor.Level;
 import de.fmp.liulab.core.ProteinStructureManager;
 import de.fmp.liulab.model.CrossLink;
 import de.fmp.liulab.model.Protein;
+import de.fmp.liulab.utils.Tuple2;
 import de.fmp.liulab.utils.Util;
 
 /**
@@ -138,21 +142,6 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 			executeSingleEdge(taskMonitor);
 		}
 
-//		if (myNetwork == null)
-//			return;
-//		
-//		List<CyEdge> edges = CyTableUtil.getEdgesInState(myNetwork, CyNetwork.SELECTED, true);
-//		
-//		if(edges.size() > 1)
-//
-//		// Check if the edge was inserted by this app
-//		String edge_name = myNetwork.getDefaultEdgeTable().getRow(edge.getSUID()).get(CyNetwork.NAME, String.class);
-//
-//		CyNode sourceNode = myNetwork.getEdge(edge.getSUID()).getSource();
-//		CyNode targetNode = myNetwork.getEdge(edge.getSUID()).getTarget();
-//		
-//		
-
 	}
 
 	/**
@@ -169,8 +158,9 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 	 * Method responsible for executing pyMOL to a single edge
 	 * 
 	 * @param taskMonitor
+	 * @throws Exception
 	 */
-	private void executeSingleEdge(final TaskMonitor taskMonitor) {
+	private void executeSingleEdge(final TaskMonitor taskMonitor) throws Exception {
 
 		String edge_name = myNetwork.getDefaultEdgeTable().getRow(edge.getSUID()).get(CyNetwork.NAME, String.class);
 		CyNode sourceNode = myNetwork.getEdge(edge.getSUID()).getSource();
@@ -183,14 +173,38 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 		crosslinks = new ArrayList<CrossLink>();
 
 		if (!Util.isEdgeModified(myNetwork, netView, edge)) { // Display all cross-links between two proteins
-			System.out.println("Intact edge");
+
+			if (!edge_name.contains("[Source:")) {// Check if edge is not modified by name
+
+				if (!isIntralink) {
+
+					Tuple2 inter_and_intralinks_source = Util.getAllLinksFromAdjacentEdgesNode(sourceNode, myNetwork);
+					crosslinks = (ArrayList<CrossLink>) inter_and_intralinks_source.getFirst();
+
+					Tuple2 inter_and_intralinks_target = Util.getAllLinksFromAdjacentEdgesNode(targetNode, myNetwork);
+					crosslinks.addAll((ArrayList<CrossLink>) inter_and_intralinks_target.getFirst());
+
+					crosslinks = crosslinks.stream().distinct().collect(Collectors.toList());
+
+					final String source_node_name = myNetwork.getDefaultNodeTable().getRow(sourceNode.getSUID())
+							.getRaw(CyNetwork.NAME).toString();
+					final String target_node_name = myNetwork.getDefaultNodeTable().getRow(targetNode.getSUID())
+							.getRaw(CyNetwork.NAME).toString();
+
+					crosslinks.removeIf(new Predicate<CrossLink>() {
+
+						public boolean test(CrossLink o) {
+							return !(o.protein_a.equals(source_node_name) && o.protein_b.equals(target_node_name)
+									|| o.protein_a.equals(target_node_name) && o.protein_b.equals(source_node_name));
+						}
+					});
+
+				}
+			}
 
 		} else { // Display only the selected edge
 
 			if (edge_name.contains("[Source:")) {// Check if edge is modified by name
-
-				taskMonitor.showMessage(Level.INFO, "Selecting source node: " + sourceNode.getSUID());
-				myCurrentRow = myNetwork.getRow(sourceNode);
 
 				String[] edgeNameArr = edge_name.split("\\[|\\]");
 				String[] pos_a = edgeNameArr[1].split("\\(|\\)");
@@ -198,54 +212,68 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 
 				CrossLink cl = new CrossLink(ptn_a, ptn_b, Integer.parseInt(pos_a[1]), Integer.parseInt(pos_b[1]));
 				crosslinks.add(cl);
-
-				taskMonitor.showMessage(Level.INFO, "Getting PDB information...");
-				Protein ptnSource = Util.getPDBidFromUniprot(myCurrentRow);
-				String nodeName_source = (String) myCurrentRow.getRaw(CyNetwork.NAME);
-
-				String msgINFO = "";
-				List<String> pdbIdsSource = ptnSource.pdbIds;
-
-				if (pdbIdsSource.size() > 0) {
-
-					taskMonitor.showMessage(Level.INFO, "Selecting target node: " + targetNode.getSUID());
-					myCurrentRow = myNetwork.getRow(targetNode);
-
-					taskMonitor.showMessage(Level.INFO, "Getting PDB information...");
-					Protein ptnTarget = Util.getPDBidFromUniprot(myCurrentRow);
-					String nodeName_target = (String) myCurrentRow.getRaw(CyNetwork.NAME);
-
-					List<String> pdbIdsTarget = ptnTarget.pdbIds;
-					if (pdbIdsTarget.size() > 0) {
-
-						Set<String> result = pdbIdsSource.stream().distinct().filter(pdbIdsTarget::contains)
-								.collect(Collectors.toSet());
-
-						if (result.size() > 1) {
-
-							List<String> pdbIds = new ArrayList<String>(result);
-							// Open a window to select only one PDB
-							SingleNodeTask.getPDBInformation(pdbIds, msgINFO, taskMonitor, ptnSource, ptnTarget, true,
-									"", false, true, nodeName_source + "#" + nodeName_target, false);
-
-						} else {
-							// processPDB with one pdb
-						}
-
-//						processPDBFile(msgINFO, taskMonitor, pdbID, ptnSource);
-
-					} else {
-						taskMonitor.showMessage(Level.ERROR, "There is no PDB for the target node: " + nodeName_target);
-						return;
-					}
-
-				} else {
-					taskMonitor.showMessage(Level.ERROR, "There is no PDB for the source node: " + nodeName_source);
-					return;
-				}
-
 			}
 		}
+
+		taskMonitor.showMessage(Level.INFO, "Selecting source node: " + sourceNode.getSUID());
+		myCurrentRow = myNetwork.getRow(sourceNode);
+
+		taskMonitor.showMessage(Level.INFO, "Getting PDB information...");
+		Protein ptnSource = Util.getPDBidFromUniprot(myCurrentRow);
+		source_node_name = (String) myCurrentRow.getRaw(CyNetwork.NAME);
+
+		String msgINFO = "";
+		List<String> pdbIdsSource = ptnSource.pdbIds;
+
+		if (pdbIdsSource.size() > 0) {
+
+			taskMonitor.showMessage(Level.INFO, "Selecting target node: " + targetNode.getSUID());
+			myCurrentRow = myNetwork.getRow(targetNode);
+
+			taskMonitor.showMessage(Level.INFO, "Getting PDB information...");
+			Protein ptnTarget = Util.getPDBidFromUniprot(myCurrentRow);
+			target_node_name = (String) myCurrentRow.getRaw(CyNetwork.NAME);
+
+			List<String> pdbIdsTarget = ptnTarget.pdbIds;
+			if (pdbIdsTarget.size() > 0) {
+
+				Set<String> result = pdbIdsSource.stream().distinct().filter(pdbIdsTarget::contains)
+						.collect(Collectors.toSet());
+
+				if (result.size() == 0) {
+					taskMonitor.showMessage(Level.ERROR,
+							"There is no common PDB for nodes: " + source_node_name + " and " + target_node_name + ".");
+
+					throw new Exception(
+							"There is no common PDB for nodes: " + source_node_name + " and " + target_node_name + ".");
+				}
+
+				if (result.size() > 1) {
+
+					List<String> pdbIds = new ArrayList<String>(result);
+					// Open a window to select only one PDB
+					SingleNodeTask.getPDBInformation(pdbIds, msgINFO, taskMonitor, ptnSource, ptnTarget, true, "",
+							false, true, source_node_name + "#" + target_node_name, false);
+
+				} else {
+
+					MainSingleEdgeTask.processPDBFile(taskMonitor, result.iterator().next(), ptnSource, ptnTarget,
+							source_node_name + "#" + target_node_name, false);
+
+				}
+
+			} else {
+				taskMonitor.showMessage(Level.ERROR, "There is no PDB for the target node: " + target_node_name);
+
+				throw new Exception("There is no PDB for the target node: " + target_node_name + ".");
+			}
+
+		} else {
+			taskMonitor.showMessage(Level.ERROR, "There is no PDB for the source node: " + source_node_name);
+
+			throw new Exception("There is no PDB for the source node: " + source_node_name + ".");
+		}
+
 	}
 
 	/**
@@ -261,7 +289,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 	public static void processPDBFile(TaskMonitor taskMonitor, String pdbID, Protein ptnSource, Protein ptnTarget,
 			String nodeName, boolean processTarget) {
 
-		if (processTarget) {
+		if (processTarget) { // process
 
 			taskMonitor.showMessage(TaskMonitor.Level.INFO, "Chain of protein source: " + pdbID);
 			// Set the chain of protein source
@@ -289,38 +317,18 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 					SingleNodeTask.getPDBInformation(protein_chainsList, "", taskMonitor, ptnSource, ptnTarget, false,
 							pdbFile, HasMoreThanOneChain_proteinTarget, true, target_node_name, true);
 
-				} else {
-					// At this point we have the selected chain of protein source and one chain of
-					// protein
-					// target. So, we can create pymol script
 				}
+
 			} else {
 
-				// At this point we have the selected chain of protein source and the matched
-				// chain of protein target.
+				// At this point we have the selected chain of protein source and one chain of
+				// protein target. So, we can create pymol script
 
-//			else if (tmpPyMOLScriptFile[0].equals("ERROR")) {
-//				textLabel_status_result.setText("ERROR: Check Task History.");
-//				taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Error creating PyMOL script file.");
-//				pyMOLButton.setEnabled(true);
-//				return;
-//
-//			} else {
-//
-//				ProteinStructureManager.executePyMOL(taskMonitor, tmpPyMOLScriptFile[0], textLabel_status_result);
-//
-//				textLabel_status_result.setText("Done!");
-//				pyMOLButton.setEnabled(true);
-//
-//			}
+				processPDBFileWithSpecificChain(taskMonitor, ptnSource, ptnTarget, returnPDB_proteinTarget[1]);
 
 			}
 
-		} else {
-
-			String[] cols_nodeName = nodeName.split("#");
-			source_node_name = cols_nodeName[0];
-			target_node_name = cols_nodeName[1];
+		} else { // Process protein source
 
 			taskMonitor.showMessage(TaskMonitor.Level.INFO, "Creating tmp PDB file...");
 
@@ -328,6 +336,9 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 			if (pdbFile.equals("ERROR")) {
 
 				taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Error creating PDB file.");
+
+				JOptionPane.showMessageDialog(null, "Error creating PDB file. Check Task History for more details.",
+						"XlinkCyNET - Alert", JOptionPane.ERROR_MESSAGE);
 				return;
 			}
 
@@ -340,7 +351,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 			HasMoreThanOneChain_proteinSource = returnPDB_proteinSource[2].equals("true") ? true : false;
 			String proteinChain_proteinSource = returnPDB_proteinSource[1];
 
-			if (proteinChain_proteinSource.startsWith("CHAINS:")) {
+			if (proteinChain_proteinSource.startsWith("CHAINS:")) { // There is more than one chain
 				taskMonitor.showMessage(TaskMonitor.Level.WARN,
 						"No chain does not match with protein source description.");
 
@@ -355,55 +366,22 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 
 				}
 
-				// return String[0-> 'CHAINS'; 1-> HasMoreThanOneChain; 2-> chains: separated by
-				// '#']
+			} else { // There is only one chain (source)
+
+				// Call this method to obtain the target chain
+				processPDBFile(taskMonitor, proteinChain_proteinSource, ptnSource, ptnTarget, nodeName, true);
 			}
 		}
-
-//		if (proteinSequenceFromPDBFile_proteinSource.isBlank() || proteinSequenceFromPDBFile_proteinSource.isEmpty()) {
-//			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "No sequence has been found in PDB file.");
-//		}
-//
-//		// tmpPyMOLScriptFile[0-> PyMOL script file name]
-//		String[] tmpPyMOLScriptFile = ProteinStructureManager.createPyMOLScriptFileUnknowChainFromTwoProteins(ptnSource,
-//				ptnTarget, crosslinks, taskMonitor, pdbFile, cols_nodeName[0], cols_nodeName[1]);
-//
-//		if (tmpPyMOLScriptFile[0].equals("CHAINS")) {
-//
-//			// tmpPyMOLScriptFile[0-> 'CHAINS'; 1-> HasMoreThanOneChain; 2-> chains:
-//			// separated by
-//			// '#']
-//
-//			boolean HasMoreThanOneChain = tmpPyMOLScriptFile[1].equals("true");
-//			String[] protein_chains = tmpPyMOLScriptFile[2].replace("CHAINS:", "").split("#");
-//
-//			List<String> protein_chainsList = Arrays.asList(protein_chains);
-//			if (protein_chainsList.size() > 1) {
-//
-//				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB information...");
-//				// Open a window to select only one protein chain
-////				getPDBInformation(protein_chainsList, msgINFO, taskMonitor, ptn, false, pdbFile, HasMoreThanOneChain,
-////						false);
-//			} else {
-//				// There is only one protein chain
-//				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Processing PDB file...");
-////				processPDBFileWithSpecificChain(taskMonitor, pdbFile, ptn, HasMoreThanOneChain,
-////						protein_chainsList.get(0));
-//			}
-//
-//		} else if (tmpPyMOLScriptFile[0].equals("ERROR")) {
-//			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Error creating PyMOL script file.");
-//			return;
-//
-//		} else {
-//
-//			ProteinStructureManager.executePyMOL(taskMonitor, tmpPyMOLScriptFile[0], null);
-//
-//			taskMonitor.showMessage(TaskMonitor.Level.INFO, "Done");
-//
-//		}
 	}
 
+	/**
+	 * Method responsible for creating pymol script
+	 * 
+	 * @param taskMonitor         task monitor
+	 * @param ptnSource           protein source
+	 * @param ptnTarget           protein target
+	 * @param proteinChain_target chain of protein target
+	 */
 	public static void processPDBFileWithSpecificChain(TaskMonitor taskMonitor, Protein ptnSource, Protein ptnTarget,
 			String proteinChain_target) {
 
@@ -417,10 +395,14 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 		if (proteinSequence_source_FromPDBFile.isBlank() || proteinSequence_source_FromPDBFile.isEmpty()) {
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR,
 					"No sequence has been found in pdb file for: " + source_node_name);
+
+			JOptionPane.showMessageDialog(null, "No sequence has been found in pdb file for: " + source_node_name,
+					"XlinkCyNET - Alert", JOptionPane.WARNING_MESSAGE);
 			return;
 		}
 
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting sequence of protein target: " + target_node_name);
+
 		String proteinSequence_target_FromPDBFile = ProteinStructureManager
 				.getProteinSequenceFromPDBFileWithSpecificChain(pdbFile, ptnTarget, taskMonitor, proteinChain_target,
 						true);
@@ -428,6 +410,9 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 		if (proteinSequence_target_FromPDBFile.isBlank() || proteinSequence_target_FromPDBFile.isEmpty()) {
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR,
 					"No sequence has been found in pdb file for: " + target_node_name);
+
+			JOptionPane.showMessageDialog(null, "No sequence has been found in pdb file for: " + target_node_name,
+					"XlinkCyNET - Alert", JOptionPane.WARNING_MESSAGE);
 			return;
 		}
 
@@ -448,6 +433,9 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 
 		if (tmpPyMOLScriptFile.equals("ERROR")) {
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Error creating PyMOL script file.");
+
+			JOptionPane.showMessageDialog(null, "Error creating PyMOL script file.", "XlinkCyNET - Alert",
+					JOptionPane.WARNING_MESSAGE);
 			return;
 		}
 

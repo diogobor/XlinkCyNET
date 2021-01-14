@@ -1728,23 +1728,33 @@ public class Util {
 
 				CyRow myCurrentRow = myNetwork.getDefaultEdgeTable().getRow(edge.getSUID());
 				if (myCurrentRow.getRaw(Util.XL_COMB_SCORE) != null) {
-					double comb_score = Double.parseDouble(myCurrentRow.getRaw(Util.XL_COMB_SCORE).toString());
-					double log_comb_score = Util.round(-Math.log10(comb_score), 2);
 
 					View<CyEdge> edgeView = netView.getEdgeView(edge);
-					if (edgeView.getVisualProperty(BasicVisualLexicon.EDGE_TOOLTIP).isBlank()
-							|| edgeView.getVisualProperty(BasicVisualLexicon.EDGE_TOOLTIP).isEmpty()) {
+					edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+					
+					double log_comb_score = -1;
+					
+					try {
+						double comb_score = Double.parseDouble(myCurrentRow.getRaw(Util.XL_COMB_SCORE).toString());
+						log_comb_score = Util.round(-Math.log10(comb_score), 2);
 
-						String tooltip = "<html><p><i>Score: " + comb_score + "</i></p><p><i>-Log(score): "
-								+ log_comb_score + "</i></p></html>";
-						edgeView.setLockedValue(BasicVisualLexicon.EDGE_TOOLTIP, tooltip);
+						if (edgeView.getVisualProperty(BasicVisualLexicon.EDGE_TOOLTIP).isBlank()
+								|| edgeView.getVisualProperty(BasicVisualLexicon.EDGE_TOOLTIP).isEmpty()) {
+
+							String tooltip = "<html><p><i>Score: " + comb_score + "</i></p><p><i>-Log(score): "
+									+ log_comb_score + "</i></p></html>";
+							edgeView.setLockedValue(BasicVisualLexicon.EDGE_TOOLTIP, tooltip);
+						}
+						
+						if (log_comb_score < Util.combinedlink_threshold_score) {
+							edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+						} else {
+							edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+						}
+
+					} catch (Exception e) {
 					}
 
-					if (log_comb_score < Util.combinedlink_threshold_score) {
-						edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
-					} else {
-						edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
-					}
 				} else if (!myCurrentRow.getRaw(CyNetwork.NAME).toString().contains("[Source")) {
 					break;// There is no score information to be displayed in the original edge.
 				}
@@ -1917,8 +1927,13 @@ public class Util {
 
 			double comb_score = -1;
 			if (myCurrentRow.getRaw(XL_COMB_SCORE) != null) {
-				comb_score = Double.parseDouble(myCurrentRow.getRaw(XL_COMB_SCORE).toString());
-				comb_score = -Math.log10(comb_score);
+				try {
+					comb_score = Double.parseDouble(myCurrentRow.getRaw(XL_COMB_SCORE).toString());
+					comb_score = -Math.log10(comb_score);
+				} catch (Exception e) {
+					comb_score = -1;
+				}
+
 			}
 			View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
 			if (!edge_name.startsWith("[Source:")) {// original edges

@@ -36,7 +36,7 @@ public class CrossLink implements Comparable<CrossLink> {
 		this.pos_site_b = pos_b;
 		this.score = score;
 	}
-	
+
 	/**
 	 * Constructor without score
 	 * 
@@ -66,6 +66,27 @@ public class CrossLink implements Comparable<CrossLink> {
 		return this.pos_site_b - d.pos_site_b;
 	}
 
+	@Override
+	public boolean equals(final Object obj) {
+		if (obj == null) {
+			return false;
+		}
+		final CrossLink crosslink = (CrossLink) obj;
+		if (this == crosslink) {
+			return true;
+		} else {
+			return (this.protein_a.equals(crosslink.protein_a) && this.protein_b.equals(crosslink.protein_b)
+					&& this.pos_site_a == crosslink.pos_site_a && this.pos_site_b == crosslink.pos_site_b);
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		int hashno = 7;
+		hashno = 13 * hashno + (protein_a == null ? 0 : protein_a.hashCode());
+		return hashno;
+	}
+
 	/**
 	 * Convert to string
 	 */
@@ -74,4 +95,5 @@ public class CrossLink implements Comparable<CrossLink> {
 		return "CrossLink {" + this.protein_a + " - " + this.protein_b + " [" + this.pos_site_a + " - "
 				+ this.pos_site_b + "]}";
 	}
+
 }
