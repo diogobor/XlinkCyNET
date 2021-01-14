@@ -274,8 +274,8 @@ public class Util {
 		View<CyEdge> edgeView = netView.getEdgeView(edge);
 		if (!edgeView.getVisualProperty(BasicVisualLexicon.EDGE_TOOLTIP)
 				.equals(style.getDefaultValue(BasicVisualLexicon.EDGE_TOOLTIP))
-				&& !edgeView.getVisualProperty(BasicVisualLexicon.EDGE_LINE_TYPE)
-						.equals(style.getDefaultValue(BasicVisualLexicon.EDGE_LINE_TYPE))
+				&& !edgeView.getVisualProperty(BasicVisualLexicon.EDGE_LABEL)
+						.equals(style.getDefaultValue(BasicVisualLexicon.EDGE_LABEL))
 				&& !edgeView.getVisualProperty(BasicVisualLexicon.EDGE_TRANSPARENCY)
 						.equals(style.getDefaultValue(BasicVisualLexicon.EDGE_TRANSPARENCY))) {
 			return true;
@@ -626,6 +626,7 @@ public class Util {
 					}
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_PAINT, IntraLinksColor);
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_SELECTED_PAINT, Color.RED);
+					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_STROKE_SELECTED_PAINT, Color.RED);
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TRANSPARENCY, edge_link_opacity);
 
 					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL, "[" + intraLinks.get(countEdge).pos_site_a
@@ -1044,6 +1045,7 @@ public class Util {
 				}
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_PAINT, InterLinksColor);
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_SELECTED_PAINT, Color.RED);
+				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_STROKE_SELECTED_PAINT, Color.RED);
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TRANSPARENCY, edge_link_opacity);
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_WIDTH, edge_link_width);
 				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TARGET_ARROW_SHAPE, ArrowShapeVisualProperty.NONE);
@@ -1847,7 +1849,7 @@ public class Util {
 			HandleFactory handleFactory, BendFactory bendFactory, VisualStyle style, VisualLexicon lexicon, CyEdge edge,
 			CyNode sourceNode, CyNode targetNode, String edge_name, float proteinLength, boolean IsIntraLink) {
 
-		if (!edge_name.startsWith("[Source:")) {// original edges
+		if (!edge_name.contains("[Source:")) {// original edges
 
 			if (IsIntraLink) {
 				View<CyEdge> currentEdgeView = netView.getEdgeView(edge);

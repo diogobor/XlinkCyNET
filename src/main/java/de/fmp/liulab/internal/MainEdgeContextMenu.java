@@ -40,7 +40,7 @@ public class MainEdgeContextMenu implements CyEdgeViewContextMenuFactory, Action
 	 */
 	@Override
 	public CyMenuItem createMenuItem(CyNetworkView netView, View<CyEdge> edgeView) {
-		JMenuItem menuItem = new JMenuItem("Visualize Structure");
+		JMenuItem menuItem = new JMenuItem("Visualize interactions in PyMOL");
 		menuItem.addActionListener(this);
 
 		CyMenuItem cyMenuItem = new CyMenuItem(menuItem, 0);

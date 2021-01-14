@@ -14,7 +14,6 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -70,6 +69,7 @@ import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.TaskMonitor;
 
 import de.fmp.liulab.core.ProteinStructureManager;
+import de.fmp.liulab.internal.MainEdgeContextMenu;
 import de.fmp.liulab.internal.UpdateViewListener;
 import de.fmp.liulab.internal.view.JFrameWithoutMaxAndMinButton;
 import de.fmp.liulab.model.CrossLink;
@@ -187,6 +187,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		mainFrame.setLocation((screenSize.width - appSize.width) / 2, (screenSize.height - appSize.height) / 2);
+
 	}
 
 	/**
@@ -204,12 +205,15 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		checkSingleOrMultipleSelectedNodes(taskMonitor);
 
 		if (IsCommandLine) {
-			this.unSelectNodes();
+			this.deselectNodes();
 		}
 
 	}
 
-	private void unSelectNodes() {
+	/**
+	 * Method responsible for deselecting all nodes.
+	 */
+	private void deselectNodes() {
 		List<CyNode> selectedNodes = CyTableUtil.getNodesInState(myNetwork, CyNetwork.SELECTED, true);
 		for (CyNode cyNode : selectedNodes) {
 			myNetwork.getRow(cyNode).set(CyNetwork.SELECTED, false);
@@ -253,7 +257,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		if (intraLinks.size() == 0 && interLinks.size() == 0)// It's a intralink_single_node
 			return;
 
-		if (forcedWindowOpen) {// Action comes from Context Menu item
+		if (forcedWindowOpen && !IsCommandLine) {// Action comes from Context Menu item
 
 			this.init_xl_layout(taskMonitor);
 
@@ -673,11 +677,11 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		jLabelIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/logo.png")));
 		logo_panel.add(jLabelIcon);
 
-		if(Util.isWindows())
+		if (Util.isWindows())
 			offset_y -= 35;
 		else
 			offset_y -= 25;
-		
+
 		JLabel textLabel_PyMOL = new JLabel("Visualize structure (PyMOL):");
 		textLabel_PyMOL.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		if (Util.isWindows())
@@ -715,8 +719,27 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	 * @param taskMonitor task monitor
 	 * @param ptn         protein
 	 */
-	private void getPDBInformation(List<String> pdbIds, String msgINFO, TaskMonitor taskMonitor, Protein ptn,
-			boolean processPDBfile, String pdbFile, boolean HasMoreThanOneChain) {
+
+	/**
+	 * Method responsible for creating a window to provide to the user a list with
+	 * all PBDs. Only one of them needs to be selected.
+	 * 
+	 * @param pdbIds              pdb IDs
+	 * @param msgINFO             output info
+	 * @param taskMonitor         task monitor
+	 * @param ptnSource           protein source
+	 * @param ptnTarget           protein target
+	 * @param processPDBfile      if true, process the pdbfile with an unknown
+	 *                            chain, otherwise process pdbfile with a specific
+	 *                            chain
+	 * @param pdbFile             pdb file name
+	 * @param HasMoreThanOneChain indicates if there is more than one chain
+	 * @param isFromEdgeAction    indicates if the method is called from edge action
+	 * @param nodeName            node name
+	 */
+	public void getPDBInformation(List<String> pdbIds, String msgINFO, TaskMonitor taskMonitor, Protein ptnSource,
+			Protein ptnTarget, boolean processPDBfile, String pdbFile, boolean HasMoreThanOneChain,
+			boolean isFromEdgeAction, String nodeName, boolean processTarget) {
 
 		JFrameWithoutMaxAndMinButton pdbFrame = new JFrameWithoutMaxAndMinButton(new JFrame(), "XlinkCyNET", -1);
 
@@ -737,9 +760,44 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			pdbPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Protein Chain"));
 		pdbPanel.setLayout(null);
 		pdbPanel.setBounds(20, 20, 200, 325);
+
+		int offset_y = 10;
+
+		JLabel textLabel_protein_title = new JLabel("Node name:");
+		textLabel_protein_title.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
+		textLabel_protein_title.setBounds(10, offset_y, 80, 40);
+		pdbPanel.add(textLabel_protein_title);
+
+		JLabel textLabel_protein_name = new JLabel();
+		textLabel_protein_name.setFont(new java.awt.Font("Tahoma", Font.BOLD, 12));
+		textLabel_protein_name.setBounds(85, offset_y, 80, 40);
+
+		String[] cols_nodeName = null;
+		if (nodeName.contains("#")) {
+			cols_nodeName = nodeName.split("#");
+			textLabel_protein_name.setText(cols_nodeName[0]);
+		} else {
+			textLabel_protein_name.setText(nodeName);
+		}
+		pdbPanel.add(textLabel_protein_name);
+
+		if (nodeName.contains("#")) {
+
+			offset_y += 15;
+			JLabel textLabel_protein_second_name = new JLabel();
+			textLabel_protein_second_name.setText(cols_nodeName[1]);
+			textLabel_protein_second_name.setFont(new java.awt.Font("Tahoma", Font.BOLD, 12));
+			textLabel_protein_second_name.setBounds(85, offset_y, 80, 40);
+			pdbPanel.add(textLabel_protein_second_name);
+			offset_y += 20;
+
+		} else {
+			offset_y += 30;
+		}
+
 		JLabel textLabel_title = new JLabel("Select one item:");
 		textLabel_title.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_title.setBounds(10, 10, 100, 40);
+		textLabel_title.setBounds(10, offset_y, 100, 40);
 		pdbPanel.add(textLabel_title);
 
 		JList<String> list = new JList(pdbIds.toArray()); // data has type Object[]
@@ -748,9 +806,15 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		list.setVisibleRowCount(-1);
 		list.setSelectedIndex(0);
 
+		if (nodeName.contains("#")) {
+			offset_y += 35;
+		} else {
+			offset_y += 40;
+		}
+
 		JScrollPane listScroller = new JScrollPane(list);
 		listScroller = new JScrollPane();
-		listScroller.setBounds(10, 45, 178, 220);
+		listScroller.setBounds(10, offset_y, 178, 180);
 		listScroller.setViewportView(list);
 		pdbPanel.add(listScroller);
 
@@ -773,11 +837,23 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 				pdbFrame.dispose();
 
 				String value = list.getSelectedValue();
-				if (processPDBfile)
-					processPDBFile(msgINFO, taskMonitor, value, ptn);
-				else
-					processPDBFileWithSpecificChain(taskMonitor, pdbFile, ptn, HasMoreThanOneChain, value);
 
+				if (!isFromEdgeAction) {
+
+					if (processPDBfile)
+						processPDBFile(msgINFO, taskMonitor, value, ptnSource);
+					else
+						processPDBFileWithSpecificChain(taskMonitor, pdbFile, ptnSource, HasMoreThanOneChain, value);
+
+				} else {
+
+					if (processPDBfile)
+						MainSingleEdgeTask.processPDBFile(taskMonitor, value, ptnSource, ptnTarget, nodeName,
+								processTarget);
+					else
+						MainSingleEdgeTask.processPDBFileWithSpecificChain(taskMonitor, ptnSource, ptnTarget, value);
+
+				}
 			}
 		});
 		pdbPanel.add(okButton);
@@ -810,7 +886,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, msgINFO);
 
 		String proteinSequenceFromPDBFile = ProteinStructureManager
-				.getProteinSequenceFromPDBFileWithSpecificChain(pdbFile, ptn, taskMonitor, proteinChain);
+				.getProteinSequenceFromPDBFileWithSpecificChain(pdbFile, ptn, taskMonitor, proteinChain, false);
 
 		String tmpPyMOLScriptFile = ProteinStructureManager.createPyMOLScriptFile(ptn, intraLinks, taskMonitor, pdbFile,
 				proteinSequenceFromPDBFile, HasMoreThanOneChain, proteinChain);
@@ -822,40 +898,11 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			return;
 		}
 
-		executePyMOL(taskMonitor, tmpPyMOLScriptFile);
-
-	}
-
-	/**
-	 * Method responsible for executing PyMOL
-	 * 
-	 * @param taskMonitor     task monitor
-	 * @param pymolScriptFile pymol script file (*.pml)
-	 */
-	private void executePyMOL(TaskMonitor taskMonitor, String pymolScriptFile) {
-
-		textLabel_status_result.setText("Executing PyMOL script...");
-		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Executing PyMOL script...");
-
-		String[] cmdArray = new String[2];
-		if (Util.isWindows())
-			cmdArray[0] = "pymol";
-		else
-			cmdArray[0] = "open \"/Applications/PyMOL.app\"";
-		cmdArray[1] = pymolScriptFile;
-
-		try {
-			if (Util.isWindows())
-				ProteinStructureManager.execWindows(cmdArray, taskMonitor);
-			else
-				ProteinStructureManager.execUnix(cmdArray, taskMonitor);
-		} catch (IOException e) {
-			textLabel_status_result.setText("WARNING: Check Task History.");
-			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Error when running PyMOL.");
-		}
+		ProteinStructureManager.executePyMOL(taskMonitor, tmpPyMOLScriptFile, textLabel_status_result);
 
 		textLabel_status_result.setText("Done!");
 		pyMOLButton.setEnabled(true);
+
 	}
 
 	/**
@@ -901,9 +948,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			List<String> protein_chainsList = Arrays.asList(protein_chains);
 			if (protein_chainsList.size() > 1) {
 
-				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB information...");
+				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Select one chain...");
 				// Open a window to select only one protein chain
-				getPDBInformation(protein_chainsList, msgINFO, taskMonitor, ptn, false, pdbFile, HasMoreThanOneChain);
+				getPDBInformation(protein_chainsList, msgINFO, taskMonitor, ptn, null, false, pdbFile,
+						HasMoreThanOneChain, false, (String) myCurrentRow.getRaw(CyNetwork.NAME), false);
 			} else {
 				// There is only one protein chain
 				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Processing PDB file...");
@@ -919,7 +967,11 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		} else {
 
-			executePyMOL(taskMonitor, tmpPyMOLScriptFile[0]);
+			ProteinStructureManager.executePyMOL(taskMonitor, tmpPyMOLScriptFile[0], textLabel_status_result);
+
+			textLabel_status_result.setText("Done!");
+			pyMOLButton.setEnabled(true);
+
 		}
 	}
 
@@ -1064,7 +1116,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 								if (pdbIds.size() > 1) {
 
 									// Open a window to select only one PDB
-									getPDBInformation(pdbIds, msgINFO, taskMonitor, ptn, true, "", false);
+									getPDBInformation(pdbIds, msgINFO, taskMonitor, ptn, null, true, "", false, false,
+											(String) myCurrentRow.getRaw(CyNetwork.NAME), false);
 
 									try {
 										pyMOLThread.join();
