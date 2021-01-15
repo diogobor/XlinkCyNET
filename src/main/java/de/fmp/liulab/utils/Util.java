@@ -1731,9 +1731,9 @@ public class Util {
 
 					View<CyEdge> edgeView = netView.getEdgeView(edge);
 					edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
-					
+
 					double log_comb_score = -1;
-					
+
 					try {
 						double comb_score = Double.parseDouble(myCurrentRow.getRaw(Util.XL_COMB_SCORE).toString());
 						log_comb_score = Util.round(-Math.log10(comb_score), 2);
@@ -1745,7 +1745,7 @@ public class Util {
 									+ log_comb_score + "</i></p></html>";
 							edgeView.setLockedValue(BasicVisualLexicon.EDGE_TOOLTIP, tooltip);
 						}
-						
+
 						if (log_comb_score < Util.combinedlink_threshold_score) {
 							edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
 						} else {
@@ -2347,6 +2347,12 @@ public class Util {
 		return proteinDomainsServer;
 	}
 
+	/**
+	 * Get protein domains from Server
+	 * 
+	 * @param proteinID protein ID
+	 * @return list with protein domains
+	 */
 	private static ArrayList<ProteinDomain> getProteinDomains(String proteinID) {
 		if (isProteinDomainPfam)
 			return getProteinDomainsFromPfam(proteinID);
@@ -2354,10 +2360,65 @@ public class Util {
 			return getProteinDomainsFromSupfam(proteinID);
 	}
 
-	public static String getPDBfileFromServer(String pdbID) {
+	/**
+	 * Get PDB file from RCSB server
+	 * 
+	 * @param pdbID protein id
+	 * @return pdb file name
+	 */
+	public static String[] getPDBorCIFfileFromServer(String pdbID) {
 
 		try {
 			String _url = "https://files.rcsb.org/view/" + pdbID + ".pdb";
+			final URL url = new URL(_url);
+			final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setRequestMethod("POST");
+			connection.setDoOutput(true);
+			connection.setReadTimeout(1000);
+			connection.setConnectTimeout(1000);
+			connection.connect();
+
+			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+
+				// Get Response
+				InputStream inputStream = connection.getErrorStream(); // first check for error.
+				if (inputStream == null) {
+					inputStream = connection.getInputStream();
+				}
+				BufferedReader rd = new BufferedReader(new InputStreamReader(inputStream));
+				String line;
+				StringBuilder response = new StringBuilder();
+				while ((line = rd.readLine()) != null) {
+					response.append(line);
+					response.append('\r');
+				}
+				rd.close();
+				return new String[] { "PDB", response.toString() };
+
+			} else if (connection.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+				
+				return new String[] { "CIF", getCiFfileFromServer(pdbID) };
+				
+			} else {
+				return new String[] { "" };
+			}
+
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			return new String[] { "" };
+		}
+	}
+
+	/**
+	 * Get CIF file from RCSB server
+	 * 
+	 * @param pdbID protein id
+	 * @return cif file name
+	 */
+	public static String getCiFfileFromServer(String pdbID) {
+
+		try {
+			String _url = "https://files.rcsb.org/view/" + pdbID + ".cif";
 			final URL url = new URL(_url);
 			final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 			connection.setRequestMethod("POST");

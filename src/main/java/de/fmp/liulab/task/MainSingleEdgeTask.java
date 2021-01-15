@@ -176,7 +176,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 
 			if (!edge_name.contains("[Source:")) {// Check if edge is not modified by name
 
-				if (!isIntralink) {
+				if (!isIntralink) { // Interlinks
 
 					Tuple2 inter_and_intralinks_source = Util.getAllLinksFromAdjacentEdgesNode(sourceNode, myNetwork);
 					crosslinks = (ArrayList<CrossLink>) inter_and_intralinks_source.getFirst();
@@ -198,6 +198,16 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 									|| o.protein_a.equals(target_node_name) && o.protein_b.equals(source_node_name));
 						}
 					});
+
+				} else {// Intralink
+					Tuple2 inter_and_intralinks_source = Util.getAllLinksFromAdjacentEdgesNode(sourceNode, myNetwork);
+					crosslinks = (ArrayList<CrossLink>) inter_and_intralinks_source.getSecond();
+					MainSingleNodeTask.intraLinks = (ArrayList<CrossLink>) crosslinks;
+					myCurrentRow = myNetwork.getRow(sourceNode);
+
+					processIntraLinks(taskMonitor, myCurrentRow);
+
+					return;
 
 				}
 			}
@@ -276,6 +286,37 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 
 	}
 
+	private static void processIntraLinks(TaskMonitor taskMonitor, CyRow myCurrentRow) {
+
+		String msgINFO = "";
+		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB information from Uniprot...");
+
+		Protein ptn = Util.getPDBidFromUniprot(myCurrentRow);
+		List<String> pdbIds = ptn.pdbIds;
+		if (pdbIds.size() > 0) {
+
+			SingleNodeTask.myCurrentRow = myCurrentRow;
+			String pdbID = pdbIds.get(0);
+
+			if (pdbIds.size() > 1) {
+
+				// Open a window to select only one PDB
+				SingleNodeTask.getPDBInformation(pdbIds, msgINFO, taskMonitor, ptn, null, true, "", false, false,
+						(String) myCurrentRow.getRaw(CyNetwork.NAME), false);
+
+				return;
+			}
+
+			SingleNodeTask.processPDBFile(msgINFO, taskMonitor, pdbID, ptn);
+
+		} else {
+			JOptionPane.showMessageDialog(null, "There is no PDB to protein: " + ptn.proteinID, "XlinkCyNET - Alert",
+					JOptionPane.ERROR_MESSAGE);
+			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "There is no PDB to protein: " + ptn.proteinID);
+			return;
+		}
+	}
+
 	/**
 	 * Method responsible for creating and processing PDB file
 	 * 
@@ -297,8 +338,15 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 
 			taskMonitor.showMessage(TaskMonitor.Level.INFO,
 					"Getting protein sequence and chain of protein target from PDB file...");
-			String[] returnPDB_proteinTarget = ProteinStructureManager.getProteinSequenceAndChainFromPDBFile(pdbFile,
-					ptnTarget, taskMonitor);
+
+			// [pdb protein sequence, protein chain, "true" -> there is more than one chain]
+			String[] returnPDB_proteinTarget = null;
+			if (pdbFile.endsWith("pdb"))
+				returnPDB_proteinTarget = ProteinStructureManager.getProteinSequenceAndChainFromPDBFile(pdbFile,
+						ptnTarget, taskMonitor);
+			else
+				returnPDB_proteinTarget = ProteinStructureManager.getProteinSequenceAndChainFromCIFFile(pdbFile,
+						ptnTarget, taskMonitor);
 
 			proteinSequenceFromPDBFile_proteinTarget = returnPDB_proteinTarget[0];
 			HasMoreThanOneChain_proteinTarget = returnPDB_proteinTarget[2].equals("true") ? true : false;

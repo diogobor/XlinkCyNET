@@ -101,7 +101,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	public static VisualLexicon lexicon;
 
 	private static View<CyNode> nodeView;
-	private CyRow myCurrentRow;
+	public CyRow myCurrentRow;
 	private List<CyNode> nodes;
 	private boolean isCurrentNode_modified = false;
 
@@ -882,7 +882,9 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			boolean HasMoreThanOneChain, String proteinChain) {
 
 		String msgINFO = "Creating tmp PyMOL script file...";
-		textLabel_status_result.setText(msgINFO);
+		if (textLabel_status_result != null)
+			textLabel_status_result.setText(msgINFO);
+
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, msgINFO);
 
 		String proteinSequenceFromPDBFile = ProteinStructureManager
@@ -892,16 +894,27 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 				proteinSequenceFromPDBFile, HasMoreThanOneChain, proteinChain);
 
 		if (tmpPyMOLScriptFile.equals("ERROR")) {
-			textLabel_status_result.setText("ERROR: Check Task History.");
+
+			if (textLabel_status_result != null) {
+
+				textLabel_status_result.setText("ERROR: Check Task History.");
+				pyMOLButton.setEnabled(true);
+
+			} else {
+				JOptionPane.showMessageDialog(null, "Error creating PyMOL script file.", "XlinkCyNET - Alert",
+						JOptionPane.ERROR_MESSAGE);
+			}
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Error creating PyMOL script file.");
-			pyMOLButton.setEnabled(true);
 			return;
 		}
 
 		ProteinStructureManager.executePyMOL(taskMonitor, tmpPyMOLScriptFile, textLabel_status_result);
 
-		textLabel_status_result.setText("Done!");
-		pyMOLButton.setEnabled(true);
+		if (textLabel_status_result != null) {
+
+			textLabel_status_result.setText("Done!");
+			pyMOLButton.setEnabled(true);
+		}
 
 	}
 
@@ -913,23 +926,33 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	 * @param pdbID       pdb ID
 	 * @param ptn         protein
 	 */
-	private void processPDBFile(String msgINFO, TaskMonitor taskMonitor, String pdbID, Protein ptn) {
+	public void processPDBFile(String msgINFO, TaskMonitor taskMonitor, String pdbID, Protein ptn) {
 
 		msgINFO = "Creating tmp PDB file...";
-		textLabel_status_result.setText(msgINFO);
+
+		if (textLabel_status_result != null)
+			textLabel_status_result.setText(msgINFO);
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, msgINFO);
 
 		String pdbFile = ProteinStructureManager.createPDBFile(pdbID, taskMonitor);
 		if (pdbFile.equals("ERROR")) {
 
-			textLabel_status_result.setText("ERROR: Check Task History.");
+			if (textLabel_status_result != null) {
+
+				textLabel_status_result.setText("ERROR: Check Task History.");
+				pyMOLButton.setEnabled(true);
+			} else {
+				JOptionPane.showMessageDialog(null, "Error creating PDB file.", "XlinkCyNET - Alert",
+						JOptionPane.ERROR_MESSAGE);
+			}
+
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Error creating PDB file.");
-			pyMOLButton.setEnabled(true);
 			return;
 		}
 
 		msgINFO = "Creating tmp PyMOL script file...";
-		textLabel_status_result.setText(msgINFO);
+		if (textLabel_status_result != null)
+			textLabel_status_result.setText(msgINFO);
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, msgINFO);
 
 		// tmpPyMOLScriptFile[0-> PyMOL script file name]
@@ -960,17 +983,28 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			}
 
 		} else if (tmpPyMOLScriptFile[0].equals("ERROR")) {
-			textLabel_status_result.setText("ERROR: Check Task History.");
+
+			if (textLabel_status_result != null) {
+
+				textLabel_status_result.setText("ERROR: Check Task History.");
+				pyMOLButton.setEnabled(true);
+			} else {
+				JOptionPane.showMessageDialog(null, "Error creating PyMOL script file.", "XlinkCyNET - Alert",
+						JOptionPane.ERROR_MESSAGE);
+			}
+
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Error creating PyMOL script file.");
-			pyMOLButton.setEnabled(true);
 			return;
 
 		} else {
 
 			ProteinStructureManager.executePyMOL(taskMonitor, tmpPyMOLScriptFile[0], textLabel_status_result);
 
-			textLabel_status_result.setText("Done!");
-			pyMOLButton.setEnabled(true);
+			if (textLabel_status_result != null) {
+
+				textLabel_status_result.setText("Done!");
+				pyMOLButton.setEnabled(true);
+			}
 
 		}
 	}
@@ -1102,10 +1136,14 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 								textLabel_status_result.setText(msgINFO + ".");
 								taskMonitor.showMessage(TaskMonitor.Level.WARN,
 										msgINFO + " to protein: " + (String) myCurrentRow.getRaw(CyNetwork.NAME));
+
+								if (pyMOLButton != null)
+									pyMOLButton.setEnabled(true);
 								return;
 							}
 
-							textLabel_status_result.setText("Getting PDB information from Uniprot...");
+							if (textLabel_status_result != null)
+								textLabel_status_result.setText("Getting PDB information from Uniprot...");
 							taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB information from Uniprot...");
 
 							Protein ptn = Util.getPDBidFromUniprot(myCurrentRow);
@@ -1134,7 +1172,9 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 								textLabel_status_result.setText("ERROR: Check Task History.");
 								taskMonitor.showMessage(TaskMonitor.Level.ERROR,
 										"There is no PDB to protein: " + ptn.proteinID);
-								pyMOLButton.setEnabled(true);
+
+								if (pyMOLButton != null)
+									pyMOLButton.setEnabled(true);
 								return;
 							}
 

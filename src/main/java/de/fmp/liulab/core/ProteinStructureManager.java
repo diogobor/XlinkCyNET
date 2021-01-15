@@ -102,18 +102,31 @@ public class ProteinStructureManager {
 	 * @return file name
 	 */
 	public static String createPDBFile(String pdbID, TaskMonitor taskMonitor) {
-		// write this script to tmp file and return path
-		File f = getTmpFile(pdbID, "pdb", taskMonitor);
-		if (f == null) {
-			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Could not create temp file with label: " + pdbID);
-			return "";
-		}
 
-		FileWriter bw;
 		String finalStr = "";
+		File f = null;
+
 		try {
+
+			// Retrieving file from RCSB server
+			// [PDB or CIF, file content]
+			String[] returnFile = Util.getPDBorCIFfileFromServer(pdbID);
+
+			// write this script to tmp file and return path
+			if (returnFile[0].equals("PDB"))
+				f = getTmpFile(pdbID, "pdb", taskMonitor);
+			else
+				f = getTmpFile(pdbID, "cif", taskMonitor);
+
+			if (f == null) {
+				taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Could not create temp file with label: " + pdbID);
+				return "";
+			}
+
+			FileWriter bw;
+
 			bw = new FileWriter(f);
-			finalStr = Util.getPDBfileFromServer(pdbID);
+			finalStr = returnFile[1];
 			if (finalStr.isBlank() || finalStr.isEmpty())
 				taskMonitor.showMessage(TaskMonitor.Level.ERROR,
 						"Error retrieving the PDB file for protein " + pdbID + ".");
@@ -127,7 +140,7 @@ public class ProteinStructureManager {
 
 		if (finalStr.isBlank() || finalStr.isEmpty())
 			return "ERROR";
-		return f.getAbsolutePath();
+		return f != null ? f.getAbsolutePath() : "ERROR";
 	}
 
 	/**
@@ -271,7 +284,11 @@ public class ProteinStructureManager {
 			taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting protein sequence from PDB file...");
 
 			// [pdb protein sequence, protein chain, "true" -> there is more than one chain]
-			String[] returnPDB = getProteinSequenceAndChainFromPDBFile(pdbFile, ptn, taskMonitor);
+			String[] returnPDB = null;
+			if (pdbFile.endsWith("pdb"))
+				returnPDB = getProteinSequenceAndChainFromPDBFile(pdbFile, ptn, taskMonitor);
+			else
+				returnPDB = getProteinSequenceAndChainFromCIFFile(pdbFile, ptn, taskMonitor);
 
 			String proteinSequenceFromPDBFile = returnPDB[0];
 			boolean HasMoreThanOneChain = returnPDB[2].equals("true") ? true : false;
@@ -293,86 +310,6 @@ public class ProteinStructureManager {
 
 			finalStr = createPyMOLScript(taskMonitor, ptn, crossLinks, pdbFile, HasMoreThanOneChain, proteinChain,
 					proteinSequenceFromPDBFile);
-
-			bw = new FileWriter(f);
-			bw.write(finalStr);
-			bw.flush();
-			bw.close();
-		} catch (IOException ex) {
-			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Problems while writing script to " + f.getAbsolutePath());
-			finalStr = "";
-		}
-
-		if (finalStr.isBlank() || finalStr.isEmpty())
-			return new String[] { "ERROR" };
-
-		return new String[] { f.getAbsolutePath() };
-	}
-
-	/**
-	 * Method responsible for creating PyMOL script (*.pml file) -> temp file when
-	 * the chain is unknown
-	 * 
-	 * @param ptnSource   protein source
-	 * @param ptnTarget   protein target
-	 * @param crossLinks  crosslinks
-	 * @param taskMonitor task monitor
-	 * @param pdbFile     pdb file name
-	 * @return return pymol file name or pdb chains
-	 */
-	public static String[] createPyMOLScriptFileUnknowChainFromTwoProteins(Protein ptnSource, Protein ptnTarget,
-			List<CrossLink> crossLinks, TaskMonitor taskMonitor, String pdbFile, String nodeName_source,
-			String nodeName_target) {
-
-		// write this script to tmp file and return path
-		File f = getTmpFile(ptnSource.proteinID, "pml", taskMonitor);
-		if (f == null) {
-			taskMonitor.showMessage(TaskMonitor.Level.ERROR,
-					"Could not create temp file with label: " + ptnSource.proteinID);
-			return new String[] { "ERROR" };
-		}
-
-		FileWriter bw;
-		String finalStr = "";
-		try {
-
-			taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting protein sequence from PDB file...");
-
-			// [pdb protein sequence, protein chain, "true" -> there is more than one chain]
-			String[] returnPDB_proteinSource = getProteinSequenceAndChainFromPDBFile(pdbFile, ptnSource, taskMonitor);
-			// [pdb protein sequence, protein chain, "true" -> there is more than one chain]
-			String[] returnPDB_proteinTarget = getProteinSequenceAndChainFromPDBFile(pdbFile, ptnTarget, taskMonitor);
-
-			String proteinSequenceFromPDBFile_proteinSource = returnPDB_proteinSource[0];
-			boolean HasMoreThanOneChain_proteinSource = returnPDB_proteinSource[2].equals("true") ? true : false;
-
-			String proteinSequenceFromPDBFile_proteinTarget = returnPDB_proteinTarget[0];
-			boolean HasMoreThanOneChain_proteinTarget = returnPDB_proteinTarget[2].equals("true") ? true : false;
-
-			String proteinChain_proteinSource = returnPDB_proteinSource[1];
-			if (proteinChain_proteinSource.startsWith("CHAINS:")) {
-				taskMonitor.showMessage(TaskMonitor.Level.WARN,
-						"No chain does not match with protein source description.");
-				f.delete();
-
-				// return String[0-> 'CHAINS'; 1-> HasMoreThanOneChain; 2-> chains: separated by
-				// '#']
-				return new String[] { "CHAINS", returnPDB_proteinSource[2], proteinChain_proteinSource };
-			}
-
-			if (proteinSequenceFromPDBFile_proteinSource.isBlank()
-					|| proteinSequenceFromPDBFile_proteinSource.isEmpty()) {
-				taskMonitor.showMessage(TaskMonitor.Level.ERROR, "No sequence has been found in PDB file.");
-				return new String[] { "ERROR" };
-			}
-
-			if (ptnSource.sequence.isBlank() || ptnSource.sequence.isEmpty()) {
-				taskMonitor.showMessage(TaskMonitor.Level.ERROR, "No sequence has been found in Uniprot.");
-				return new String[] { "ERROR" };
-			}
-
-			finalStr = createPyMOLScript(taskMonitor, ptnSource, crossLinks, pdbFile, HasMoreThanOneChain_proteinSource,
-					proteinChain_proteinSource, proteinSequenceFromPDBFile_proteinSource);
 
 			bw = new FileWriter(f);
 			bw.write(finalStr);
@@ -665,6 +602,86 @@ public class ProteinStructureManager {
 			proteinOffsetInPDBTarget = -1;
 
 		return sbSequence.toString();
+	}
+
+	/**
+	 * Get protein sequence and chain from CIF file
+	 * 
+	 * @param fileName    file name
+	 * @param taskMonitor task monitor
+	 * @return [sequence, protein chain, hasMoreThanOneChain]
+	 */
+	public static String[] getProteinSequenceAndChainFromCIFFile(String fileName, Protein ptn,
+			TaskMonitor taskMonitor) {
+
+		return new String[] { "", "A", "false" };
+
+//		Map<ByteBuffer, Integer> ResiduesDict = Util.createResiduesDict();
+//
+//		StringBuilder sbSequence = new StringBuilder();
+//		String protein_chain = "";
+//		StringBuilder sbProteinChains = new StringBuilder();
+//		sbProteinChains.append("CHAINS:");
+//
+//		boolean hasMoreThanOneChain = false;
+//		int countChains = 0;
+//
+//		try {
+//			parserFile = new ReaderWriterTextFile(fileName);
+//			String line = "";
+//			int lastInsertedResidue = 0;
+//			int threshold = 10;// qtd aminoacids
+//			int countAA = 0;
+//			proteinOffsetInPDBSource = -1;
+//
+//			boolean isCompleteFullName = false;
+//			StringBuilder sbProteinFullName = new StringBuilder();
+//
+//			while (parserFile.hasLine()) {
+//				line = parserFile.getLine();
+//				if (!(line.equals(""))) {
+//
+//					if (!line.startsWith("ATOM"))
+//						continue;
+//
+//					String[] cols = line.split("\\s+");
+//
+//					if (!cols[4].equals(protein_chain))
+//						continue;
+//
+//					byte[] pdbResidue = cols[3].getBytes();// Residue -> three characters
+//					int newResidue = ResiduesDict.get(ByteBuffer.wrap(pdbResidue));
+//
+//					if (newResidue != lastInsertedResidue) {
+//						byte[] _byte = new byte[1];
+//						_byte[0] = (byte) newResidue;
+//						String string = new String(_byte);
+//						sbSequence.append(string);
+//						countAA++;
+//						if (countAA > threshold) {
+//							break;
+//						}
+//					}
+//					lastInsertedResidue = newResidue;
+//
+//					if (proteinOffsetInPDBSource == -1) {
+//						proteinOffsetInPDBSource = Integer.parseInt(cols[5]);
+//					}
+//
+//				}
+//			}
+//		} catch (Exception e) {
+//			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Problems while reading PDB file: " + fileName);
+//		}
+//
+//		if (protein_chain.isBlank() || protein_chain.isEmpty())
+//			protein_chain = sbProteinChains.toString();
+//
+//		if (countChains > 1 || hasMoreThanOneChain) {
+//			return new String[] { sbSequence.toString(), protein_chain, "true" };
+//		} else
+//			return new String[] { sbSequence.toString(), protein_chain, "false" };
+
 	}
 
 	/**
