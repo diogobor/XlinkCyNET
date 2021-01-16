@@ -7,8 +7,10 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.swing.JLabel;
@@ -18,7 +20,6 @@ import org.cytoscape.work.TaskMonitor;
 import de.fmp.liulab.model.CrossLink;
 import de.fmp.liulab.model.Protein;
 import de.fmp.liulab.parser.ReaderWriterTextFile;
-import de.fmp.liulab.task.MainSingleEdgeTask;
 import de.fmp.liulab.utils.Util;
 
 /**
@@ -288,7 +289,7 @@ public class ProteinStructureManager {
 			if (pdbFile.endsWith("pdb"))
 				returnPDB = getProteinSequenceAndChainFromPDBFile(pdbFile, ptn, taskMonitor);
 			else
-				returnPDB = getProteinSequenceAndChainFromCIFFile(pdbFile, ptn, taskMonitor);
+				returnPDB = getChainFromCIFFile(pdbFile, ptn, taskMonitor);
 
 			String proteinSequenceFromPDBFile = returnPDB[0];
 			boolean HasMoreThanOneChain = returnPDB[2].equals("true") ? true : false;
@@ -545,6 +546,7 @@ public class ProteinStructureManager {
 	 */
 	public static String getProteinSequenceFromPDBFileWithSpecificChain(String fileName, Protein ptn,
 			TaskMonitor taskMonitor, String protein_chain, boolean isProteinSource) {
+
 		Map<ByteBuffer, Integer> ResiduesDict = Util.createResiduesDict();
 
 		StringBuilder sbSequence = new StringBuilder();
@@ -605,82 +607,126 @@ public class ProteinStructureManager {
 	}
 
 	/**
+	 * Get protein sequence from CIF file
+	 * 
+	 * @param fileName      file name
+	 * @param ptn           protein
+	 * @param taskMonitor   task monitor
+	 * @param protein_chain protein chain
+	 * @return protein sequence
+	 */
+	public static String getProteinSequenceFromCIFFileWithSpecificChain(String fileName, Protein ptn,
+			TaskMonitor taskMonitor, String protein_chain, boolean isProteinSource) {
+
+		Map<ByteBuffer, Integer> ResiduesDict = Util.createResiduesDict();
+
+		StringBuilder sbSequence = new StringBuilder();
+
+		try {
+			parserFile = new ReaderWriterTextFile(fileName);
+			String line = "";
+			int lastInsertedResidue = 0;
+			int threshold = 10;// qtd aminoacids
+			int countAA = 0;
+			int proteinOffsetInPDB = -1;
+
+			while (parserFile.hasLine()) {
+				line = parserFile.getLine();
+				if (!(line.equals(""))) {
+
+					if (!line.startsWith("ATOM"))
+						continue;
+
+					// It starts with 'ATOM'
+
+					String[] cols = line.split("\\s+");
+
+					if (!cols[6].equals(protein_chain))
+						continue;
+
+					if (!(cols[5].length() == 3))
+						continue;// It means that the ATOM is not a residue, it's a gene
+						
+					byte[] pdbResidue = cols[5].getBytes();// Residue -> three characters
+					int newResidue = ResiduesDict.get(ByteBuffer.wrap(pdbResidue));
+
+					if (newResidue != lastInsertedResidue) {
+						byte[] _byte = new byte[1];
+						_byte[0] = (byte) newResidue;
+						String string = new String(_byte);
+						sbSequence.append(string);
+						countAA++;
+						if (countAA > threshold) {
+							break;
+						}
+					}
+					lastInsertedResidue = newResidue;
+
+					if (proteinOffsetInPDB == -1) {
+						proteinOffsetInPDB = Integer.parseInt(cols[5]);
+					}
+				}
+
+			}
+		} catch (Exception e) {
+			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Problems while reading PDB file: " + fileName);
+		}
+
+		if (isProteinSource)
+			proteinOffsetInPDBSource = -1;
+		else
+			proteinOffsetInPDBTarget = -1;
+
+		return sbSequence.toString();
+	}
+
+	/**
 	 * Get protein sequence and chain from CIF file
 	 * 
 	 * @param fileName    file name
 	 * @param taskMonitor task monitor
 	 * @return [sequence, protein chain, hasMoreThanOneChain]
 	 */
-	public static String[] getProteinSequenceAndChainFromCIFFile(String fileName, Protein ptn,
-			TaskMonitor taskMonitor) {
+	public static String[] getChainFromCIFFile(String fileName, Protein ptn, TaskMonitor taskMonitor) {
 
-		return new String[] { "", "A", "false" };
+		StringBuilder sbSequence = new StringBuilder();
+		String protein_chain = "";
+		Set<String> chainsSet = new HashSet<String>();
+		StringBuilder sbProteinChains = new StringBuilder();
+		sbProteinChains.append("CHAINS:");
 
-//		Map<ByteBuffer, Integer> ResiduesDict = Util.createResiduesDict();
-//
-//		StringBuilder sbSequence = new StringBuilder();
-//		String protein_chain = "";
-//		StringBuilder sbProteinChains = new StringBuilder();
-//		sbProteinChains.append("CHAINS:");
-//
-//		boolean hasMoreThanOneChain = false;
-//		int countChains = 0;
-//
-//		try {
-//			parserFile = new ReaderWriterTextFile(fileName);
-//			String line = "";
-//			int lastInsertedResidue = 0;
-//			int threshold = 10;// qtd aminoacids
-//			int countAA = 0;
-//			proteinOffsetInPDBSource = -1;
-//
-//			boolean isCompleteFullName = false;
-//			StringBuilder sbProteinFullName = new StringBuilder();
-//
-//			while (parserFile.hasLine()) {
-//				line = parserFile.getLine();
-//				if (!(line.equals(""))) {
-//
-//					if (!line.startsWith("ATOM"))
-//						continue;
-//
-//					String[] cols = line.split("\\s+");
-//
-//					if (!cols[4].equals(protein_chain))
-//						continue;
-//
-//					byte[] pdbResidue = cols[3].getBytes();// Residue -> three characters
-//					int newResidue = ResiduesDict.get(ByteBuffer.wrap(pdbResidue));
-//
-//					if (newResidue != lastInsertedResidue) {
-//						byte[] _byte = new byte[1];
-//						_byte[0] = (byte) newResidue;
-//						String string = new String(_byte);
-//						sbSequence.append(string);
-//						countAA++;
-//						if (countAA > threshold) {
-//							break;
-//						}
-//					}
-//					lastInsertedResidue = newResidue;
-//
-//					if (proteinOffsetInPDBSource == -1) {
-//						proteinOffsetInPDBSource = Integer.parseInt(cols[5]);
-//					}
-//
-//				}
-//			}
-//		} catch (Exception e) {
-//			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Problems while reading PDB file: " + fileName);
-//		}
-//
-//		if (protein_chain.isBlank() || protein_chain.isEmpty())
-//			protein_chain = sbProteinChains.toString();
-//
-//		if (countChains > 1 || hasMoreThanOneChain) {
-//			return new String[] { sbSequence.toString(), protein_chain, "true" };
-//		} else
-//			return new String[] { sbSequence.toString(), protein_chain, "false" };
+		int countChains = 0;
+
+		try {
+			parserFile = new ReaderWriterTextFile(fileName);
+			String line = "";
+			proteinOffsetInPDBSource = -1;
+
+			while (parserFile.hasLine()) {
+				line = parserFile.getLine();
+				if (!(line.equals(""))) {
+
+					if (!line.startsWith("ATOM"))
+						continue;
+
+					String[] cols = line.split("\\s+");
+
+					if (cols[5].length() == 3)// It means that the ATOM is a residue, not a gene
+						chainsSet.add(cols[6]);
+				}
+			}
+		} catch (Exception e) {
+			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Problems while reading PDB file: " + fileName);
+		}
+
+		countChains = sbProteinChains.length();
+		sbProteinChains.append(String.join("#", chainsSet));
+		protein_chain = sbProteinChains.toString();
+
+		if (countChains > 1) {
+			return new String[] { sbSequence.toString(), protein_chain, "true" };
+		} else
+			return new String[] { sbSequence.toString(), protein_chain, "false" };
 
 	}
 

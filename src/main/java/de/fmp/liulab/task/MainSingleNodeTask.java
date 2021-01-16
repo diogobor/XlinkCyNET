@@ -887,8 +887,14 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, msgINFO);
 
-		String proteinSequenceFromPDBFile = ProteinStructureManager
-				.getProteinSequenceFromPDBFileWithSpecificChain(pdbFile, ptn, taskMonitor, proteinChain, false);
+		String proteinSequenceFromPDBFile = "";
+
+		if (pdbFile.endsWith("pdb"))
+			proteinSequenceFromPDBFile = ProteinStructureManager.getProteinSequenceFromPDBFileWithSpecificChain(pdbFile,
+					ptn, taskMonitor, proteinChain, false);
+		else
+			proteinSequenceFromPDBFile = ProteinStructureManager.getProteinSequenceFromCIFFileWithSpecificChain(pdbFile,
+					ptn, taskMonitor, proteinChain, false);
 
 		String tmpPyMOLScriptFile = ProteinStructureManager.createPyMOLScriptFile(ptn, intraLinks, taskMonitor, pdbFile,
 				proteinSequenceFromPDBFile, HasMoreThanOneChain, proteinChain);

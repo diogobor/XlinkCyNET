@@ -135,7 +135,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 
 		} else if (edges.size() > 1) {
 
-//			executeMultipleNodes(taskMonitor);
+			throw new Exception("More than one edge has been selected. Please select only one.");
 
 		} else {
 			edge = edges.get(0);
@@ -168,8 +168,8 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 		boolean isIntralink = sourceNode.getSUID() == targetNode.getSUID() || edge_name.startsWith("Edge") ? true
 				: false;
 
-		String ptn_a = myNetwork.getRow(sourceNode).get(CyNetwork.NAME, String.class);
-		String ptn_b = myNetwork.getRow(targetNode).get(CyNetwork.NAME, String.class);
+//		String ptn_a = myNetwork.getRow(sourceNode).get(CyNetwork.NAME, String.class);
+//		String ptn_b = myNetwork.getRow(targetNode).get(CyNetwork.NAME, String.class);
 		crosslinks = new ArrayList<CrossLink>();
 
 		if (!Util.isEdgeModified(myNetwork, netView, edge)) { // Display all cross-links between two proteins
@@ -220,8 +220,22 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 				String[] pos_a = edgeNameArr[1].split("\\(|\\)");
 				String[] pos_b = edgeNameArr[3].split("\\(|\\)");
 
+				String ptn_a = pos_a[0].replaceAll("Source: ", "").trim();
+				String ptn_b = pos_b[0].replaceAll("Target: ", "").trim();
+
 				CrossLink cl = new CrossLink(ptn_a, ptn_b, Integer.parseInt(pos_a[1]), Integer.parseInt(pos_b[1]));
 				crosslinks.add(cl);
+			}
+
+			if (isIntralink) {
+
+				sourceNode = Util.getNode(myNetwork, crosslinks.get(0).protein_a);
+				MainSingleNodeTask.intraLinks = (ArrayList<CrossLink>) crosslinks;
+				myCurrentRow = myNetwork.getRow(sourceNode);
+
+				processIntraLinks(taskMonitor, myCurrentRow);
+
+				return;
 			}
 		}
 
@@ -345,8 +359,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 				returnPDB_proteinTarget = ProteinStructureManager.getProteinSequenceAndChainFromPDBFile(pdbFile,
 						ptnTarget, taskMonitor);
 			else
-				returnPDB_proteinTarget = ProteinStructureManager.getProteinSequenceAndChainFromCIFFile(pdbFile,
-						ptnTarget, taskMonitor);
+				returnPDB_proteinTarget = ProteinStructureManager.getChainFromCIFFile(pdbFile, ptnTarget, taskMonitor);
 
 			proteinSequenceFromPDBFile_proteinTarget = returnPDB_proteinTarget[0];
 			HasMoreThanOneChain_proteinTarget = returnPDB_proteinTarget[2].equals("true") ? true : false;
