@@ -415,7 +415,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 			if (current_node != null) {
 				myCurrentRow = myNetwork.getRow(current_node);
 
-				List<ProteinDomain> new_proteinDomains = Util.getProteinDomains(myCurrentRow);
+				List<ProteinDomain> new_proteinDomains = Util.getProteinDomains(myCurrentRow, taskMonitor);
 				if (new_proteinDomains.size() > 0) {
 					geneDomain.proteinDomains = new_proteinDomains;
 				}

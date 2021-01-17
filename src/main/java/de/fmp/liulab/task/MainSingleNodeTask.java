@@ -843,7 +843,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 					if (processPDBfile)
 						processPDBFile(msgINFO, taskMonitor, value, ptnSource);
 					else
-						processPDBFileWithSpecificChain(taskMonitor, pdbFile, ptnSource, HasMoreThanOneChain, value);
+						processPDBorCiFfileWithSpecificChain(taskMonitor, pdbFile, ptnSource, HasMoreThanOneChain, value);
 
 				} else {
 
@@ -878,7 +878,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	 * @param HasMoreThanOneChain has more than one protein chain
 	 * @param proteinChain        protein chain
 	 */
-	private void processPDBFileWithSpecificChain(TaskMonitor taskMonitor, String pdbFile, Protein ptn,
+	private void processPDBorCiFfileWithSpecificChain(TaskMonitor taskMonitor, String pdbFile, Protein ptn,
 			boolean HasMoreThanOneChain, String proteinChain) {
 
 		String msgINFO = "Creating tmp PyMOL script file...";
@@ -984,7 +984,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			} else {
 				// There is only one protein chain
 				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Processing PDB file...");
-				processPDBFileWithSpecificChain(taskMonitor, pdbFile, ptn, HasMoreThanOneChain,
+				processPDBorCiFfileWithSpecificChain(taskMonitor, pdbFile, ptn, HasMoreThanOneChain,
 						protein_chainsList.get(0));
 			}
 
@@ -1071,7 +1071,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 							textLabel_status_result.setText("Getting protein domains...");
 							taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting protein domains...");
-							proteinDomainsServer = Util.getProteinDomains(myCurrentRow);
+							proteinDomainsServer = Util.getProteinDomains(myCurrentRow, taskMonitor);
 							taskMonitor.setProgress(0.4);
 							if (proteinDomainsServer.size() > 0)
 								textLabel_status_result.setText("Done!");
@@ -1152,7 +1152,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 								textLabel_status_result.setText("Getting PDB information from Uniprot...");
 							taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB information from Uniprot...");
 
-							Protein ptn = Util.getPDBidFromUniprot(myCurrentRow);
+							Protein ptn = Util.getPDBidFromUniprot(myCurrentRow, taskMonitor);
 							List<String> pdbIds = ptn.pdbIds;
 							if (pdbIds.size() > 0) {
 								String pdbID = pdbIds.get(0);

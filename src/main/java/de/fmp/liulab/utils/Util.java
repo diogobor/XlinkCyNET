@@ -2332,14 +2332,14 @@ public class Util {
 	 * @param myCurrentRow current row of the table
 	 * @return all protein domains
 	 */
-	public static ArrayList<ProteinDomain> getProteinDomains(CyRow myCurrentRow) {
+	public static ArrayList<ProteinDomain> getProteinDomains(CyRow myCurrentRow, TaskMonitor taskMonitor) {
 
 		// ############ GET PROTEIN DOMAINS #################
 		ArrayList<ProteinDomain> proteinDomainsServer = new ArrayList<ProteinDomain>(0);
 
 		String proteinID = getProteinID(myCurrentRow);
 		if (!(proteinID.isBlank() || proteinID.isEmpty())) {
-			proteinDomainsServer = getProteinDomains(proteinID);
+			proteinDomainsServer = getProteinDomains(proteinID, taskMonitor);
 			Collections.sort(proteinDomainsServer);
 		}
 		// ############################### END ################################
@@ -2353,11 +2353,11 @@ public class Util {
 	 * @param proteinID protein ID
 	 * @return list with protein domains
 	 */
-	private static ArrayList<ProteinDomain> getProteinDomains(String proteinID) {
+	private static ArrayList<ProteinDomain> getProteinDomains(String proteinID, TaskMonitor taskMonitor) {
 		if (isProteinDomainPfam)
-			return getProteinDomainsFromPfam(proteinID);
+			return getProteinDomainsFromPfam(proteinID, taskMonitor);
 		else
-			return getProteinDomainsFromSupfam(proteinID);
+			return getProteinDomainsFromSupfam(proteinID, taskMonitor);
 	}
 
 	/**
@@ -2366,7 +2366,7 @@ public class Util {
 	 * @param pdbID protein id
 	 * @return pdb file name
 	 */
-	public static String[] getPDBorCIFfileFromServer(String pdbID) {
+	public static String[] getPDBorCIFfileFromServer(String pdbID, TaskMonitor taskMonitor) {
 
 		try {
 			String _url = "https://files.rcsb.org/view/" + pdbID + ".pdb";
@@ -2387,24 +2387,44 @@ public class Util {
 				}
 				BufferedReader rd = new BufferedReader(new InputStreamReader(inputStream));
 				String line;
+
 				StringBuilder response = new StringBuilder();
+				int total_lines = connection.getContentLength();
+
+				int old_progress = 0;
+				int summary_processed = 0;
+
 				while ((line = rd.readLine()) != null) {
 					response.append(line);
 					response.append('\r');
+
+					summary_processed += line.toCharArray().length + 1;
+					int new_progress = (int) ((double) summary_processed / (total_lines) * 100);
+					if (new_progress > old_progress) {
+						old_progress = new_progress;
+
+						taskMonitor.showMessage(TaskMonitor.Level.INFO,
+								"Downloading PDB file from server: " + old_progress + "%");
+					}
 				}
 				rd.close();
 				return new String[] { "PDB", response.toString() };
 
 			} else if (connection.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-				
-				return new String[] { "CIF", getCiFfileFromServer(pdbID) };
-				
+
+				taskMonitor.showMessage(TaskMonitor.Level.WARN,
+						"There is no PDB for this ID: " + pdbID + ". Trying to retrieve CIF file...");
+
+				return new String[] { "CIF", getCiFfileFromServer(pdbID, taskMonitor) };
+
 			} else {
+
+				taskMonitor.showMessage(TaskMonitor.Level.WARN, "There is no PDB for this ID: " + pdbID + ".");
 				return new String[] { "" };
 			}
 
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+			taskMonitor.showMessage(TaskMonitor.Level.WARN, e.getMessage());
 			return new String[] { "" };
 		}
 	}
@@ -2415,7 +2435,7 @@ public class Util {
 	 * @param pdbID protein id
 	 * @return cif file name
 	 */
-	public static String getCiFfileFromServer(String pdbID) {
+	public static String getCiFfileFromServer(String pdbID, TaskMonitor taskMonitor) {
 
 		try {
 			String _url = "https://files.rcsb.org/view/" + pdbID + ".cif";
@@ -2437,19 +2457,34 @@ public class Util {
 				BufferedReader rd = new BufferedReader(new InputStreamReader(inputStream));
 				String line;
 				StringBuilder response = new StringBuilder();
+				int total_lines = connection.getContentLength();
+
+				int old_progress = 0;
+				int summary_processed = 0;
 				while ((line = rd.readLine()) != null) {
 					response.append(line);
 					response.append('\r');
+
+					summary_processed += line.toCharArray().length + 1;
+					int new_progress = (int) ((double) summary_processed / (total_lines) * 100);
+					if (new_progress > old_progress) {
+						old_progress = new_progress;
+
+						taskMonitor.showMessage(TaskMonitor.Level.INFO,
+								"Downloading CIF file from server: " + old_progress + "%");
+					}
 				}
 				rd.close();
 				return response.toString();
 
 			} else {
+
+				taskMonitor.showMessage(TaskMonitor.Level.WARN, "There is no CIF for this ID: " + pdbID + ".");
 				return "";
 			}
 
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+			taskMonitor.showMessage(TaskMonitor.Level.WARN, e.getMessage());
 			return "";
 		}
 	}
@@ -2460,7 +2495,7 @@ public class Util {
 	 * @param myCurrentRow current row
 	 * @return pdb ids
 	 */
-	public static Protein getPDBidFromUniprot(CyRow myCurrentRow) {
+	public static Protein getPDBidFromUniprot(CyRow myCurrentRow, TaskMonitor taskMonitor) {
 
 		String proteinID = getProteinID(myCurrentRow);
 		if (proteinID.isBlank() || proteinID.isEmpty()) {
@@ -2487,9 +2522,23 @@ public class Util {
 				BufferedReader rd = new BufferedReader(new InputStreamReader(inputStream));
 				String line;
 				StringBuilder response = new StringBuilder();
+				int total_lines = connection.getContentLength();
+
+				int old_progress = 0;
+				int summary_processed = 0;
 				while ((line = rd.readLine()) != null) {
 					response.append(line);
 					response.append('\r');
+
+					summary_processed += line.toCharArray().length + 1;
+					int new_progress = (int) ((double) summary_processed / (total_lines) * 100);
+					if (new_progress > old_progress) {
+						old_progress = new_progress;
+
+						taskMonitor.showMessage(TaskMonitor.Level.INFO,
+								"Downloading protein information from Uniprot: " + old_progress + "%");
+					}
+
 				}
 				rd.close();
 				String responseString = response.toString();
@@ -2509,6 +2558,7 @@ public class Util {
 					throw new Exception("XlinkCyNET ERROR: " + xmlnodes.item(0).getNodeValue());
 				}
 
+				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting protein description...");
 				xmlnodes = doc.getElementsByTagName("recommendedName");
 				if (xmlnodes.getLength() == 0) {
 					xmlnodes = doc.getElementsByTagName("submittedName");
@@ -2527,6 +2577,7 @@ public class Util {
 					}
 				}
 
+				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB IDs...");
 				xmlnodes = doc.getElementsByTagName("dbReference");
 
 				Set<String> pDBids = new HashSet<String>();
@@ -2539,6 +2590,7 @@ public class Util {
 
 				}
 
+				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting protein sequence...");
 				xmlnodes = doc.getElementsByTagName("sequence");
 
 				String ptnSequence = "";
@@ -2624,7 +2676,8 @@ public class Util {
 	 * @param proteinID protein id
 	 * @return all protein domains
 	 */
-	private static ArrayList<ProteinDomain> getProteinDomainsFromSupfam(String proteinID) {
+	private static ArrayList<ProteinDomain> getProteinDomainsFromSupfam(String proteinID, TaskMonitor taskMonitor) {
+
 		try {
 			String _url = "http://supfam.org/SUPERFAMILY/cgi-bin/das/up/features?segment=" + proteinID;
 			final URL url = new URL(_url);
@@ -2668,6 +2721,7 @@ public class Util {
 
 				NodeList xmlnodes = doc.getElementsByTagName("FEATURE");
 
+				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting domains...");
 				ArrayList<ProteinDomain> proteinDomainList = new ArrayList<ProteinDomain>();
 				for (int i = 0; i < xmlnodes.getLength(); i++) {
 					String domain = "";
@@ -2703,13 +2757,16 @@ public class Util {
 						proteinDomainList.add(new ProteinDomain(domain, startId, endId, eValue));
 					}
 				}
+				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Done!");
 				return proteinDomainList;
 			} else {
+				taskMonitor.showMessage(TaskMonitor.Level.WARN, "There is no Supfam file for the ID: " + proteinID);
 				return new ArrayList<ProteinDomain>();
 			}
 
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+
+			taskMonitor.showMessage(TaskMonitor.Level.WARN, e.getMessage());
 			return new ArrayList<ProteinDomain>();
 		}
 	}
@@ -2720,7 +2777,7 @@ public class Util {
 	 * @param proteinID protein id
 	 * @return all protein domains
 	 */
-	private static ArrayList<ProteinDomain> getProteinDomainsFromPfam(String proteinID) {
+	private static ArrayList<ProteinDomain> getProteinDomainsFromPfam(String proteinID, TaskMonitor taskMonitor) {
 
 		try {
 			String _url = "https://pfam.xfam.org/protein?entry=" + proteinID + "&output=xml";
@@ -2738,12 +2795,27 @@ public class Util {
 				if (inputStream == null) {
 					inputStream = connection.getInputStream();
 				}
+
+				int total_lines = connection.getContentLength();
+
 				BufferedReader rd = new BufferedReader(new InputStreamReader(inputStream));
 				String line;
+
+				int old_progress = 0;
+				int summary_processed = 0;
 				StringBuilder response = new StringBuilder();
 				while ((line = rd.readLine()) != null) {
 					response.append(line);
 					response.append('\r');
+
+					summary_processed += line.toCharArray().length + 1;
+					int new_progress = (int) ((double) summary_processed / (total_lines) * 100);
+					if (new_progress > old_progress) {
+						old_progress = new_progress;
+
+						taskMonitor.showMessage(TaskMonitor.Level.INFO,
+								"Downloading Pfam file from server: " + old_progress + "%");
+					}
 				}
 				rd.close();
 				String responseString = response.toString();
@@ -2765,6 +2837,8 @@ public class Util {
 
 				xmlnodes = doc.getElementsByTagName("matches");
 
+				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting domains...");
+
 				ArrayList<ProteinDomain> proteinDomainList = new ArrayList<ProteinDomain>();
 				for (int i = 0; i < xmlnodes.getLength(); i++) {
 					for (int j = 0; j < xmlnodes.item(i).getChildNodes().getLength(); j++) {
@@ -2785,11 +2859,12 @@ public class Util {
 				}
 				return proteinDomainList;
 			} else {
+				taskMonitor.showMessage(TaskMonitor.Level.WARN, "There is no Pfam file for the ID: " + proteinID);
 				return new ArrayList<ProteinDomain>();
 			}
 
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+			taskMonitor.showMessage(TaskMonitor.Level.WARN, e.getMessage());
 			return new ArrayList<ProteinDomain>();
 		}
 	}

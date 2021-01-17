@@ -111,7 +111,7 @@ public class ProteinStructureManager {
 
 			// Retrieving file from RCSB server
 			// [PDB or CIF, file content]
-			String[] returnFile = Util.getPDBorCIFfileFromServer(pdbID);
+			String[] returnFile = Util.getPDBorCIFfileFromServer(pdbID, taskMonitor);
 
 			// write this script to tmp file and return path
 			if (returnFile[0].equals("PDB"))
@@ -628,7 +628,7 @@ public class ProteinStructureManager {
 			int lastInsertedResidue = 0;
 			int threshold = 10;// qtd aminoacids
 			int countAA = 0;
-			int proteinOffsetInPDB = -1;
+			proteinOffsetInPDBSource = -1;
 
 			while (parserFile.hasLine()) {
 				line = parserFile.getLine();
@@ -646,7 +646,7 @@ public class ProteinStructureManager {
 
 					if (!(cols[5].length() == 3))
 						continue;// It means that the ATOM is not a residue, it's a gene
-						
+
 					byte[] pdbResidue = cols[5].getBytes();// Residue -> three characters
 					int newResidue = ResiduesDict.get(ByteBuffer.wrap(pdbResidue));
 
@@ -662,8 +662,8 @@ public class ProteinStructureManager {
 					}
 					lastInsertedResidue = newResidue;
 
-					if (proteinOffsetInPDB == -1) {
-						proteinOffsetInPDB = Integer.parseInt(cols[5]);
+					if (proteinOffsetInPDBSource == -1) {
+						proteinOffsetInPDBSource = Integer.parseInt(cols[7]);
 					}
 				}
 
@@ -672,10 +672,10 @@ public class ProteinStructureManager {
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Problems while reading PDB file: " + fileName);
 		}
 
-		if (isProteinSource)
-			proteinOffsetInPDBSource = -1;
-		else
-			proteinOffsetInPDBTarget = -1;
+//		if (isProteinSource)
+//			proteinOffsetInPDBSource = -1;
+//		else
+//			proteinOffsetInPDBTarget = -1;
 
 		return sbSequence.toString();
 	}
@@ -818,7 +818,8 @@ public class ProteinStructureManager {
 											continue;
 										}
 
-									} else { // There is more than one chain for this ptn full name
+									} else { // There is only one molecule, but with more than one chain for this ptn
+												// full name
 
 										hasMoreThanOneChain = true;
 										for (String fullName : fullNames) {
@@ -829,7 +830,15 @@ public class ProteinStructureManager {
 											}
 										}
 									}
-									sbProteinChains.append(cols[3].toString().replace(';', ' ').trim() + "#");
+
+									if ((cols.length - 3) > 1) //Check if 'CHAIN' field has more than 1 chain: CHAIN: A,B
+										hasMoreThanOneChain = true;
+
+									for (int i = 3; i < cols.length; i++) {
+
+										sbProteinChains.append(
+												cols[i].toString().replace(',', ' ').replace(';', ' ').trim() + "#");
+									}
 
 								}
 							}

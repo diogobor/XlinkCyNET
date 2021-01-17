@@ -168,8 +168,6 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 		boolean isIntralink = sourceNode.getSUID() == targetNode.getSUID() || edge_name.startsWith("Edge") ? true
 				: false;
 
-//		String ptn_a = myNetwork.getRow(sourceNode).get(CyNetwork.NAME, String.class);
-//		String ptn_b = myNetwork.getRow(targetNode).get(CyNetwork.NAME, String.class);
 		crosslinks = new ArrayList<CrossLink>();
 
 		if (!Util.isEdgeModified(myNetwork, netView, edge)) { // Display all cross-links between two proteins
@@ -243,7 +241,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 		myCurrentRow = myNetwork.getRow(sourceNode);
 
 		taskMonitor.showMessage(Level.INFO, "Getting PDB information...");
-		Protein ptnSource = Util.getPDBidFromUniprot(myCurrentRow);
+		Protein ptnSource = Util.getPDBidFromUniprot(myCurrentRow, taskMonitor);
 		source_node_name = (String) myCurrentRow.getRaw(CyNetwork.NAME);
 
 		String msgINFO = "";
@@ -255,7 +253,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 			myCurrentRow = myNetwork.getRow(targetNode);
 
 			taskMonitor.showMessage(Level.INFO, "Getting PDB information...");
-			Protein ptnTarget = Util.getPDBidFromUniprot(myCurrentRow);
+			Protein ptnTarget = Util.getPDBidFromUniprot(myCurrentRow, taskMonitor);
 			target_node_name = (String) myCurrentRow.getRaw(CyNetwork.NAME);
 
 			List<String> pdbIdsTarget = ptnTarget.pdbIds;
@@ -305,7 +303,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 		String msgINFO = "";
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB information from Uniprot...");
 
-		Protein ptn = Util.getPDBidFromUniprot(myCurrentRow);
+		Protein ptn = Util.getPDBidFromUniprot(myCurrentRow, taskMonitor);
 		List<String> pdbIds = ptn.pdbIds;
 		if (pdbIds.size() > 0) {
 
@@ -350,16 +348,19 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 			// Set the chain of protein source
 			proteinChain_source = pdbID;
 
-			taskMonitor.showMessage(TaskMonitor.Level.INFO,
-					"Getting protein sequence and chain of protein target from PDB file...");
-
 			// [pdb protein sequence, protein chain, "true" -> there is more than one chain]
 			String[] returnPDB_proteinTarget = null;
-			if (pdbFile.endsWith("pdb"))
+			if (pdbFile.endsWith("pdb")) {
+				taskMonitor.showMessage(TaskMonitor.Level.INFO,
+						"Getting protein sequence and chain of protein source from PDB file...");
 				returnPDB_proteinTarget = ProteinStructureManager.getProteinSequenceAndChainFromPDBFile(pdbFile,
 						ptnTarget, taskMonitor);
-			else
+			} else {
+
+				taskMonitor.showMessage(TaskMonitor.Level.INFO,
+						"Getting all chains of protein source from CIF file...");
 				returnPDB_proteinTarget = ProteinStructureManager.getChainFromCIFFile(pdbFile, ptnTarget, taskMonitor);
+			}
 
 			proteinSequenceFromPDBFile_proteinTarget = returnPDB_proteinTarget[0];
 			HasMoreThanOneChain_proteinTarget = returnPDB_proteinTarget[2].equals("true") ? true : false;
@@ -403,10 +404,20 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 				return;
 			}
 
-			taskMonitor.showMessage(TaskMonitor.Level.INFO,
-					"Getting protein sequence and chain of protein source from PDB file...");
-			String[] returnPDB_proteinSource = ProteinStructureManager.getProteinSequenceAndChainFromPDBFile(pdbFile,
-					ptnSource, taskMonitor);
+			// [pdb protein sequence, protein chain, "true" -> there is more than one chain]
+			String[] returnPDB_proteinSource = null;
+			if (pdbFile.endsWith("pdb")) {
+
+				taskMonitor.showMessage(TaskMonitor.Level.INFO,
+						"Getting protein sequence and chain of protein source from PDB file...");
+				returnPDB_proteinSource = ProteinStructureManager.getProteinSequenceAndChainFromPDBFile(pdbFile,
+						ptnSource, taskMonitor);
+			} else {
+
+				taskMonitor.showMessage(TaskMonitor.Level.INFO,
+						"Getting all chains of protein source from CIF file...");
+				returnPDB_proteinSource = ProteinStructureManager.getChainFromCIFFile(pdbFile, ptnSource, taskMonitor);
+			}
 
 			proteinSequenceFromPDBFile_proteinSource = returnPDB_proteinSource[0];
 			HasMoreThanOneChain_proteinSource = returnPDB_proteinSource[2].equals("true") ? true : false;
@@ -449,30 +460,40 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Chain of protein target: " + proteinChain_target);
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting sequence of protein source: " + source_node_name);
 
-		String proteinSequence_source_FromPDBFile = ProteinStructureManager
-				.getProteinSequenceFromPDBFileWithSpecificChain(pdbFile, ptnSource, taskMonitor, proteinChain_source,
-						false);
+		String proteinSequence_source_FromPDBFile = "";
+
+		if (pdbFile.endsWith("pdb"))
+			proteinSequence_source_FromPDBFile = ProteinStructureManager.getProteinSequenceFromPDBFileWithSpecificChain(
+					pdbFile, ptnSource, taskMonitor, proteinChain_source, false);
+		else
+			proteinSequence_source_FromPDBFile = ProteinStructureManager.getProteinSequenceFromCIFFileWithSpecificChain(
+					pdbFile, ptnSource, taskMonitor, proteinChain_source, false);
 
 		if (proteinSequence_source_FromPDBFile.isBlank() || proteinSequence_source_FromPDBFile.isEmpty()) {
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR,
-					"No sequence has been found in pdb file for: " + source_node_name);
+					"No sequence has been found in pdb/cif file for: " + source_node_name);
 
-			JOptionPane.showMessageDialog(null, "No sequence has been found in pdb file for: " + source_node_name,
+			JOptionPane.showMessageDialog(null, "No sequence has been found in pdb/cif file for: " + source_node_name,
 					"XlinkCyNET - Alert", JOptionPane.WARNING_MESSAGE);
 			return;
 		}
 
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting sequence of protein target: " + target_node_name);
 
-		String proteinSequence_target_FromPDBFile = ProteinStructureManager
-				.getProteinSequenceFromPDBFileWithSpecificChain(pdbFile, ptnTarget, taskMonitor, proteinChain_target,
-						true);
+		String proteinSequence_target_FromPDBFile = "";
+
+		if (pdbFile.endsWith("pdb"))
+			proteinSequence_target_FromPDBFile = ProteinStructureManager.getProteinSequenceFromPDBFileWithSpecificChain(
+					pdbFile, ptnTarget, taskMonitor, proteinChain_target, true);
+		else
+			proteinSequence_target_FromPDBFile = ProteinStructureManager.getProteinSequenceFromCIFFileWithSpecificChain(
+					pdbFile, ptnTarget, taskMonitor, proteinChain_target, true);
 
 		if (proteinSequence_target_FromPDBFile.isBlank() || proteinSequence_target_FromPDBFile.isEmpty()) {
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR,
-					"No sequence has been found in pdb file for: " + target_node_name);
+					"No sequence has been found in pdb/cif file for: " + target_node_name);
 
-			JOptionPane.showMessageDialog(null, "No sequence has been found in pdb file for: " + target_node_name,
+			JOptionPane.showMessageDialog(null, "No sequence has been found in pdb/cif file for: " + target_node_name,
 					"XlinkCyNET - Alert", JOptionPane.WARNING_MESSAGE);
 			return;
 		}
