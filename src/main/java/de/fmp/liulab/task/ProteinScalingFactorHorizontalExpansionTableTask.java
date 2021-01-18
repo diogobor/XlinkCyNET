@@ -21,6 +21,8 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 	private CyNetwork myNetwork;
 	private boolean forcedHorizontalExpansion;
 
+	public static boolean isProcessing;
+
 	/**
 	 * Constructor
 	 * 
@@ -41,13 +43,31 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 		if (myNetwork == null)
 			return;
 
+		if (isProcessing)
+			return;
+		
+		isProcessing = true;// It indicates that there is a process here
+		
 		// Create Scaling factor protein column
 		CyTable nodeTable = myNetwork.getDefaultNodeTable();
 		if (nodeTable.getColumn(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME) == null) {
-			nodeTable.createColumn(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME, Double.class, false);
+			try {
+				nodeTable.createColumn(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME, Double.class, false);
 
-			for (CyRow row : myNetwork.getDefaultNodeTable().getAllRows()) {
-				row.set(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME, 1.0d);
+				for (CyRow row : myNetwork.getDefaultNodeTable().getAllRows()) {
+					row.set(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME, 1.0d);
+				}
+
+			} catch (IllegalArgumentException e) {
+				try {
+					for (CyRow row : myNetwork.getDefaultNodeTable().getAllRows()) {
+						if (row.get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME, Double.class) == null)
+							row.set(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME, 1.0d);
+					}
+				} catch (Exception e2) {
+					return;
+				}
+			} catch (Exception e) {
 			}
 
 		} else { // The column exists, but it's necessary to check the cells
@@ -62,10 +82,24 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 		}
 
 		if (nodeTable.getColumn(Util.HORIZONTAL_EXPANSION_COLUMN_NAME) == null) {
-			nodeTable.createColumn(Util.HORIZONTAL_EXPANSION_COLUMN_NAME, Boolean.class, false);
+			try {
+				nodeTable.createColumn(Util.HORIZONTAL_EXPANSION_COLUMN_NAME, Boolean.class, false);
 
-			for (CyRow row : myNetwork.getDefaultNodeTable().getAllRows()) {
-				row.set(Util.HORIZONTAL_EXPANSION_COLUMN_NAME, true);
+				for (CyRow row : myNetwork.getDefaultNodeTable().getAllRows()) {
+					row.set(Util.HORIZONTAL_EXPANSION_COLUMN_NAME, true);
+				}
+
+			} catch (IllegalArgumentException e) {
+				try {
+					for (CyRow row : myNetwork.getDefaultNodeTable().getAllRows()) {
+						if (forcedHorizontalExpansion
+								|| row.get(Util.HORIZONTAL_EXPANSION_COLUMN_NAME, Boolean.class) == null)
+							row.set(Util.HORIZONTAL_EXPANSION_COLUMN_NAME, true);
+					}
+				} catch (Exception e2) {
+					return;
+				}
+			} catch (Exception e) {
 			}
 
 		} else { // The column exists, but it's necessary to check the cells
@@ -81,10 +115,22 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 		}
 
 		if (nodeTable.getColumn(Util.PROTEIN_DOMAIN_COLUMN) == null) {
-			nodeTable.createColumn(Util.PROTEIN_DOMAIN_COLUMN, String.class, false);
+			try {
+				nodeTable.createColumn(Util.PROTEIN_DOMAIN_COLUMN, String.class, false);
 
-			for (CyRow row : myNetwork.getDefaultNodeTable().getAllRows()) {
-				row.set(Util.PROTEIN_DOMAIN_COLUMN, "");
+				for (CyRow row : myNetwork.getDefaultNodeTable().getAllRows()) {
+					row.set(Util.PROTEIN_DOMAIN_COLUMN, "");
+				}
+
+			} catch (IllegalArgumentException e) {
+				try {
+					for (CyRow row : myNetwork.getDefaultNodeTable().getAllRows()) {
+						if (row.get(Util.PROTEIN_DOMAIN_COLUMN, String.class) == null)
+							row.set(Util.PROTEIN_DOMAIN_COLUMN, "");
+					}
+				} catch (Exception e2) {
+				}
+			} catch (Exception e) {
 			}
 
 		} else { // The column exists, but it's necessary to check the cells
@@ -96,5 +142,7 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 			} catch (Exception e) {
 			}
 		}
+
+		isProcessing = false;
 	}
 }

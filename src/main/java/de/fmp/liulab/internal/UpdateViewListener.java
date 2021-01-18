@@ -43,6 +43,7 @@ import org.cytoscape.work.swing.DialogTaskManager;
 
 import de.fmp.liulab.task.LoadProteinDomainTask;
 import de.fmp.liulab.task.MainSingleNodeTask;
+import de.fmp.liulab.task.ProteinScalingFactorHorizontalExpansionTableTask;
 import de.fmp.liulab.task.ProteinScalingFactorHorizontalExpansionTableTaskFactory;
 import de.fmp.liulab.task.UpdateViewerTaskFactory;
 import de.fmp.liulab.utils.Util;
@@ -331,8 +332,8 @@ public class UpdateViewListener
 			MainControlPanel.netView = netView;
 
 			// Create protein scaling factor table
-			if (this.dialogTaskManager != null
-					&& this.proteinScalingFactorHorizontalExpansionTableTaskFactory != null) {
+			if (this.dialogTaskManager != null && this.proteinScalingFactorHorizontalExpansionTableTaskFactory != null
+					&& !ProteinScalingFactorHorizontalExpansionTableTask.isProcessing) {
 				TaskIterator ti = this.proteinScalingFactorHorizontalExpansionTableTaskFactory
 						.createTaskIterator(myNetwork, false);
 				this.dialogTaskManager.execute(ti);
@@ -389,8 +390,8 @@ public class UpdateViewListener
 		CyNetwork cyNetwork = event.getNetwork();
 		if (cyNetwork != null) {
 			// Create protein scaling factor table
-			if (this.dialogTaskManager != null
-					&& this.proteinScalingFactorHorizontalExpansionTableTaskFactory != null) {
+			if (this.dialogTaskManager != null && this.proteinScalingFactorHorizontalExpansionTableTaskFactory != null
+					&& !ProteinScalingFactorHorizontalExpansionTableTask.isProcessing) {
 				TaskIterator ti = this.proteinScalingFactorHorizontalExpansionTableTaskFactory
 						.createTaskIterator(cyNetwork, true);
 				this.dialogTaskManager.execute(ti);
