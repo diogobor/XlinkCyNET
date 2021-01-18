@@ -63,6 +63,7 @@ import de.fmp.liulab.internal.UpdateViewListener;
 import de.fmp.liulab.internal.view.JTableRowRenderer;
 import de.fmp.liulab.model.CrossLink;
 import de.fmp.liulab.model.GeneDomain;
+import de.fmp.liulab.model.PDB;
 import de.fmp.liulab.model.Protein;
 import de.fmp.liulab.model.ProteinDomain;
 import de.fmp.liulab.task.LoadProteinDomainTask;
@@ -2045,13 +2046,13 @@ public class Util {
 	/**
 	 * Method responsible for updating table row header
 	 * 
-	 * @param number_lines                  total number of lines
-	 * @param mainProteinDomainTable        main table
-	 * @param rowHeader                     row header of the table
-	 * @param proteinDomainTableScrollPanel scroll panel of the table
+	 * @param number_lines     total number of lines
+	 * @param mainTable        main table
+	 * @param rowHeader        row header of the table
+	 * @param tableScrollPanel scroll panel of the table
 	 */
-	public static void updateRowHeader(int number_lines, JTable mainProteinDomainTable, JList rowHeader,
-			JScrollPane proteinDomainTableScrollPanel) {
+	public static void updateRowHeader(int number_lines, JTable mainTable, JList rowHeader,
+			JScrollPane tableScrollPanel) {
 
 		final String[] headers = new String[number_lines];
 		for (int count = 0; count < number_lines; count++) {
@@ -2074,10 +2075,10 @@ public class Util {
 
 		rowHeader = new JList(lm);
 		rowHeader.setFixedCellWidth(50);
-		rowHeader.setFixedCellHeight(mainProteinDomainTable.getRowHeight());
-		rowHeader.setCellRenderer(new JTableRowRenderer(mainProteinDomainTable));
-		if (proteinDomainTableScrollPanel != null)
-			proteinDomainTableScrollPanel.setRowHeaderView(rowHeader);
+		rowHeader.setFixedCellHeight(mainTable.getRowHeight());
+		rowHeader.setCellRenderer(new JTableRowRenderer(mainTable));
+		if (tableScrollPanel != null)
+			tableScrollPanel.setRowHeaderView(rowHeader);
 	}
 
 	// Utility function
@@ -2580,13 +2581,29 @@ public class Util {
 				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB IDs...");
 				xmlnodes = doc.getElementsByTagName("dbReference");
 
-				Set<String> pDBids = new HashSet<String>();
+				List<PDB> pdbs = new ArrayList<PDB>();
 				for (int i = 0; i < xmlnodes.getLength(); i++) {
 					Node nNode = xmlnodes.item(i);
 					String pdbType = nNode.getAttributes().item(1).getNodeValue();
 					if (!pdbType.equals("PDB"))
 						continue;
-					pDBids.add(nNode.getAttributes().item(0).getNodeValue());
+					if (nNode.hasChildNodes()) {
+						String entry = nNode.getAttributes().item(0).getNodeValue();
+						String resolution = "0.00";
+						String[] chain_positions = null;
+						if (nNode.getChildNodes().item(3).getAttributes().item(0).getNodeValue().equals("resolution")) {
+							resolution = nNode.getChildNodes().item(3).getAttributes().item(1).getNodeValue();
+							chain_positions = nNode.getChildNodes().item(5).getAttributes().item(1).getNodeValue()
+									.split("=");
+						} else if (nNode.getChildNodes().item(3).getAttributes().item(0).getNodeValue()
+								.equals("chains"))
+							chain_positions = nNode.getChildNodes().item(3).getAttributes().item(1).getNodeValue()
+									.split("=");
+						String chain = chain_positions[0];
+						String positions = chain_positions[1];
+						PDB pdb = new PDB(entry, resolution, chain, positions);
+						pdbs.add(pdb);
+					}
 
 				}
 
@@ -2605,8 +2622,8 @@ public class Util {
 					}
 				}
 
-				List<String> pdbIdsList = new ArrayList<String>(pDBids);
-				Protein ptn = new Protein(proteinID, fullName, ptnSequence, pdbIdsList);
+				Collections.sort(pdbs);
+				Protein ptn = new Protein(proteinID, fullName, ptnSequence, pdbs);
 				return ptn;
 
 			} else {

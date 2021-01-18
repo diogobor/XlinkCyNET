@@ -41,7 +41,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
-import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
@@ -69,11 +68,11 @@ import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.TaskMonitor;
 
 import de.fmp.liulab.core.ProteinStructureManager;
-import de.fmp.liulab.internal.MainEdgeContextMenu;
 import de.fmp.liulab.internal.UpdateViewListener;
 import de.fmp.liulab.internal.view.JFrameWithoutMaxAndMinButton;
 import de.fmp.liulab.model.CrossLink;
 import de.fmp.liulab.model.GeneDomain;
+import de.fmp.liulab.model.PDB;
 import de.fmp.liulab.model.Protein;
 import de.fmp.liulab.model.ProteinDomain;
 import de.fmp.liulab.utils.Tuple2;
@@ -714,16 +713,6 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	 * Method responsible for creating a window to provide to the user a list with
 	 * all PBDs. Only one of them needs to be selected.
 	 * 
-	 * @param pdbIds      pdb IDs
-	 * @param msgINFO     output info
-	 * @param taskMonitor task monitor
-	 * @param ptn         protein
-	 */
-
-	/**
-	 * Method responsible for creating a window to provide to the user a list with
-	 * all PBDs. Only one of them needs to be selected.
-	 * 
 	 * @param pdbIds              pdb IDs
 	 * @param msgINFO             output info
 	 * @param taskMonitor         task monitor
@@ -737,7 +726,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	 * @param isFromEdgeAction    indicates if the method is called from edge action
 	 * @param nodeName            node name
 	 */
-	public void getPDBInformation(List<String> pdbIds, String msgINFO, TaskMonitor taskMonitor, Protein ptnSource,
+	public void getPDBInformation(List<PDB> pdbIds, String msgINFO, TaskMonitor taskMonitor, Protein ptnSource,
 			Protein ptnTarget, boolean processPDBfile, String pdbFile, boolean HasMoreThanOneChain,
 			boolean isFromEdgeAction, String nodeName, boolean processTarget) {
 
@@ -746,9 +735,9 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		pdbFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		Dimension appSize = null;
 		if (Util.isWindows()) {
-			appSize = new Dimension(220, 345);
+			appSize = new Dimension(300, 345);
 		} else {
-			appSize = new Dimension(200, 325);
+			appSize = new Dimension(280, 325);
 		}
 		pdbFrame.setSize(appSize);
 		pdbFrame.setResizable(false);
@@ -759,7 +748,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		else
 			pdbPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Protein Chain"));
 		pdbPanel.setLayout(null);
-		pdbPanel.setBounds(20, 20, 200, 325);
+		pdbPanel.setBounds(20, 20, 280, 325);
 
 		int offset_y = 10;
 
@@ -800,11 +789,58 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		textLabel_title.setBounds(10, offset_y, 100, 40);
 		pdbPanel.add(textLabel_title);
 
-		JList<String> list = new JList(pdbIds.toArray()); // data has type Object[]
-		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		list.setLayoutOrientation(JList.VERTICAL_WRAP);
-		list.setVisibleRowCount(-1);
-		list.setSelectedIndex(0);
+		// create table model with data
+
+		String[] columnPDBNames = null;
+		final Class[] columnPDBClass;
+		int numberClasses = 4;
+
+		if (processPDBfile) {
+			columnPDBNames = new String[] { "PDB Entry", "Resolution", "Chain", "Positions" };
+			columnPDBClass = new Class[] { String.class, String.class, String.class, String.class };
+		} else {
+			columnPDBNames = new String[] { "Chain" };
+			columnPDBClass = new Class[] { String.class };
+			numberClasses = 1;
+		}
+
+		Object[][] data = null;
+		if (pdbIds.size() > 0)
+			data = new Object[pdbIds.size()][numberClasses];
+		else
+			data = new Object[1][numberClasses];
+
+		DefaultTableModel tableDataModel = new DefaultTableModel(data, columnPDBNames) {
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public boolean isCellEditable(int row, int column) {
+				return false;
+			}
+
+			@Override
+			public Class<?> getColumnClass(int columnIndex) {
+				return columnPDBClass[columnIndex];
+			}
+		};
+
+		tableDataModel.setDataVector(data, columnPDBNames);
+
+		int countPtnDomain = 0;
+		for (PDB pdb : pdbIds) {
+			if (processPDBfile) {
+				tableDataModel.setValueAt(pdb.entry, countPtnDomain, 0);
+				tableDataModel.setValueAt(pdb.resolution + " Å", countPtnDomain, 1);
+				tableDataModel.setValueAt(pdb.chain, countPtnDomain, 2);
+				tableDataModel.setValueAt(pdb.positions, countPtnDomain, 3);
+			} else {
+				tableDataModel.setValueAt(pdb.chain, countPtnDomain, 0);
+			}
+			countPtnDomain++;
+		}
 
 		if (nodeName.contains("#")) {
 			offset_y += 35;
@@ -812,20 +848,35 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			offset_y += 40;
 		}
 
-		JScrollPane listScroller = new JScrollPane(list);
-		listScroller = new JScrollPane();
-		listScroller.setBounds(10, offset_y, 178, 180);
-		listScroller.setViewportView(list);
-		pdbPanel.add(listScroller);
+		JTable mainPdbTable = new JTable(tableDataModel);
+
+		// Create the scroll pane and add the table to it.
+		JScrollPane pdbTableScrollPanel = new JScrollPane();
+		if (Util.isWindows())
+			pdbTableScrollPanel.setBounds(10, offset_y, 260, 180);
+		else
+			pdbTableScrollPanel.setBounds(10, offset_y, 260, 180);
+		pdbTableScrollPanel.setViewportView(mainPdbTable);
+		pdbTableScrollPanel.setRowHeaderView(rowHeader);
+		pdbPanel.add(pdbTableScrollPanel);
+
+		if (mainPdbTable != null && processPDBfile) {
+			mainPdbTable.getColumnModel().getColumn(0).setPreferredWidth(80);
+			mainPdbTable.getColumnModel().getColumn(1).setPreferredWidth(80);
+			mainPdbTable.getColumnModel().getColumn(2).setPreferredWidth(50);
+			mainPdbTable.getColumnModel().getColumn(3).setPreferredWidth(65);
+			mainPdbTable.setFillsViewportHeight(true);
+			mainPdbTable.setAutoCreateRowSorter(true);
+		}
 
 		Icon iconBtnOk = new ImageIcon(getClass().getResource("/images/okBtn.png"));
 		JButton okButton = new JButton(iconBtnOk);
 		okButton.setText("OK");
 
 		if (Util.isWindows()) {
-			okButton.setBounds(30, 280, 140, 25);
+			okButton.setBounds(70, 280, 140, 25);
 		} else {
-			okButton.setBounds(30, 270, 140, 25);
+			okButton.setBounds(70, 270, 140, 25);
 		}
 		okButton.setEnabled(true);
 		okButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -836,14 +887,17 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 				pdbFrame.dispose();
 
-				String value = list.getSelectedValue();
+				int row = mainPdbTable.getSelectedRow();
+				String value = tableDataModel.getValueAt(row, 0) != null ? tableDataModel.getValueAt(row, 0).toString()
+						: "";
 
 				if (!isFromEdgeAction) {
 
 					if (processPDBfile)
 						processPDBFile(msgINFO, taskMonitor, value, ptnSource);
 					else
-						processPDBorCiFfileWithSpecificChain(taskMonitor, pdbFile, ptnSource, HasMoreThanOneChain, value);
+						processPDBorCiFfileWithSpecificChain(taskMonitor, pdbFile, ptnSource, HasMoreThanOneChain,
+								value);
 
 				} else {
 
@@ -975,12 +1029,16 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			String[] protein_chains = tmpPyMOLScriptFile[2].replace("CHAINS:", "").split("#");
 
 			List<String> protein_chainsList = Arrays.asList(protein_chains);
-			if (protein_chainsList.size() > 1) {
+			List<PDB> PDBchains = new ArrayList<PDB>();
+			for (String chainStr : protein_chainsList) {
+				PDBchains.add(new PDB("", "", chainStr, ""));
+			}
+			if (PDBchains.size() > 1) {
 
 				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Select one chain...");
 				// Open a window to select only one protein chain
-				getPDBInformation(protein_chainsList, msgINFO, taskMonitor, ptn, null, false, pdbFile,
-						HasMoreThanOneChain, false, (String) myCurrentRow.getRaw(CyNetwork.NAME), false);
+				getPDBInformation(PDBchains, msgINFO, taskMonitor, ptn, null, false, pdbFile, HasMoreThanOneChain,
+						false, (String) myCurrentRow.getRaw(CyNetwork.NAME), false);
 			} else {
 				// There is only one protein chain
 				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Processing PDB file...");
@@ -1153,9 +1211,9 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 							taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB information from Uniprot...");
 
 							Protein ptn = Util.getPDBidFromUniprot(myCurrentRow, taskMonitor);
-							List<String> pdbIds = ptn.pdbIds;
+							List<PDB> pdbIds = ptn.pdbIds;
 							if (pdbIds.size() > 0) {
-								String pdbID = pdbIds.get(0);
+								PDB pdbID = pdbIds.get(0);
 
 								if (pdbIds.size() > 1) {
 
@@ -1171,7 +1229,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 									}
 								}
 
-								processPDBFile(msgINFO, taskMonitor, pdbID, ptn);
+								processPDBFile(msgINFO, taskMonitor, pdbID.entry, ptn);
 
 							} else {
 

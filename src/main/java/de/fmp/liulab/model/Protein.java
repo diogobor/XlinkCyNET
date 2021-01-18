@@ -14,7 +14,7 @@ public class Protein {
 	public String proteinID;
 	public String fullName;
 	public String sequence;
-	public List<String> pdbIds;
+	public List<PDB> pdbIds;
 
 	/**
 	 * Constructor
@@ -22,7 +22,7 @@ public class Protein {
 	 * @param sequence protein sequence
 	 * @param pdbIds   pdb IDs
 	 */
-	public Protein(String proteinID, String fullName, String sequence, List<String> pdbIds) {
+	public Protein(String proteinID, String fullName, String sequence, List<PDB> pdbIds) {
 		this.proteinID = proteinID;
 		this.fullName = fullName;
 		this.sequence = sequence;
@@ -33,6 +33,6 @@ public class Protein {
 	 * Empty constructor
 	 */
 	public Protein() {
-		this.pdbIds = new ArrayList<String>();
+		this.pdbIds = new ArrayList<PDB>();
 	}
 }

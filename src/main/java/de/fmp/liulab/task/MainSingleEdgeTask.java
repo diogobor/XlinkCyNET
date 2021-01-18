@@ -245,7 +245,8 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 		source_node_name = (String) myCurrentRow.getRaw(CyNetwork.NAME);
 
 		String msgINFO = "";
-		List<String> pdbIdsSource = ptnSource.pdbIds;
+		List<String> pdbIdsSource = new ArrayList<String>();
+//		List<String> pdbIdsSource = ptnSource.pdbIds;
 
 		if (pdbIdsSource.size() > 0) {
 
@@ -256,7 +257,8 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 			Protein ptnTarget = Util.getPDBidFromUniprot(myCurrentRow, taskMonitor);
 			target_node_name = (String) myCurrentRow.getRaw(CyNetwork.NAME);
 
-			List<String> pdbIdsTarget = ptnTarget.pdbIds;
+//			List<String> pdbIdsTarget = ptnTarget.pdbIds;
+			List<String> pdbIdsTarget = new ArrayList<String>();
 			if (pdbIdsTarget.size() > 0) {
 
 				Set<String> result = pdbIdsSource.stream().distinct().filter(pdbIdsTarget::contains)
@@ -274,8 +276,8 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 
 					List<String> pdbIds = new ArrayList<String>(result);
 					// Open a window to select only one PDB
-					SingleNodeTask.getPDBInformation(pdbIds, msgINFO, taskMonitor, ptnSource, ptnTarget, true, "",
-							false, true, source_node_name + "#" + target_node_name, false);
+//					SingleNodeTask.getPDBInformation(pdbIds, msgINFO, taskMonitor, ptnSource, ptnTarget, true, "",
+//							false, true, source_node_name + "#" + target_node_name, false);
 
 				} else {
 
@@ -304,7 +306,8 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB information from Uniprot...");
 
 		Protein ptn = Util.getPDBidFromUniprot(myCurrentRow, taskMonitor);
-		List<String> pdbIds = ptn.pdbIds;
+//		List<String> pdbIds = ptn.pdbIds;
+		List<String> pdbIds = new ArrayList<String>();
 		if (pdbIds.size() > 0) {
 
 			SingleNodeTask.myCurrentRow = myCurrentRow;
@@ -313,8 +316,8 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 			if (pdbIds.size() > 1) {
 
 				// Open a window to select only one PDB
-				SingleNodeTask.getPDBInformation(pdbIds, msgINFO, taskMonitor, ptn, null, true, "", false, false,
-						(String) myCurrentRow.getRaw(CyNetwork.NAME), false);
+//				SingleNodeTask.getPDBInformation(pdbIds, msgINFO, taskMonitor, ptn, null, true, "", false, false,
+//						(String) myCurrentRow.getRaw(CyNetwork.NAME), false);
 
 				return;
 			}
@@ -374,8 +377,8 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 					taskMonitor.showMessage(TaskMonitor.Level.INFO, "There is more than one chain. Select one...");
 
 					// Open a window to select only one chain
-					SingleNodeTask.getPDBInformation(protein_chainsList, "", taskMonitor, ptnSource, ptnTarget, false,
-							pdbFile, HasMoreThanOneChain_proteinTarget, true, target_node_name, true);
+//					SingleNodeTask.getPDBInformation(protein_chainsList, "", taskMonitor, ptnSource, ptnTarget, false,
+//							pdbFile, HasMoreThanOneChain_proteinTarget, true, target_node_name, true);
 
 				}
 
@@ -431,8 +434,8 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 					taskMonitor.showMessage(TaskMonitor.Level.INFO, "There is more than one chain. Select one...");
 
 					// Open a window to select only one chain
-					SingleNodeTask.getPDBInformation(protein_chainsList, "", taskMonitor, ptnSource, ptnTarget, true,
-							pdbFile, HasMoreThanOneChain_proteinSource, true, source_node_name, true);
+//					SingleNodeTask.getPDBInformation(protein_chainsList, "", taskMonitor, ptnSource, ptnTarget, true,
+//							pdbFile, HasMoreThanOneChain_proteinSource, true, source_node_name, true);
 
 				}
 

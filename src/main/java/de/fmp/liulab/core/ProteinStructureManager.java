@@ -814,7 +814,8 @@ public class ProteinStructureManager {
 									if (fullNames.length == 1) {
 										if (ptn.fullName.toLowerCase()
 												.equals(pdbProteinFullName_moleculeField.toLowerCase())) {
-											protein_chain = cols[3].toString().replace(';', ' ').trim();
+											protein_chain = cols[3].toString().replace(';', ' ').replace(',', ' ')
+													.trim();
 											continue;
 										}
 
@@ -831,7 +832,8 @@ public class ProteinStructureManager {
 										}
 									}
 
-									if ((cols.length - 3) > 1) //Check if 'CHAIN' field has more than 1 chain: CHAIN: A,B
+									if ((cols.length - 3) > 1) // Check if 'CHAIN' field has more than 1 chain: CHAIN:
+																// A,B
 										hasMoreThanOneChain = true;
 
 									for (int i = 3; i < cols.length; i++) {
