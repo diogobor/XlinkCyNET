@@ -90,7 +90,7 @@ public class Util {
 	private static String XL_SCORE_AB = "score_ab";
 	private static String XL_SCORE_BA = "score_ba";
 	public static String XL_COMB_SCORE = "score_cmb";
-	public static String PYMOL_PATH = "\"/Applications/PyMOL.app\"";
+	public static String PYMOL_PATH = "";
 	public static String PDB_PATH = "\"/Applications/\"";
 
 	private static String OS = System.getProperty("os.name").toLowerCase();
@@ -2944,11 +2944,20 @@ public class Util {
 	/**
 	 * Check if the operating system is Linux
 	 * 
-	 * @return true if the operating system is Windows.
+	 * @return true if the operating system is Linux.
 	 */
 	public static boolean isUnix() {
 		return (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0);
 	}
+	
+	/**
+	 * Check if the operating system is MacOS
+	 * 
+	 * @return true if the operating system is MacOS.
+	 */
+	public static boolean isMac() {
+        return (OS.indexOf("mac") >= 0);
+    }
 
 	/**
 	 * Round a double value

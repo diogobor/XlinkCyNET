@@ -14,3 +14,4 @@ xlinkcynet.node_border_width = 1.5
 xlinkcynet.intralink_threshold_score = 0
 xlinkcynet.interlink_threshold_score = 0
 xlinkcynet.combinedlink_threshold_score = 0
+xlinkcynet.pymol_path = pymol

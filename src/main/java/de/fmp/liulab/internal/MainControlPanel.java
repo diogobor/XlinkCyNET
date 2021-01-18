@@ -7,8 +7,12 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Properties;
@@ -20,10 +24,12 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
 import javax.swing.JComponent;
+import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
+import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
@@ -52,6 +58,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	private JPanel link_legend_panel;
 	private JPanel node_panel;
 	private JPanel node_border_panel;
+	private JPanel pymol_panel;
 
 	private static JButton intraLinkColorButton;
 	private static JButton interLinkColorButton;
@@ -70,6 +77,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	private static JSpinner spinner_opacity_node_border;
 	private static JSpinner spinner_width_node_border;
 
+	private static JLabel pymolPathStr;
 	private static JCheckBox show_links_legend;
 
 	private Properties XlinkCyNETProps;
@@ -196,6 +204,40 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			propertyValue = cm.getProperties().getProperty("xlinkcynet.combinedlink_threshold_score");
 		Util.combinedlink_threshold_score = Double.parseDouble(propertyValue);
 
+		if (cm == null)
+			propertyValue = ((Properties) XlinkCyNETProps).getProperty("xlinkcynet.pymol_path");
+		else
+			propertyValue = cm.getProperties().getProperty("xlinkcynet.pymol_path");
+		Util.PYMOL_PATH = propertyValue;
+	}
+
+	/**
+	 * Method responsible for checking if the PyMOL is correct for a specific OS.
+	 */
+	private void checkPyMOLname() {
+
+		if (Util.isWindows()) {
+			if (Util.PYMOL_PATH.endsWith(".exe")) {
+				pymolPathStr.setText(Util.PYMOL_PATH);
+			} else {
+				pymolPathStr.setText("pymol");
+				Util.PYMOL_PATH = "pymol";
+			}
+		} else if (Util.isMac()) {
+			if (Util.PYMOL_PATH.endsWith(".app")) {
+				pymolPathStr.setText(Util.PYMOL_PATH);
+			} else {
+				pymolPathStr.setText("/Applications/PyMOL.app");
+				Util.PYMOL_PATH = "/Applications/PyMOL.app";
+			}
+		} else if (Util.isUnix()) {
+			if (Util.PYMOL_PATH.endsWith("pymol")) {
+				pymolPathStr.setText(Util.PYMOL_PATH);
+			} else {
+				pymolPathStr.setText("pymol");
+				Util.PYMOL_PATH = "pymol";
+			}
+		}
 	}
 
 	/**
@@ -885,6 +927,72 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	}
 
 	/**
+	 * Method responsible for initializing pymol setting panel
+	 * 
+	 * @param offset_x offset x
+	 */
+	private void init_pymol_panel(int offset_x) {
+
+		pymol_panel = new JPanel();
+		pymol_panel.setBackground(Color.WHITE);
+		pymol_panel.setBorder(BorderFactory.createTitledBorder("PyMOL"));
+		pymol_panel.setLayout(null);
+
+		int offset_y = 10;
+		JLabel pymolPath_label = new JLabel("Application path:");
+		pymolPath_label.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
+		pymolPath_label.setBounds(10, offset_y, 100, 40);
+		pymol_panel.add(pymolPath_label);
+		offset_y += 30;
+
+		pymolPathStr = new JLabel("???");
+		pymolPathStr.setFont(new java.awt.Font("Tahoma", Font.ITALIC, 12));
+		pymolPathStr.setBounds(10, offset_y, 350, 40);
+		pymol_panel.add(pymolPathStr);
+
+		offset_y = 20;
+		if (!Util.isWindows())// MacOS or Unix
+			offset_x -= 5;
+
+		Icon iconPyMOLBtn = new ImageIcon(getClass().getResource("/images/pyMOL_logo.png"));
+		JButton pyMOL_pathButton = new JButton(iconPyMOLBtn);
+		if (Util.isWindows())
+			offset_x -= 5;
+
+		offset_y -= 5;
+		pyMOL_pathButton.setBounds(offset_x, offset_y, 30, 30);
+
+		pyMOL_pathButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		pyMOL_pathButton.setToolTipText("Select the PyMOL software");
+
+		pyMOL_pathButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				pymolPathStr.setText(getPyMOLPath());
+				Util.PYMOL_PATH = pymolPathStr.getText();
+				XlinkCyNETProps.setProperty("xlinkcynet.pymol_path", pymolPathStr.getText());
+			}
+		});
+
+		pymol_panel.add(pyMOL_pathButton);
+	}
+
+	/**
+	 * Select PyMOL file
+	 * 
+	 * @return path
+	 */
+	private String getPyMOLPath() {
+		JFileChooser choosePyMOL = new JFileChooser();
+		choosePyMOL.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		choosePyMOL.setDialogTitle("Select PyMOL file");
+
+		if (choosePyMOL.showOpenDialog(choosePyMOL) != JFileChooser.APPROVE_OPTION)
+			return Util.PYMOL_PATH;
+
+		return choosePyMOL.getSelectedFile().toString();
+	}
+
+	/**
 	 * Method responsible for putting objects to Panel
 	 */
 	private void setFrameObjects() {
@@ -906,16 +1014,22 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		this.init_link_log_score_features(offset_x, button_width);
 		this.init_link_legend_features(offset_x, button_width);
 		this.init_link_check_boxes_colors(offset_x, button_width);
-		
-		this.add(link_panel, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0,
-			      GridBagConstraints.NORTH, GridBagConstraints.VERTICAL, new Insets(10, 0, 10, 0), ipdax, 450));
+
+		this.add(link_panel, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.NORTH,
+				GridBagConstraints.VERTICAL, new Insets(10, 0, 10, 0), ipdax, 400));
 
 		this.init_node_style_features(offset_x, button_width);
 		this.init_node_border_features(offset_x, button_width);
-		
-		this.add(node_panel, new GridBagConstraints(0, 1, 1, 1, 2.0, 2.0,
-				GridBagConstraints.NORTH, GridBagConstraints.NORTH, new Insets(0, 0, 10, 0), ipdax, 190));
-		
+
+		this.add(node_panel, new GridBagConstraints(0, 1, 1, 1, 2.0, 2.0, GridBagConstraints.NORTH,
+				GridBagConstraints.NORTH, new Insets(0, 0, 10, 0), ipdax, 190));
+
+		this.init_pymol_panel(offset_x);
+		this.checkPyMOLname();
+
+		this.add(pymol_panel, new GridBagConstraints(0, 2, 1, 1, 3.0, 3.0, GridBagConstraints.NORTH,
+				GridBagConstraints.NORTH, new Insets(0, 0, 10, 0), ipdax, 95));
+
 	}
 
 	public static void updateParamsValue() {
