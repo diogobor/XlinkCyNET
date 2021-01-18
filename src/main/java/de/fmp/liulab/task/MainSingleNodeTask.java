@@ -743,10 +743,39 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		pdbFrame.setResizable(false);
 
 		JPanel pdbPanel = new JPanel();
-		if (processPDBfile)
+
+		boolean isPDBInformation = false;
+
+		if (!isFromEdgeAction) {
+			if (processPDBfile)
+				isPDBInformation = true;
+
+			else
+				isPDBInformation = false;
+		} else {
+			if (processTarget) {
+				if (pdbIds.get(0).entry.isBlank() || pdbIds.get(0).entry.isEmpty()) {
+					isPDBInformation = false;
+				} else {
+					if (processPDBfile)
+						isPDBInformation = true;
+					else
+						isPDBInformation = false;
+				}
+			} else {
+				if (processPDBfile)
+					isPDBInformation = true;
+				else
+					isPDBInformation = false;
+
+			}
+		}
+
+		if (isPDBInformation)
 			pdbPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "PDB Information"));
 		else
 			pdbPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Protein Chain"));
+
 		pdbPanel.setLayout(null);
 		pdbPanel.setBounds(20, 20, 280, 325);
 
@@ -784,10 +813,23 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			offset_y += 30;
 		}
 
-		JLabel textLabel_title = new JLabel("Select one item:");
-		textLabel_title.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_title.setBounds(10, offset_y, 100, 40);
-		pdbPanel.add(textLabel_title);
+		JLabel textLabel_title = null;
+		if (isPDBInformation) {
+			textLabel_title = new JLabel("Select one item:");
+			textLabel_title.setBounds(10, offset_y, 100, 40);
+			textLabel_title.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
+			pdbPanel.add(textLabel_title);
+		} else {
+			textLabel_title = new JLabel("No chain matched with the protein description.");
+			textLabel_title.setBounds(10, offset_y, 400, 40);
+			textLabel_title.setFont(new java.awt.Font("Tahoma", Font.ITALIC, 12));
+			pdbPanel.add(textLabel_title);
+			offset_y += 15;
+			JLabel textLabel2_title = new JLabel("Please select one item:");
+			textLabel2_title.setBounds(10, offset_y, 400, 40);
+			textLabel2_title.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
+			pdbPanel.add(textLabel2_title);
+		}
 
 		// create table model with data
 
@@ -795,7 +837,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		final Class[] columnPDBClass;
 		int numberClasses = 4;
 
-		if (processPDBfile) {
+		if (isPDBInformation) {
 			columnPDBNames = new String[] { "PDB Entry", "Resolution", "Chain", "Positions" };
 			columnPDBClass = new Class[] { String.class, String.class, String.class, String.class };
 		} else {
@@ -831,7 +873,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		int countPtnDomain = 0;
 		for (PDB pdb : pdbIds) {
-			if (processPDBfile) {
+			if (isPDBInformation) {
 				tableDataModel.setValueAt(pdb.entry, countPtnDomain, 0);
 				tableDataModel.setValueAt(pdb.resolution + " Å", countPtnDomain, 1);
 				tableDataModel.setValueAt(pdb.chain, countPtnDomain, 2);
@@ -852,15 +894,23 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		// Create the scroll pane and add the table to it.
 		JScrollPane pdbTableScrollPanel = new JScrollPane();
-		if (Util.isWindows())
-			pdbTableScrollPanel.setBounds(10, offset_y, 260, 180);
-		else
-			pdbTableScrollPanel.setBounds(10, offset_y, 260, 180);
+
+		if (isPDBInformation) {
+			if (Util.isWindows())
+				pdbTableScrollPanel.setBounds(10, offset_y, 260, 180);
+			else
+				pdbTableScrollPanel.setBounds(10, offset_y, 260, 180);
+		} else {
+			if (Util.isWindows())
+				pdbTableScrollPanel.setBounds(10, offset_y, 260, 165);
+			else
+				pdbTableScrollPanel.setBounds(10, offset_y, 260, 165);
+		}
 		pdbTableScrollPanel.setViewportView(mainPdbTable);
 		pdbTableScrollPanel.setRowHeaderView(rowHeader);
 		pdbPanel.add(pdbTableScrollPanel);
 
-		if (mainPdbTable != null && processPDBfile) {
+		if (mainPdbTable != null && isPDBInformation) {
 			mainPdbTable.getColumnModel().getColumn(0).setPreferredWidth(80);
 			mainPdbTable.getColumnModel().getColumn(1).setPreferredWidth(80);
 			mainPdbTable.getColumnModel().getColumn(2).setPreferredWidth(50);
@@ -868,6 +918,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			mainPdbTable.setFillsViewportHeight(true);
 			mainPdbTable.setAutoCreateRowSorter(true);
 		}
+		mainPdbTable.setRowSelectionInterval(0, 0);
 
 		Icon iconBtnOk = new ImageIcon(getClass().getResource("/images/okBtn.png"));
 		JButton okButton = new JButton(iconBtnOk);

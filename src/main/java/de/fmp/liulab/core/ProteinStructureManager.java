@@ -297,7 +297,7 @@ public class ProteinStructureManager {
 			String proteinChain = returnPDB[1];
 			if (proteinChain.startsWith("CHAINS:")) {
 				taskMonitor.showMessage(TaskMonitor.Level.WARN,
-						"No chain does not match with protein description. Select one chain...");
+						"No chain matched with protein description. Select one chain...");
 				f.delete();
 				// return String[0-> 'CHAINS'; 1-> HasMoreThanOneChain; 2-> chains: separated by
 				// '#']
