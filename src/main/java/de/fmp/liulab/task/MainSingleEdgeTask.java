@@ -298,7 +298,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 
 	}
 
-	private static void processIntraLinks(TaskMonitor taskMonitor, CyRow myCurrentRow) {
+	private static void processIntraLinks(TaskMonitor taskMonitor, CyRow myCurrentRow) throws Exception {
 
 		String msgINFO = "";
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB information from Uniprot...");
@@ -322,10 +322,8 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 			SingleNodeTask.processPDBFile(msgINFO, taskMonitor, pdbID, ptn);
 
 		} else {
-			JOptionPane.showMessageDialog(null, "There is no PDB to protein: " + ptn.proteinID, "XlinkCyNET - Alert",
-					JOptionPane.ERROR_MESSAGE);
-			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "There is no PDB to protein: " + ptn.proteinID);
-			return;
+			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "There is no PDB for the protein: " + ptn.proteinID);
+			throw new Exception("There is no PDB for the protein: " + ptn.proteinID);
 		}
 	}
 

@@ -1177,7 +1177,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 								textLabel_status_result.setText("ERROR: Check Task History.");
 								taskMonitor.showMessage(TaskMonitor.Level.ERROR,
-										"There is no PDB to protein: " + ptn.proteinID);
+										"There is no PDB for the protein: " + ptn.proteinID);
 
 								if (pyMOLButton != null)
 									pyMOLButton.setEnabled(true);
