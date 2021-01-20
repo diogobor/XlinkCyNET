@@ -455,9 +455,9 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		Icon iconBtn = new ImageIcon(getClass().getResource("/images/browse_Icon.png"));
 		proteinDomainServerButton = new JButton(iconBtn);
 		if (Util.isWindows())
-			proteinDomainServerButton.setBounds(265, 55, 30, 30);
+			proteinDomainServerButton.setBounds(250, 55, 30, 30);
 		else
-			proteinDomainServerButton.setBounds(280, 50, 30, 30);
+			proteinDomainServerButton.setBounds(280, 55, 30, 30);
 
 		proteinDomainServerButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		proteinDomainServerButton.addActionListener(new ActionListener() {
