@@ -38,7 +38,7 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 	 * Default method
 	 */
 	@Override
-	public void run(TaskMonitor tm) throws IOException {
+	public void run(TaskMonitor taskMonitor) throws IOException {
 
 		if (myNetwork == null)
 			return;
@@ -47,6 +47,8 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 			return;
 		
 		isProcessing = true;// It indicates that there is a process here
+		
+		taskMonitor.setTitle("XlinkCyNET - Adding extra columns to the tables");
 		
 		// Create Scaling factor protein column
 		CyTable nodeTable = myNetwork.getDefaultNodeTable();
