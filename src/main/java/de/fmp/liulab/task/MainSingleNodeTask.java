@@ -875,7 +875,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		for (PDB pdb : pdbIds) {
 			if (isPDBInformation) {
 				tableDataModel.setValueAt(pdb.entry, countPtnDomain, 0);
-				tableDataModel.setValueAt(pdb.resolution + " Å", countPtnDomain, 1);
+				tableDataModel.setValueAt(pdb.resolution + " \u212B", countPtnDomain, 1);
 				tableDataModel.setValueAt(pdb.chain, countPtnDomain, 2);
 				tableDataModel.setValueAt(pdb.positions, countPtnDomain, 3);
 			} else {
@@ -924,11 +924,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		JButton okButton = new JButton(iconBtnOk);
 		okButton.setText("OK");
 
-		if (Util.isWindows()) {
-			okButton.setBounds(70, 280, 140, 25);
-		} else {
-			okButton.setBounds(70, 270, 140, 25);
-		}
+		okButton.setBounds(70, 270, 140, 25);
 		okButton.setEnabled(true);
 		okButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
