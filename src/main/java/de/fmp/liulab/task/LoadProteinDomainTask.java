@@ -454,7 +454,11 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 		Icon iconBtn = new ImageIcon(getClass().getResource("/images/browse_Icon.png"));
 		proteinDomainServerButton = new JButton(iconBtn);
-		proteinDomainServerButton.setBounds(265, 50, 30, 30);
+		if (Util.isWindows())
+			proteinDomainServerButton.setBounds(265, 55, 30, 30);
+		else
+			proteinDomainServerButton.setBounds(280, 50, 30, 30);
+
 		proteinDomainServerButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		proteinDomainServerButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
@@ -653,7 +657,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 							textLabel_status_result.setText("WARNING: Check Task History.");
 							taskMonitor.showMessage(TaskMonitor.Level.WARN, msgError);
 						}
-						
+
 						if (geneListFromTable.size() > 0) {
 							Util.update_ProteinDomainColumn(taskMonitor, myNetwork, geneListFromTable);
 
