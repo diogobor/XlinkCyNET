@@ -2,6 +2,7 @@ package de.fmp.liulab.task;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Toolkit;
@@ -194,7 +195,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	 */
 	private void initFrameLabels() {
 
-		int offset_y = -35;
+		int offset_y = 0;
 
 		information_panel = new JPanel();
 		information_panel.setBorder(BorderFactory.createTitledBorder(""));
@@ -205,22 +206,22 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		JLabel textLabel_Protein_lbl_1 = new JLabel(
 				"Fill in the table below to indicate what proteins will have their");
 		textLabel_Protein_lbl_1.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_Protein_lbl_1.setBounds(10, offset_y, 450, 100);
+		textLabel_Protein_lbl_1.setBounds(10, offset_y, 450, 40);
 		information_panel.add(textLabel_Protein_lbl_1);
 		offset_y += 20;
 
 		JLabel textLabel_Protein_lbl_2 = new JLabel("domains loaded.");
 		textLabel_Protein_lbl_2.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_Protein_lbl_2.setBounds(10, offset_y, 300, 100);
+		textLabel_Protein_lbl_2.setBounds(10, offset_y, 100, 40);
 		information_panel.add(textLabel_Protein_lbl_2);
 		offset_y += 30;
 
 		JLabel textLabel_Pfam = new JLabel("Search for domains:");
 		textLabel_Pfam.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_Pfam.setBounds(10, offset_y, 300, 100);
+		textLabel_Pfam.setBounds(10, offset_y, 150, 40);
 		information_panel.add(textLabel_Pfam);
 
-		offset_y += 40;
+		offset_y += 10;
 		JRadioButton protein_domain_pfam = new JRadioButton("Pfam");
 		protein_domain_pfam.setSelected(Util.isProteinDomainPfam);
 		if (Util.isWindows()) {
@@ -271,12 +272,12 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		bg_database.add(protein_domain_pfam);
 		bg_database.add(protein_domain_supfam);
 
-		offset_y -= 10;
+		offset_y = 80;
 
 		textLabel_status_result = new JLabel("");
 		textLabel_status_result.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		textLabel_status_result.setForeground(new Color(159, 17, 17));
-		textLabel_status_result.setBounds(55, offset_y, 350, 100);
+		textLabel_status_result.setBounds(55, offset_y, 350, 40);
 
 		JPanel logo_panel = new JPanel();
 		logo_panel.setBorder(BorderFactory.createTitledBorder(""));
@@ -291,7 +292,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 		JLabel textLabel_status = new JLabel("Status:");
 		textLabel_status.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_status.setBounds(10, offset_y, 50, 100);
+		textLabel_status.setBounds(10, offset_y, 50, 40);
 		information_panel.add(textLabel_status);
 		information_panel.add(textLabel_status_result);
 	}
@@ -454,6 +455,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		Icon iconBtn = new ImageIcon(getClass().getResource("/images/browse_Icon.png"));
 		proteinDomainServerButton = new JButton(iconBtn);
 		proteinDomainServerButton.setBounds(265, 50, 30, 30);
+		proteinDomainServerButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		proteinDomainServerButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
 				taskMonitor.setTitle("XL interactions");

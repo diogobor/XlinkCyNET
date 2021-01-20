@@ -1016,19 +1016,19 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		this.init_link_check_boxes_colors(offset_x, button_width);
 
 		this.add(link_panel, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.NORTH,
-				GridBagConstraints.VERTICAL, new Insets(10, 0, 10, 0), ipdax, 400));
+				GridBagConstraints.BOTH, new Insets(10, 0, 10, 0), ipdax, 350));
 
 		this.init_node_style_features(offset_x, button_width);
 		this.init_node_border_features(offset_x, button_width);
 
-		this.add(node_panel, new GridBagConstraints(0, 1, 1, 1, 2.0, 2.0, GridBagConstraints.NORTH,
-				GridBagConstraints.NORTH, new Insets(0, 0, 10, 0), ipdax, 190));
+		this.add(node_panel, new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTH,
+				GridBagConstraints.BOTH, new Insets(0, 0, 10, 0), ipdax, 150));
 
 		this.init_pymol_panel(offset_x);
 		this.checkPyMOLname();
 
-		this.add(pymol_panel, new GridBagConstraints(0, 2, 1, 1, 3.0, 3.0, GridBagConstraints.NORTH,
-				GridBagConstraints.NORTH, new Insets(0, 0, 10, 0), ipdax, 95));
+		this.add(pymol_panel, new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0, GridBagConstraints.NORTH,
+				GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), ipdax, 85));
 
 	}
 
