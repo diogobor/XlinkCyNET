@@ -130,7 +130,8 @@ public class Parser {
 
 				String[] cols_gene = gene_name.split(" ");
 				for (String each_gene : cols_gene) {
-
+					if (each_gene.isBlank() || each_gene.isEmpty() || each_gene.trim().equals("\t"))
+						continue;
 					sb_data_to_be_stored.append(each_gene);
 					sb_data_to_be_stored.append("\t");
 					sb_data_to_be_stored.append(domains).append("\n");
@@ -149,11 +150,18 @@ public class Parser {
 		LoadProteinDomainTask.tableDataModel.setDataVector(data, columnNames);
 
 		for (String line : data_to_be_stored) {
-			String[] cols_line = line.split("\t");
-			LoadProteinDomainTask.tableDataModel.setValueAt(cols_line[0], countPtnDomain, 0);
-			if (cols_line.length > 1)
-				LoadProteinDomainTask.tableDataModel.setValueAt(cols_line[1], countPtnDomain, 1);
-			countPtnDomain++;
+			try {
+				String[] cols_line = line.split("\t");
+				LoadProteinDomainTask.tableDataModel.setValueAt(cols_line[0], countPtnDomain, 0);
+				if (cols_line.length > 1)
+					LoadProteinDomainTask.tableDataModel.setValueAt(cols_line[1], countPtnDomain, 1);
+
+			} catch (Exception e) {
+				System.out.println();
+			} finally {
+				countPtnDomain++;
+			}
+
 		}
 
 		LoadProteinDomainTask.setTableProperties(countPtnDomain);

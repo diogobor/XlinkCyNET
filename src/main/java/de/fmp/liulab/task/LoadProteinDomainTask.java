@@ -648,24 +648,24 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 						msgError = setNodesInformation(taskMonitor, myNetwork);
 						if (!msgError.isBlank() && !msgError.isEmpty()) {
-							textLabel_status_result.setText("ERROR: Check Task History.");
-							taskMonitor.showMessage(TaskMonitor.Level.ERROR, msgError);
-						} else {
-							if (geneListFromTable.size() > 0) {
-								Util.update_ProteinDomainColumn(taskMonitor, myNetwork, geneListFromTable);
-
-							}
-
-							taskMonitor.setProgress(1.0);
-							taskMonitor.showMessage(TaskMonitor.Level.INFO,
-									"Protein domains have been loaded successfully!");
-
-							if (isFromScreen) {
-								textLabel_status_result.setText("Done!");
-								disposeMainJFrameThread.start();
-							}
+							textLabel_status_result.setText("WARNING: Check Task History.");
+							taskMonitor.showMessage(TaskMonitor.Level.WARN, msgError);
+						}
+						
+						if (geneListFromTable.size() > 0) {
+							Util.update_ProteinDomainColumn(taskMonitor, myNetwork, geneListFromTable);
 
 						}
+
+						taskMonitor.setProgress(1.0);
+						taskMonitor.showMessage(TaskMonitor.Level.INFO,
+								"Protein domains have been loaded successfully!");
+
+						if (isFromScreen) {
+							textLabel_status_result.setText("Done!");
+							disposeMainJFrameThread.start();
+						}
+
 					} catch (Exception e) {
 						if (isFromScreen)
 							textLabel_status_result.setText("ERROR: Check Task History.");
@@ -806,7 +806,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 				}
 			} else {
-				sb_error.append("ERROR: Node " + geneDomain.geneName + " has not been found.\n");
+				sb_error.append("WARNING: Node " + geneDomain.geneName + " has not been found.\n");
 			}
 
 			summary_processed++;
