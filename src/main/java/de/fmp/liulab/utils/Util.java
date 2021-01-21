@@ -92,6 +92,7 @@ public class Util {
 	public static String XL_COMB_SCORE = "score_cmb";
 	public static String PYMOL_PATH = "";
 	public static String PDB_PATH = "\"/Applications/\"";
+	public static List<CyNetwork> myCyNetworkList = new ArrayList<CyNetwork>();
 
 	private static String OS = System.getProperty("os.name").toLowerCase();
 	private final static float OFFSET_BEND = 2;
@@ -2949,15 +2950,15 @@ public class Util {
 	public static boolean isUnix() {
 		return (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0);
 	}
-	
+
 	/**
 	 * Check if the operating system is MacOS
 	 * 
 	 * @return true if the operating system is MacOS.
 	 */
 	public static boolean isMac() {
-        return (OS.indexOf("mac") >= 0);
-    }
+		return (OS.indexOf("mac") >= 0);
+	}
 
 	/**
 	 * Round a double value

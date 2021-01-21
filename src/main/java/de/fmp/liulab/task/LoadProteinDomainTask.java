@@ -836,7 +836,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	 * @param node
 	 * @param myProteinDomains
 	 */
-	private static void updateProteinDomainsMap(CyNetwork myNetwork, CyNode node,
+	public static void updateProteinDomainsMap(CyNetwork myNetwork, CyNode node,
 			List<ProteinDomain> myProteinDomains) {
 		String network_name = myNetwork.toString();
 		if (Util.proteinDomainsMap.containsKey(network_name)) {
@@ -878,7 +878,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 					String[] cols = domainsStr.split(",");
 					for (String col : cols) {
 						String[] domainsArray = col.split("\\[|\\]");
-						String domainName = domainsArray[0];
+						String domainName = domainsArray[0].trim();
 						String[] colRange = domainsArray[1].split("-");
 						int startId = Integer.parseInt(colRange[0]);
 						int endId = Integer.parseInt(colRange[1]);

@@ -316,6 +316,9 @@ public class UpdateViewListener
 			if (myNetwork == null)
 				return;
 
+			// Create protein scaling factor table
+			createAuxiliarColumnsTable();
+
 			Collection<CyNetworkView> views = networkViewManager.getNetworkViews(myNetwork);
 			if (views.size() != 0)
 				netView = views.iterator().next();
@@ -330,14 +333,6 @@ public class UpdateViewListener
 			// Load network and netview to XlinkCyNET setting to update the edges plot
 			MainControlPanel.myNetwork = myNetwork;
 			MainControlPanel.netView = netView;
-
-			// Create protein scaling factor table
-			if (this.dialogTaskManager != null && this.proteinScalingFactorHorizontalExpansionTableTaskFactory != null
-					&& !ProteinScalingFactorHorizontalExpansionTableTask.isProcessing) {
-				TaskIterator ti = this.proteinScalingFactorHorizontalExpansionTableTaskFactory
-						.createTaskIterator(myNetwork, false);
-				this.dialogTaskManager.execute(ti);
-			}
 
 			MainSingleNodeTask.lexicon = cyApplicationManager.getCurrentRenderingEngine().getVisualLexicon();
 			MainSingleNodeTask.style = this.style;
@@ -389,12 +384,31 @@ public class UpdateViewListener
 
 		CyNetwork cyNetwork = event.getNetwork();
 		if (cyNetwork != null) {
-			// Create protein scaling factor table
+			Util.myCyNetworkList.add(cyNetwork);
+		}
+	}
+
+	/**
+	 * Create auxiliar columns in the tables
+	 */
+	private void createAuxiliarColumnsTable() {
+
+		// Check if the node exists in the network
+		Optional<CyNetwork> isNetworkPresent = Util.myCyNetworkList.stream().filter(new Predicate<CyNetwork>() {
+			public boolean test(CyNetwork o) {
+				return o.getSUID() == myNetwork.getSUID();
+			}
+		}).findFirst();
+
+		if (isNetworkPresent.isPresent()) {// Get node if exists
+			CyNetwork current_network = isNetworkPresent.get();
 			if (this.dialogTaskManager != null && this.proteinScalingFactorHorizontalExpansionTableTaskFactory != null
 					&& !ProteinScalingFactorHorizontalExpansionTableTask.isProcessing) {
 				TaskIterator ti = this.proteinScalingFactorHorizontalExpansionTableTaskFactory
-						.createTaskIterator(cyNetwork, true);
+						.createTaskIterator(current_network, false);
 				this.dialogTaskManager.execute(ti);
+
+				Util.myCyNetworkList.remove(current_network);
 			}
 		}
 	}
