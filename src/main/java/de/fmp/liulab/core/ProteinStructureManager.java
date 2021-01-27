@@ -18,6 +18,7 @@ import javax.swing.JLabel;
 import org.cytoscape.work.TaskMonitor;
 
 import de.fmp.liulab.model.CrossLink;
+import de.fmp.liulab.model.Fasta;
 import de.fmp.liulab.model.Protein;
 import de.fmp.liulab.parser.ReaderWriterTextFile;
 import de.fmp.liulab.utils.Util;
@@ -263,7 +264,7 @@ public class ProteinStructureManager {
 	 * @return return pymol file name or pdb chains
 	 */
 	public static String[] createPyMOLScriptFileUnknowChain(Protein ptn, List<CrossLink> crossLinks,
-			TaskMonitor taskMonitor, String pdbFile) {
+			TaskMonitor taskMonitor, String pdbFile, String pdbID) {
 
 		// Check protein sequence
 		if (ptn.sequence.isBlank() || ptn.sequence.isEmpty()) {
@@ -284,29 +285,45 @@ public class ProteinStructureManager {
 
 			taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting protein sequence from PDB file...");
 
-			// [pdb protein sequence, protein chain, "true" -> there is more than one chain]
-			String[] returnPDB = null;
-			if (pdbFile.endsWith("pdb"))
-				returnPDB = getProteinSequenceAndChainFromPDBFile(pdbFile, ptn, taskMonitor);
-			else
-				returnPDB = getChainFromCIFFile(pdbFile, ptn, taskMonitor);
+			boolean foundChain = true;
+			String proteinSequenceFromPDBFile = "";
+			boolean HasMoreThanOneChain = false;
+			String proteinChain = getChainFromPDBFasta(ptn.sequence, pdbID, taskMonitor);
+			if (proteinChain.isBlank() || proteinChain.isEmpty())
+				foundChain = false;
 
-			String proteinSequenceFromPDBFile = returnPDB[0];
-			boolean HasMoreThanOneChain = returnPDB[2].equals("true") ? true : false;
+			if (!foundChain) {
+				// [pdb protein sequence, protein chain, "true" -> there is more than one chain]
+				String[] returnPDB = null;
+				if (pdbFile.endsWith("pdb"))
+					returnPDB = getProteinSequenceAndChainFromPDBFile(pdbFile, ptn, taskMonitor);
+				else
+					returnPDB = getChainFromCIFFile(pdbFile, ptn, taskMonitor);
 
-			String proteinChain = returnPDB[1];
-			if (proteinChain.startsWith("CHAINS:")) {
-				taskMonitor.showMessage(TaskMonitor.Level.WARN,
-						"No chain matched with protein description. Select one chain...");
-				f.delete();
-				// return String[0-> 'CHAINS'; 1-> HasMoreThanOneChain; 2-> chains: separated by
-				// '#']
-				return new String[] { "CHAINS", returnPDB[2], proteinChain };
-			}
+				proteinSequenceFromPDBFile = returnPDB[0];
+				HasMoreThanOneChain = returnPDB[2].equals("true") ? true : false;
 
-			if (proteinSequenceFromPDBFile.isBlank() || proteinSequenceFromPDBFile.isEmpty()) {
-				taskMonitor.showMessage(TaskMonitor.Level.ERROR, "No sequence has been found in PDB file.");
-				return new String[] { "ERROR" };
+				proteinChain = returnPDB[1];
+				if (proteinChain.startsWith("CHAINS:")) {
+					taskMonitor.showMessage(TaskMonitor.Level.WARN,
+							"No chain matched with protein description. Select one chain...");
+					f.delete();
+					// return String[0-> 'CHAINS'; 1-> HasMoreThanOneChain; 2-> chains: separated by
+					// '#']
+					return new String[] { "CHAINS", returnPDB[2], proteinChain };
+				}
+
+				if (proteinSequenceFromPDBFile.isBlank() || proteinSequenceFromPDBFile.isEmpty()) {
+					taskMonitor.showMessage(TaskMonitor.Level.ERROR, "No sequence has been found in PDB file.");
+					return new String[] { "ERROR" };
+				}
+			} else {
+				if (pdbFile.endsWith("pdb"))
+					proteinSequenceFromPDBFile = ProteinStructureManager.getProteinSequenceFromPDBFileWithSpecificChain(
+							pdbFile, ptn, taskMonitor, proteinChain, false);
+				else
+					proteinSequenceFromPDBFile = ProteinStructureManager.getProteinSequenceFromCIFFileWithSpecificChain(
+							pdbFile, ptn, taskMonitor, proteinChain, false);
 			}
 
 			finalStr = createPyMOLScript(taskMonitor, ptn, crossLinks, pdbFile, HasMoreThanOneChain, proteinChain,
@@ -325,6 +342,44 @@ public class ProteinStructureManager {
 			return new String[] { "ERROR" };
 
 		return new String[] { f.getAbsolutePath() };
+	}
+
+	/**
+	 * Get chain from the PDB fasta file
+	 * 
+	 * @param targetProteinSequence target sequence
+	 * @param pdbID                 pdb identifier
+	 * @param taskMonitor           task monitor
+	 * @return chain
+	 */
+	public static String getChainFromPDBFasta(String targetProteinSequence, String pdbID, TaskMonitor taskMonitor) {
+
+		List<Fasta> fastaList = Util.getProteinSequenceFromPDBServer(pdbID, taskMonitor);
+
+		String chain = "";
+		if (fastaList.size() > 0) {
+
+			for (Fasta fasta : fastaList) {
+				
+				int offset = fasta.sequence.indexOf(targetProteinSequence);
+				if(offset != -1) {
+
+					// Example: >3J7Y_8|Chain J|uL11|Homo sapiens (9606)
+					String[] cols = fasta.header.split("\\|");
+
+					String[] chainCols = cols[1].split("Chain ");
+					if (chainCols.length == 1) {// It means that there are more than one chain
+						chainCols = cols[1].split("Chains ");
+						chainCols = chainCols[1].split(",");
+						chain = chainCols[0].trim();
+					} else {
+						chain = chainCols[1].trim();
+					}
+					break;
+				}
+			}
+		}
+		return chain;
 	}
 
 	/**
@@ -413,8 +468,7 @@ public class ProteinStructureManager {
 		sbScript.append("set dash_width, 5\n");
 		sbScript.append("set dash_length, 0.1\n");
 		sbScript.append("set dash_color, [1.000, 1.000, 0.000]\n");
-		sbScript.append("set label_color, [1.000, 0.000, 0.000]\n");
-		sbScript.append("set label_size, 14\n");
+		sbScript.append("hide label\n");
 		sbScript.append("deselect\n");
 		sbScript.append("show sticks, a\n");
 		sbScript.append("show cartoon, chain_" + proteinChain + "\n");
@@ -521,8 +575,7 @@ public class ProteinStructureManager {
 		sbScript.append("set dash_width, 5\n");
 		sbScript.append("set dash_length, 0.1\n");
 		sbScript.append("set dash_color, [1.000, 1.000, 0.000]\n");
-		sbScript.append("set label_color, [1.000, 0.000, 0.000]\n");
-		sbScript.append("set label_size, 14\n");
+		sbScript.append("hide label\n");
 		sbScript.append("deselect\n");
 		sbScript.append("show sticks, a\n");
 		sbScript.append("show cartoon, chain_" + proteinChain_source + "\n");

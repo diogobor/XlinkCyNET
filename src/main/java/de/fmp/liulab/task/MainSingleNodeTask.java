@@ -950,9 +950,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 					if (processPDBfile)
 						MainSingleEdgeTask.processPDBFile(taskMonitor, value, ptnSource, ptnTarget, nodeName,
-								processTarget);
+								processTarget, "");
 					else
-						MainSingleEdgeTask.processPDBFileWithSpecificChain(taskMonitor, ptnSource, ptnTarget, value);
+						MainSingleEdgeTask.processPDBorCIFfileWithSpecificChain(taskMonitor, ptnSource, ptnTarget,
+								value);
 
 				}
 			}
@@ -1064,7 +1065,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		// tmpPyMOLScriptFile[0-> PyMOL script file name]
 		String[] tmpPyMOLScriptFile = ProteinStructureManager.createPyMOLScriptFileUnknowChain(ptn, intraLinks,
-				taskMonitor, pdbFile);
+				taskMonitor, pdbFile, pdbID);
 
 		if (tmpPyMOLScriptFile[0].equals("CHAINS")) {
 

@@ -5,7 +5,6 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -286,7 +285,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 				} else {
 
 					MainSingleEdgeTask.processPDBFile(taskMonitor, ((PDB) result.iterator().next()).entry, ptnSource,
-							ptnTarget, source_node_name + "#" + target_node_name, false);
+							ptnTarget, source_node_name + "#" + target_node_name, false, "");
 
 				}
 
@@ -344,48 +343,67 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 	 * @param nodeName    node name
 	 */
 	public static void processPDBFile(TaskMonitor taskMonitor, String pdbID, Protein ptnSource, Protein ptnTarget,
-			String nodeName, boolean processTarget) {
+			String nodeName, boolean processTarget, String proteinChain_proteinSource) {
 
 		if (processTarget) { // process
 
 			taskMonitor.showMessage(TaskMonitor.Level.INFO, "Chain of protein source: " + pdbID);
 			// Set the chain of protein source
-			proteinChain_source = pdbID;
+			proteinChain_source = proteinChain_proteinSource;
 
-			// [pdb protein sequence, protein chain, "true" -> there is more than one chain]
-			String[] returnPDB_proteinTarget = null;
-			if (pdbFile.endsWith("pdb")) {
-				taskMonitor.showMessage(TaskMonitor.Level.INFO,
-						"Getting protein sequence and chain of protein source from PDB file...");
-				returnPDB_proteinTarget = ProteinStructureManager.getProteinSequenceAndChainFromPDBFile(pdbFile,
-						ptnTarget, taskMonitor);
-			} else {
+			HasMoreThanOneChain_proteinTarget = false;
+			boolean foundChain = true;
+			String proteinChain_proteinTarget = ProteinStructureManager.getChainFromPDBFasta(ptnTarget.sequence, pdbID,
+					taskMonitor);
+			if (proteinChain_proteinTarget.isBlank() || proteinChain_proteinTarget.isEmpty())
+				foundChain = false;
 
-				taskMonitor.showMessage(TaskMonitor.Level.INFO,
-						"Getting all chains of protein source from CIF file...");
-				returnPDB_proteinTarget = ProteinStructureManager.getChainFromCIFFile(pdbFile, ptnTarget, taskMonitor);
-			}
+			if (!foundChain) {
 
-			proteinSequenceFromPDBFile_proteinTarget = returnPDB_proteinTarget[0];
-			HasMoreThanOneChain_proteinTarget = returnPDB_proteinTarget[2].equals("true") ? true : false;
+				// [pdb protein sequence, protein chain, "true" -> there is more than one chain]
+				String[] returnPDB_proteinTarget = null;
+				if (pdbFile.endsWith("pdb")) {
+					taskMonitor.showMessage(TaskMonitor.Level.INFO,
+							"Getting protein sequence and chain of protein source from PDB file...");
+					returnPDB_proteinTarget = ProteinStructureManager.getProteinSequenceAndChainFromPDBFile(pdbFile,
+							ptnTarget, taskMonitor);
+				} else {
 
-			String proteinChain_proteinTarget = returnPDB_proteinTarget[1];
-			if (proteinChain_proteinTarget.startsWith("CHAINS:")) {// There is more than one chain
-				taskMonitor.showMessage(TaskMonitor.Level.WARN,
-						"No chain matched with protein target description.");
-
-				String[] protein_chains = returnPDB_proteinTarget[1].replace("CHAINS:", "").split("#");
-				List<String> protein_chainsList = Arrays.asList(protein_chains);
-				List<PDB> PDBchains = new ArrayList<PDB>();
-				for (String chainStr : protein_chainsList) {
-					PDBchains.add(new PDB("", "", chainStr, ""));
+					taskMonitor.showMessage(TaskMonitor.Level.INFO,
+							"Getting all chains of protein source from CIF file...");
+					returnPDB_proteinTarget = ProteinStructureManager.getChainFromCIFFile(pdbFile, ptnTarget,
+							taskMonitor);
 				}
-				if (PDBchains.size() > 1) {
-					taskMonitor.showMessage(TaskMonitor.Level.INFO, "There is more than one chain. Select one...");
 
-					// Open a window to select only one chain
-					SingleNodeTask.getPDBInformation(PDBchains, "", taskMonitor, ptnSource, ptnTarget, false, pdbFile,
-							HasMoreThanOneChain_proteinTarget, true, target_node_name, true);
+				proteinSequenceFromPDBFile_proteinTarget = returnPDB_proteinTarget[0];
+				HasMoreThanOneChain_proteinTarget = returnPDB_proteinTarget[2].equals("true") ? true : false;
+
+				proteinChain_proteinTarget = returnPDB_proteinTarget[1];
+				if (proteinChain_proteinTarget.startsWith("CHAINS:")) {// There is more than one chain
+					taskMonitor.showMessage(TaskMonitor.Level.WARN,
+							"No chain matched with protein target description.");
+
+					String[] protein_chains = returnPDB_proteinTarget[1].replace("CHAINS:", "").split("#");
+					List<String> protein_chainsList = Arrays.asList(protein_chains);
+					List<PDB> PDBchains = new ArrayList<PDB>();
+					for (String chainStr : protein_chainsList) {
+						PDBchains.add(new PDB("", "", chainStr, ""));
+					}
+					if (PDBchains.size() > 1) {
+						taskMonitor.showMessage(TaskMonitor.Level.INFO, "There is more than one chain. Select one...");
+
+						// Open a window to select only one chain
+						SingleNodeTask.getPDBInformation(PDBchains, "", taskMonitor, ptnSource, ptnTarget, false,
+								pdbFile, HasMoreThanOneChain_proteinTarget, true, target_node_name, true);
+
+					}
+
+				} else {
+
+					// At this point we have the selected chain of protein source and one chain of
+					// protein target. So, we can create pymol script
+
+					processPDBorCIFfileWithSpecificChain(taskMonitor, ptnSource, ptnTarget, returnPDB_proteinTarget[1]);
 
 				}
 
@@ -393,9 +411,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 
 				// At this point we have the selected chain of protein source and one chain of
 				// protein target. So, we can create pymol script
-
-				processPDBFileWithSpecificChain(taskMonitor, ptnSource, ptnTarget, returnPDB_proteinTarget[1]);
-
+				processPDBorCIFfileWithSpecificChain(taskMonitor, ptnSource, ptnTarget, proteinChain_proteinTarget);
 			}
 
 		} else { // Process protein source
@@ -412,48 +428,65 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 				return;
 			}
 
-			// [pdb protein sequence, protein chain, "true" -> there is more than one chain]
-			String[] returnPDB_proteinSource = null;
-			if (pdbFile.endsWith("pdb")) {
+			HasMoreThanOneChain_proteinSource = false;
+			boolean foundChain = true;
+			proteinChain_proteinSource = ProteinStructureManager.getChainFromPDBFasta(ptnSource.sequence, pdbID,
+					taskMonitor);
+			if (proteinChain_proteinSource.isBlank() || proteinChain_proteinSource.isEmpty())
+				foundChain = false;
 
-				taskMonitor.showMessage(TaskMonitor.Level.INFO,
-						"Getting protein sequence and chain of protein source from PDB file...");
-				returnPDB_proteinSource = ProteinStructureManager.getProteinSequenceAndChainFromPDBFile(pdbFile,
-						ptnSource, taskMonitor);
+			if (!foundChain) {
+
+				// [pdb protein sequence, protein chain, "true" -> there is more than one chain]
+				String[] returnPDB_proteinSource = null;
+				if (pdbFile.endsWith("pdb")) {
+
+					taskMonitor.showMessage(TaskMonitor.Level.INFO,
+							"Getting protein sequence and chain of protein source from PDB file...");
+					returnPDB_proteinSource = ProteinStructureManager.getProteinSequenceAndChainFromPDBFile(pdbFile,
+							ptnSource, taskMonitor);
+				} else {
+
+					taskMonitor.showMessage(TaskMonitor.Level.INFO,
+							"Getting all chains of protein source from CIF file...");
+					returnPDB_proteinSource = ProteinStructureManager.getChainFromCIFFile(pdbFile, ptnSource,
+							taskMonitor);
+				}
+
+				proteinSequenceFromPDBFile_proteinSource = returnPDB_proteinSource[0];
+				HasMoreThanOneChain_proteinSource = returnPDB_proteinSource[2].equals("true") ? true : false;
+
+				proteinChain_proteinSource = returnPDB_proteinSource[1];
+				if (proteinChain_proteinSource.startsWith("CHAINS:")) { // There is more than one chain
+					taskMonitor.showMessage(TaskMonitor.Level.WARN,
+							"No chain matched with protein source description.");
+
+					String[] protein_chains = returnPDB_proteinSource[1].replace("CHAINS:", "").split("#");
+					List<String> protein_chainsList = Arrays.asList(protein_chains);
+					List<PDB> PDBchains = new ArrayList<PDB>();
+					for (String chainStr : protein_chainsList) {
+						PDBchains.add(new PDB("", "", chainStr, ""));
+					}
+					if (PDBchains.size() > 1) {
+						taskMonitor.showMessage(TaskMonitor.Level.INFO, "There is more than one chain. Select one...");
+
+						// Open a window to select only one chain
+						SingleNodeTask.getPDBInformation(PDBchains, "", taskMonitor, ptnSource, ptnTarget, true,
+								pdbFile, HasMoreThanOneChain_proteinSource, true, source_node_name, true);
+
+					}
+
+				} else { // There is only one chain (source)
+
+					// Call this method to obtain the target chain
+					processPDBFile(taskMonitor, pdbID, ptnSource, ptnTarget, nodeName, true,
+							proteinChain_proteinSource);
+				}
+
 			} else {
 
-				taskMonitor.showMessage(TaskMonitor.Level.INFO,
-						"Getting all chains of protein source from CIF file...");
-				returnPDB_proteinSource = ProteinStructureManager.getChainFromCIFFile(pdbFile, ptnSource, taskMonitor);
-			}
-
-			proteinSequenceFromPDBFile_proteinSource = returnPDB_proteinSource[0];
-			HasMoreThanOneChain_proteinSource = returnPDB_proteinSource[2].equals("true") ? true : false;
-
-			String proteinChain_proteinSource = returnPDB_proteinSource[1];
-			if (proteinChain_proteinSource.startsWith("CHAINS:")) { // There is more than one chain
-				taskMonitor.showMessage(TaskMonitor.Level.WARN,
-						"No chain matched with protein source description.");
-
-				String[] protein_chains = returnPDB_proteinSource[1].replace("CHAINS:", "").split("#");
-				List<String> protein_chainsList = Arrays.asList(protein_chains);
-				List<PDB> PDBchains = new ArrayList<PDB>();
-				for (String chainStr : protein_chainsList) {
-					PDBchains.add(new PDB("", "", chainStr, ""));
-				}
-				if (PDBchains.size() > 1) {
-					taskMonitor.showMessage(TaskMonitor.Level.INFO, "There is more than one chain. Select one...");
-
-					// Open a window to select only one chain
-					SingleNodeTask.getPDBInformation(PDBchains, "", taskMonitor, ptnSource, ptnTarget, true, pdbFile,
-							HasMoreThanOneChain_proteinSource, true, source_node_name, true);
-
-				}
-
-			} else { // There is only one chain (source)
-
 				// Call this method to obtain the target chain
-				processPDBFile(taskMonitor, proteinChain_proteinSource, ptnSource, ptnTarget, nodeName, true);
+				processPDBFile(taskMonitor, pdbID, ptnSource, ptnTarget, nodeName, true, proteinChain_proteinSource);
 			}
 		}
 	}
@@ -466,8 +499,8 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 	 * @param ptnTarget           protein target
 	 * @param proteinChain_target chain of protein target
 	 */
-	public static void processPDBFileWithSpecificChain(TaskMonitor taskMonitor, Protein ptnSource, Protein ptnTarget,
-			String proteinChain_target) {
+	public static void processPDBorCIFfileWithSpecificChain(TaskMonitor taskMonitor, Protein ptnSource,
+			Protein ptnTarget, String proteinChain_target) {
 
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Chain of protein target: " + proteinChain_target);
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting sequence of protein source: " + source_node_name);

@@ -62,6 +62,7 @@ import org.xml.sax.InputSource;
 import de.fmp.liulab.internal.UpdateViewListener;
 import de.fmp.liulab.internal.view.JTableRowRenderer;
 import de.fmp.liulab.model.CrossLink;
+import de.fmp.liulab.model.Fasta;
 import de.fmp.liulab.model.GeneDomain;
 import de.fmp.liulab.model.PDB;
 import de.fmp.liulab.model.Protein;
@@ -2492,6 +2493,63 @@ public class Util {
 	}
 
 	/**
+	 * Method responsible for getting fasta file from RCSB PDB server
+	 * 
+	 * @param pdbID pbd identifier
+	 * @return list of fasta files
+	 */
+	public static List<Fasta> getProteinSequenceFromPDBServer(String pdbID, TaskMonitor taskMonitor) {
+
+		List<Fasta> fastaList = new ArrayList<Fasta>();
+		try {
+			String _url = "https://www.rcsb.org/fasta/entry/" + pdbID + "/download";
+			final URL url = new URL(_url);
+			final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setRequestMethod("GET");
+			connection.setRequestProperty("Accept", "text/html");
+			connection.setRequestProperty("Accept-Language", "en-US");
+			connection.setRequestProperty("Connection", "close");
+			connection.setDoOutput(true);
+			connection.setReadTimeout(1000);
+			connection.setConnectTimeout(1000);
+			connection.connect();
+
+			StringBuilder response = new StringBuilder();
+			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+
+				// Get Response
+				InputStream inputStream = connection.getErrorStream(); // first check for error.
+				if (inputStream == null) {
+					inputStream = connection.getInputStream();
+				}
+				BufferedReader rd = new BufferedReader(new InputStreamReader(inputStream));
+				String line;
+
+				while ((line = rd.readLine()) != null) {
+					response.append(line);
+					response.append('\r');
+				}
+				rd.close();
+
+			} else {
+				return new ArrayList<Fasta>();
+			}
+
+			String[] cols = response.toString().split("\r");
+			for (int i = 0; i < cols.length - 1; i += 2) {
+				fastaList.add(new Fasta(cols[i], cols[i + 1]));
+			}
+
+		} catch (Exception e) {
+			taskMonitor.showMessage(TaskMonitor.Level.ERROR,
+					"ERROR: Download fasta file from RCSB PDB server:" + e.getMessage());
+			System.out.println(e.getMessage());
+			return new ArrayList<Fasta>();
+		}
+		return fastaList;
+	}
+
+	/**
 	 * Get PDB IDs from Uniprot
 	 * 
 	 * @param myCurrentRow current row
@@ -2579,6 +2637,22 @@ public class Util {
 					}
 				}
 
+				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting gene name...");
+				xmlnodes = doc.getElementsByTagName("gene");
+				nodes = xmlnodes.item(0).getChildNodes();
+
+				String geneName = "";
+				for (int i = 0; i < nodes.getLength(); i++) {
+					Node node = nodes.item(i);
+					if (node instanceof Element) {
+						if (node.getNodeName().equals("name")) {
+							Node nodeChild = node.getFirstChild();
+							geneName = nodeChild.getNodeValue();
+							break;
+						}
+					}
+				}
+
 				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB IDs...");
 				xmlnodes = doc.getElementsByTagName("dbReference");
 
@@ -2624,7 +2698,7 @@ public class Util {
 				}
 
 				Collections.sort(pdbs);
-				Protein ptn = new Protein(proteinID, fullName, ptnSequence, pdbs);
+				Protein ptn = new Protein(proteinID, geneName, fullName, ptnSequence, pdbs);
 				return ptn;
 
 			} else {
