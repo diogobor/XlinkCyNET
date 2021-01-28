@@ -84,13 +84,13 @@ public class Util {
 	public static String PROTEIN_LENGTH_A = "length_protein_a";
 	public static String PROTEIN_LENGTH_B = "length_protein_b";
 	public static String NODE_LABEL_POSITION = "NODE_LABEL_POSITION";
-	private static String XL_PROTEIN_A_B = "pro_site_ab";
-	private static String XL_PROTEIN_B_A = "pro_site_ba";
+	private static String XL_PROTEIN_A_B = "crosslinks_ab";
+	private static String XL_PROTEIN_B_A = "crosslinks_ba";
 	private static String PROTEIN_A = "protein_a";
 	private static String PROTEIN_B = "protein_b";
 	private static String XL_SCORE_AB = "score_ab";
 	private static String XL_SCORE_BA = "score_ba";
-	public static String XL_COMB_SCORE = "score_cmb";
+	public static String XL_COMB_SCORE = "ppi_score";
 	public static String PYMOL_PATH = "";
 	public static String PDB_PATH = "\"/Applications/\"";
 	public static List<CyNetwork> myCyNetworkList = new ArrayList<CyNetwork>();
