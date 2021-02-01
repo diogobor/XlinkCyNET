@@ -21,6 +21,7 @@ import de.fmp.liulab.model.CrossLink;
 import de.fmp.liulab.model.Fasta;
 import de.fmp.liulab.model.Protein;
 import de.fmp.liulab.parser.ReaderWriterTextFile;
+import de.fmp.liulab.utils.Tuple2;
 import de.fmp.liulab.utils.Util;
 
 /**
@@ -37,6 +38,7 @@ public class ProteinStructureManager {
 	private static ReaderWriterTextFile parserFile;
 	private static int proteinOffsetInPDBSource = -1;
 	private static int proteinOffsetInPDBTarget = -1;
+	private static Aligner align = new Aligner();
 
 	public static void execUnix(String[] cmdarray, TaskMonitor taskMonitor) throws IOException {
 		// instead of calling command directly, we'll call the shell
@@ -110,9 +112,17 @@ public class ProteinStructureManager {
 
 		try {
 
-			// Retrieving file from RCSB server
-			// [PDB or CIF, file content]
-			String[] returnFile = Util.getPDBorCIFfileFromServer(pdbID, taskMonitor);
+			String[] returnFile = null;
+			if (pdbID.startsWith("https://swissmodel.expasy.org/repository/")) {
+				// Download file from SwissModel server
+				returnFile = Util.getPDBfileFromSwissModelServer(pdbID, taskMonitor);
+
+			} else {
+
+				// Retrieving file from RCSB server
+				// [PDB or CIF, file content]
+				returnFile = Util.getPDBorCIFfileFromServer(pdbID, taskMonitor);
+			}
 
 			// write this script to tmp file and return path
 			if (returnFile[0].equals("PDB"))
@@ -288,7 +298,7 @@ public class ProteinStructureManager {
 			boolean foundChain = true;
 			String proteinSequenceFromPDBFile = "";
 			boolean HasMoreThanOneChain = false;
-			String proteinChain = getChainFromPDBFasta(ptn.sequence, pdbID, taskMonitor);
+			String proteinChain = getChainFromPDBFasta(ptn, pdbID, taskMonitor, pdbFile);
 			if (proteinChain.isBlank() || proteinChain.isEmpty())
 				foundChain = false;
 
@@ -352,17 +362,51 @@ public class ProteinStructureManager {
 	 * @param taskMonitor           task monitor
 	 * @return chain
 	 */
-	public static String getChainFromPDBFasta(String targetProteinSequence, String pdbID, TaskMonitor taskMonitor) {
+	public static String getChainFromPDBFasta(Protein ptn, String pdbID, TaskMonitor taskMonitor, String fileName) {
 
 		List<Fasta> fastaList = Util.getProteinSequenceFromPDBServer(pdbID, taskMonitor);
+
+		if (fastaList.size() == 0) {
+			fastaList = getProteinSequencesFromPDBFile(fileName, ptn, taskMonitor);
+		}
 
 		String chain = "";
 		if (fastaList.size() > 0) {
 
 			for (Fasta fasta : fastaList) {
-				
-				int offset = fasta.sequence.indexOf(targetProteinSequence);
-				if(offset != -1) {
+
+				int offset = fasta.sequence.indexOf(ptn.sequence);
+				if (offset == -1)
+					offset = ptn.sequence.indexOf(fasta.sequence);
+
+				if (offset == -1) {// Performs alignment between sequences
+
+					try {
+						Tuple2 closestPeptideinProteinInfo = align
+								.getClosestPeptideInASequence(fasta.sequence.toCharArray(), ptn.sequence.toCharArray());
+						String closestPept = (String) closestPeptideinProteinInfo.getSecond();
+
+						Tuple2 closestPeptInfo = align.getClosestPeptideInASequence(fasta.sequence.toCharArray(),
+								closestPept.toCharArray());
+						int indexClosestPet = (int) closestPeptInfo.getFirst();
+
+						int countSameAA = 0;
+
+						int limit = Math.min(closestPept.length(), fasta.sequence.length() - indexClosestPet);
+						for (int i = indexClosestPet; i < limit; i++) {
+							if (closestPept.toCharArray()[i] == fasta.sequence.toCharArray()[i])
+								countSameAA++;
+						}
+
+						if (((double) countSameAA / (double) limit) > 0.4)
+							offset = 0;
+					} catch (Exception e) {
+						continue;
+					}
+
+				}
+
+				if (offset != -1) {
 
 					// Example: >3J7Y_8|Chain J|uL11|Homo sapiens (9606)
 					String[] cols = fasta.header.split("\\|");
@@ -375,6 +419,9 @@ public class ProteinStructureManager {
 					} else {
 						chain = chainCols[1].trim();
 					}
+					if (proteinOffsetInPDBSource == -1 && fasta.offset != -1)
+						proteinOffsetInPDBSource = fasta.offset;
+
 					break;
 				}
 			}
@@ -781,6 +828,85 @@ public class ProteinStructureManager {
 		} else
 			return new String[] { sbSequence.toString(), protein_chain, "false" };
 
+	}
+
+	/**
+	 * Get protein sequence from pdb file
+	 * 
+	 * @param fileName    file name
+	 * @param ptn         protein
+	 * @param taskMonitor task monitor
+	 * @return
+	 */
+	public static List<Fasta> getProteinSequencesFromPDBFile(String fileName, Protein ptn, TaskMonitor taskMonitor) {
+
+		Map<ByteBuffer, Integer> ResiduesDict = Util.createResiduesDict();
+		StringBuilder sbSequence = new StringBuilder();
+		String proteinChain = "";
+
+		List<Fasta> fastaList = new ArrayList<Fasta>();
+
+		try {
+			parserFile = new ReaderWriterTextFile(fileName);
+			String line = "";
+			int lastInsertedResidue = 0;
+			int threshold = 9;// qtd aminoacids
+			int countAA = 0;
+			boolean getSequence = true;
+
+			while (parserFile.hasLine()) {
+				line = parserFile.getLine();
+				if (!(line.equals(""))) {
+
+					if (!line.startsWith("ATOM"))
+						continue;
+
+					String[] cols = line.split("\\s+");
+
+					if (!getSequence) {
+						if (cols[4].equals(proteinChain)) {
+							continue;
+						} else {
+							getSequence = true;
+							countAA = 0;
+							sbSequence = new StringBuilder();
+						}
+					}
+
+					proteinChain = cols[4];
+
+					byte[] pdbResidue = cols[3].getBytes();// Residue -> three characters
+					int newResidue = ResiduesDict.get(ByteBuffer.wrap(pdbResidue));
+
+					if (newResidue != lastInsertedResidue) {
+
+						byte[] _byte = new byte[1];
+						_byte[0] = (byte) newResidue;
+						String string = new String(_byte);
+						sbSequence.append(string);
+						countAA++;
+						if (countAA > threshold) {
+							getSequence = false;
+
+							// Create Fasta
+
+							int proteinOffsetInPDBSource = Integer.parseInt(cols[5]);
+							String header = ">" + ptn.proteinID + "|Chain " + proteinChain + "|description";
+							Fasta fasta = new Fasta(header, sbSequence.toString(), proteinOffsetInPDBSource);
+							fastaList.add(fasta);
+						}
+					}
+					lastInsertedResidue = newResidue;
+
+				}
+			}
+
+		} catch (Exception e) {
+			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Problems while reading PDB file: " + fileName);
+			return new ArrayList<Fasta>();
+		}
+
+		return fastaList;
 	}
 
 	/**

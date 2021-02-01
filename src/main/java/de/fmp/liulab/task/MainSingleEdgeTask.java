@@ -324,7 +324,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 				return;
 			}
 
-			SingleNodeTask.processPDBFile(msgINFO, taskMonitor, pdbID.entry, ptn);
+			SingleNodeTask.processPDBFile(msgINFO, taskMonitor, pdbID, ptn);
 
 		} else {
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "There is no PDB for the protein: " + ptn.proteinID);
@@ -353,8 +353,8 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 
 			HasMoreThanOneChain_proteinTarget = false;
 			boolean foundChain = true;
-			String proteinChain_proteinTarget = ProteinStructureManager.getChainFromPDBFasta(ptnTarget.sequence, pdbID,
-					taskMonitor);
+			String proteinChain_proteinTarget = ProteinStructureManager.getChainFromPDBFasta(ptnTarget, pdbID,
+					taskMonitor, "");
 			if (proteinChain_proteinTarget.isBlank() || proteinChain_proteinTarget.isEmpty())
 				foundChain = false;
 
@@ -430,8 +430,8 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 
 			HasMoreThanOneChain_proteinSource = false;
 			boolean foundChain = true;
-			proteinChain_proteinSource = ProteinStructureManager.getChainFromPDBFasta(ptnSource.sequence, pdbID,
-					taskMonitor);
+			proteinChain_proteinSource = ProteinStructureManager.getChainFromPDBFasta(ptnSource, pdbID, taskMonitor,
+					"");
 			if (proteinChain_proteinSource.isBlank() || proteinChain_proteinSource.isEmpty())
 				foundChain = false;
 

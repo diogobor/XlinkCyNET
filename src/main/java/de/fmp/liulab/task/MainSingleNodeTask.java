@@ -940,9 +940,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 				if (!isFromEdgeAction) {
 
-					if (processPDBfile)
-						processPDBFile(msgINFO, taskMonitor, value, ptnSource);
-					else
+					if (processPDBfile) {
+						PDB pdb = new PDB(value, "", "", "");
+						processPDBFile(msgINFO, taskMonitor, pdb, ptnSource);
+					} else
 						processPDBorCiFfileWithSpecificChain(taskMonitor, pdbFile, ptnSource, HasMoreThanOneChain,
 								value);
 
@@ -1034,7 +1035,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	 * @param pdbID       pdb ID
 	 * @param ptn         protein
 	 */
-	public void processPDBFile(String msgINFO, TaskMonitor taskMonitor, String pdbID, Protein ptn) {
+	public void processPDBFile(String msgINFO, TaskMonitor taskMonitor, PDB pdbID, Protein ptn) {
 
 		msgINFO = "Creating tmp PDB file...";
 
@@ -1042,7 +1043,27 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			textLabel_status_result.setText(msgINFO);
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, msgINFO);
 
-		String pdbFile = ProteinStructureManager.createPDBFile(pdbID, taskMonitor);
+		if (pdbID.resolution.equals("SMR")) {// It means that there is no PDB ID stored on
+			// Uniprot, but there is a SWISS-MODEL
+
+			String new_pdbID = Util.getPDBidOrURLFromSwissModel(pdbID.entry, ptn.checksum, taskMonitor);
+			pdbID.entry = new_pdbID;
+
+			if (new_pdbID.isBlank() || new_pdbID.isEmpty()) {
+
+				if (textLabel_status_result != null) {
+
+					textLabel_status_result.setText("ERROR: Check Task History.");
+					pyMOLButton.setEnabled(true);
+				}
+				
+				taskMonitor.showMessage(TaskMonitor.Level.ERROR, "There is no PDB for the protein: " + ptn.proteinID);
+				return;
+			}
+
+		}
+
+		String pdbFile = ProteinStructureManager.createPDBFile(pdbID.entry, taskMonitor);
 		if (pdbFile.equals("ERROR")) {
 
 			if (textLabel_status_result != null) {
@@ -1065,7 +1086,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		// tmpPyMOLScriptFile[0-> PyMOL script file name]
 		String[] tmpPyMOLScriptFile = ProteinStructureManager.createPyMOLScriptFileUnknowChain(ptn, intraLinks,
-				taskMonitor, pdbFile, pdbID);
+				taskMonitor, pdbFile, pdbID.entry);
 
 		if (tmpPyMOLScriptFile[0].equals("CHAINS")) {
 
@@ -1277,7 +1298,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 									}
 								}
 
-								processPDBFile(msgINFO, taskMonitor, pdbID.entry, ptn);
+								processPDBFile(msgINFO, taskMonitor, pdbID, ptn);
 
 							} else {
 

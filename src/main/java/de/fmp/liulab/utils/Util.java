@@ -2364,6 +2364,70 @@ public class Util {
 	}
 
 	/**
+	 * Get PDB file from SwissModel server
+	 * 
+	 * @param _url link to download pdb file
+	 * @return pdb file name
+	 */
+	public static String[] getPDBfileFromSwissModelServer(String _url, TaskMonitor taskMonitor) {
+
+		try {
+			final URL url = new URL(_url);
+			final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setRequestMethod("GET");
+			connection.setRequestProperty("Accept", "text/html");
+			connection.setRequestProperty("Accept-Language", "en-US");
+			connection.setRequestProperty("Connection", "close");
+			connection.setDoOutput(true);
+			connection.setReadTimeout(1000);
+			connection.setConnectTimeout(1000);
+			connection.connect();
+
+			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+
+				// Get Response
+				InputStream inputStream = connection.getErrorStream(); // first check for error.
+				if (inputStream == null) {
+					inputStream = connection.getInputStream();
+				}
+				BufferedReader rd = new BufferedReader(new InputStreamReader(inputStream));
+				String line;
+
+				StringBuilder response = new StringBuilder();
+				int total_lines = connection.getContentLength();
+
+				int old_progress = 0;
+				int summary_processed = 0;
+
+				while ((line = rd.readLine()) != null) {
+					response.append(line);
+					response.append('\r');
+
+					summary_processed += line.toCharArray().length + 1;
+					int new_progress = (int) ((double) summary_processed / (total_lines) * 100);
+					if (new_progress > old_progress) {
+						old_progress = new_progress;
+
+						taskMonitor.showMessage(TaskMonitor.Level.INFO,
+								"Downloading PDB file from server: " + old_progress + "%");
+					}
+				}
+				rd.close();
+				return new String[] { "PDB", response.toString() };
+
+			} else {
+
+				taskMonitor.showMessage(TaskMonitor.Level.WARN, "There is no PDB file.");
+				return new String[] { "" };
+			}
+
+		} catch (Exception e) {
+			taskMonitor.showMessage(TaskMonitor.Level.WARN, e.getMessage());
+			return new String[] { "" };
+		}
+	}
+
+	/**
 	 * Get PDB file from RCSB server
 	 * 
 	 * @param pdbID protein id
@@ -2549,6 +2613,99 @@ public class Util {
 		return fastaList;
 	}
 
+	public static String getPDBidOrURLFromSwissModel(String swissID, String checksum, TaskMonitor taskMonitor) {
+
+		try {
+			String _url = "https://swissmodel.expasy.org/repository/uniprot/" + swissID + "?csm=" + checksum;
+			final URL url = new URL(_url);
+			final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setRequestMethod("GET");
+			connection.setRequestProperty("Accept", "text/html");
+			connection.setRequestProperty("Accept-Language", "en-US");
+			connection.setRequestProperty("Connection", "close");
+			connection.setDoOutput(true);
+			connection.setReadTimeout(1000);
+			connection.setConnectTimeout(1000);
+			connection.connect();
+			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+
+				// Get Response
+				InputStream inputStream = connection.getErrorStream(); // first check for error.
+				if (inputStream == null) {
+					inputStream = connection.getInputStream();
+				}
+				BufferedReader rd = new BufferedReader(new InputStreamReader(inputStream));
+				String line;
+				StringBuilder response = new StringBuilder();
+				while ((line = rd.readLine()) != null) {
+					response.append(line);
+					response.append('\r');
+				}
+				rd.close();
+				String responseString = response.toString();
+
+				// Try to find out second RCSB link. Example:
+				// href="https://www.rcsb.org/structure/6lgk"
+
+				int firstRCSBIndex = responseString.indexOf("href=\"https://www.rcsb.org/structure/");
+
+				if (firstRCSBIndex != -1) {
+					int secondRCSBIndex = responseString.indexOf("href=\"https://www.rcsb.org/structure/",
+							firstRCSBIndex + 1);
+
+					if (secondRCSBIndex != -1) {
+
+						// 37 = link length
+						int quoteIndex = responseString.indexOf("\"", secondRCSBIndex + 37);
+						String _pdbID = responseString.substring(secondRCSBIndex + 37, quoteIndex);
+
+						return _pdbID;
+
+					} else {
+						String pdbID = retrievePDBIDfromSwissModelServer(responseString);
+						return "https://swissmodel.expasy.org/repository/" + pdbID + ".pdb";
+					}
+
+				} else { // There is no RCSB link. Try to find out pdb file on Swiss-Model website
+
+					String pdbID = retrievePDBIDfromSwissModelServer(responseString);
+					return "https://swissmodel.expasy.org/repository/" + pdbID + ".pdb";
+				}
+
+			} else {
+				taskMonitor.showMessage(TaskMonitor.Level.WARN, "Error retrieving PDB file from SWISS-MODEL server.");
+				return "";
+			}
+
+		} catch (Exception e) {
+
+			taskMonitor.showMessage(TaskMonitor.Level.WARN, e.getMessage());
+		}
+		return "";
+	}
+
+	/**
+	 * Retrieve PDB id from SwissModel server
+	 * 
+	 * @param responseString whole html
+	 * @return pdb id
+	 */
+	private static String retrievePDBIDfromSwissModelServer(String responseString) {
+
+		int endPdbIndex = responseString.indexOf(".pdb");
+
+		if (endPdbIndex != -1) {
+
+			int startPdbIndex = responseString.indexOf("/repository/", endPdbIndex - 50);
+			String pdbFile = responseString.substring(startPdbIndex + 12, endPdbIndex);
+
+			return pdbFile;
+		} else {
+			return "";
+		}
+
+	}
+
 	/**
 	 * Get PDB IDs from Uniprot
 	 * 
@@ -2656,28 +2813,37 @@ public class Util {
 				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB IDs...");
 				xmlnodes = doc.getElementsByTagName("dbReference");
 
+				boolean containsPDBtags = false;
 				List<PDB> pdbs = new ArrayList<PDB>();
 				for (int i = 0; i < xmlnodes.getLength(); i++) {
 					Node nNode = xmlnodes.item(i);
 					String pdbType = nNode.getAttributes().item(1).getNodeValue();
-					if (!pdbType.equals("PDB"))
-						continue;
-					if (nNode.hasChildNodes()) {
+					if (pdbType.equals("PDB")) {
+						if (nNode.hasChildNodes()) {
+							String entry = nNode.getAttributes().item(0).getNodeValue();
+							String resolution = "0.00";
+							String[] chain_positions = null;
+							if (nNode.getChildNodes().item(3).getAttributes().item(0).getNodeValue()
+									.equals("resolution")) {
+								resolution = nNode.getChildNodes().item(3).getAttributes().item(1).getNodeValue();
+								chain_positions = nNode.getChildNodes().item(5).getAttributes().item(1).getNodeValue()
+										.split("=");
+							} else if (nNode.getChildNodes().item(3).getAttributes().item(0).getNodeValue()
+									.equals("chains"))
+								chain_positions = nNode.getChildNodes().item(3).getAttributes().item(1).getNodeValue()
+										.split("=");
+							String chain = chain_positions[0];
+							String positions = chain_positions[1];
+							PDB pdb = new PDB(entry, resolution, chain, positions);
+							pdbs.add(pdb);
+							containsPDBtags = true;
+						}
+					} else if (pdbType.equals("SMR") && !containsPDBtags) {
 						String entry = nNode.getAttributes().item(0).getNodeValue();
-						String resolution = "0.00";
-						String[] chain_positions = null;
-						if (nNode.getChildNodes().item(3).getAttributes().item(0).getNodeValue().equals("resolution")) {
-							resolution = nNode.getChildNodes().item(3).getAttributes().item(1).getNodeValue();
-							chain_positions = nNode.getChildNodes().item(5).getAttributes().item(1).getNodeValue()
-									.split("=");
-						} else if (nNode.getChildNodes().item(3).getAttributes().item(0).getNodeValue()
-								.equals("chains"))
-							chain_positions = nNode.getChildNodes().item(3).getAttributes().item(1).getNodeValue()
-									.split("=");
-						String chain = chain_positions[0];
-						String positions = chain_positions[1];
-						PDB pdb = new PDB(entry, resolution, chain, positions);
+						PDB pdb = new PDB(entry, "SMR", "", "");
 						pdbs.add(pdb);
+					} else {
+						continue;
 					}
 
 				}
@@ -2686,10 +2852,12 @@ public class Util {
 				xmlnodes = doc.getElementsByTagName("sequence");
 
 				String ptnSequence = "";
+				String checksum = "";
 				for (int i = 0; i < xmlnodes.getLength(); i++) {
 					Node node = xmlnodes.item(i);
 					if (node instanceof Element) {
 						if (node.getAttributes().item(0).getNodeName().equals("checksum")) {
+							checksum = node.getAttributes().item(0).getNodeValue();
 							Node nodeChild = node.getFirstChild();
 							ptnSequence = nodeChild.getNodeValue();
 							break;
@@ -2698,7 +2866,7 @@ public class Util {
 				}
 
 				Collections.sort(pdbs);
-				Protein ptn = new Protein(proteinID, geneName, fullName, ptnSequence, pdbs);
+				Protein ptn = new Protein(proteinID, geneName, fullName, ptnSequence, checksum, pdbs);
 				return ptn;
 
 			} else {

@@ -15,6 +15,7 @@ public class Protein {
 	public String gene;
 	public String fullName;
 	public String sequence;
+	public String checksum;
 	public List<PDB> pdbIds;
 
 	/**
@@ -23,11 +24,12 @@ public class Protein {
 	 * @param sequence protein sequence
 	 * @param pdbIds   pdb IDs
 	 */
-	public Protein(String proteinID, String gene, String fullName, String sequence, List<PDB> pdbIds) {
+	public Protein(String proteinID, String gene, String fullName, String sequence, String checksum, List<PDB> pdbIds) {
 		this.proteinID = proteinID;
 		this.gene = gene;
 		this.fullName = fullName;
 		this.sequence = sequence;
+		this.checksum = checksum;
 		this.pdbIds = pdbIds;
 	}
 
