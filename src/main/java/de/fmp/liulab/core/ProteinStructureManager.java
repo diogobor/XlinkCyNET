@@ -303,6 +303,9 @@ public class ProteinStructureManager {
 				foundChain = false;
 
 			if (!foundChain) {
+
+				// protein offset will be retrieved in the PDB / CIF file
+
 				// [pdb protein sequence, protein chain, "true" -> there is more than one chain]
 				String[] returnPDB = null;
 				if (pdbFile.endsWith("pdb"))
@@ -328,6 +331,7 @@ public class ProteinStructureManager {
 					return new String[] { "ERROR" };
 				}
 			} else {
+
 				if (pdbFile.endsWith("pdb"))
 					proteinSequenceFromPDBFile = ProteinStructureManager.getProteinSequenceFromPDBFileWithSpecificChain(
 							pdbFile, ptn, taskMonitor, proteinChain, false);
@@ -490,7 +494,9 @@ public class ProteinStructureManager {
 		if ((proteinOffsetInPDBSource - 1) == offsetProtein) {
 			offsetProtein = 0;
 		} else if (offsetProtein > 0) {
-			offsetProtein = (proteinOffsetInPDBSource - 1) - offsetProtein;
+			offsetProtein = (proteinOffsetInPDBSource - 1) - offsetProtein > 0
+					? (proteinOffsetInPDBSource - 1) - offsetProtein
+					: offsetProtein;
 		}
 
 		StringBuilder sbDistances = new StringBuilder();
@@ -660,10 +666,10 @@ public class ProteinStructureManager {
 		try {
 			parserFile = new ReaderWriterTextFile(fileName);
 			String line = "";
-			int lastInsertedResidue = 0;
-			int threshold = 10;// qtd aminoacids
+			String lastOffset = "-1";
+			int threshold = 15;// qtd aminoacids
 			int countAA = 0;
-			int proteinOffsetInPDB = -1;
+			proteinOffsetInPDBSource = -1;
 
 			while (parserFile.hasLine()) {
 				line = parserFile.getLine();
@@ -681,8 +687,9 @@ public class ProteinStructureManager {
 
 					byte[] pdbResidue = cols[3].getBytes();// Residue -> three characters
 					int newResidue = ResiduesDict.get(ByteBuffer.wrap(pdbResidue));
+					String currentOffset = cols[5];
 
-					if (newResidue != lastInsertedResidue) {
+					if (!currentOffset.equals(lastOffset)) {
 						byte[] _byte = new byte[1];
 						_byte[0] = (byte) newResidue;
 						String string = new String(_byte);
@@ -692,10 +699,10 @@ public class ProteinStructureManager {
 							break;
 						}
 					}
-					lastInsertedResidue = newResidue;
+					lastOffset = currentOffset;
 
-					if (proteinOffsetInPDB == -1) {
-						proteinOffsetInPDB = Integer.parseInt(cols[5]);
+					if (proteinOffsetInPDBSource == -1) {
+						proteinOffsetInPDBSource = Integer.parseInt(cols[5]);
 					}
 				}
 
@@ -703,6 +710,8 @@ public class ProteinStructureManager {
 		} catch (Exception e) {
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Problems while reading PDB file: " + fileName);
 		}
+
+		proteinOffsetInPDBTarget = proteinOffsetInPDBSource;
 
 		if (isProteinSource)
 			proteinOffsetInPDBSource = -1;
@@ -731,8 +740,8 @@ public class ProteinStructureManager {
 		try {
 			parserFile = new ReaderWriterTextFile(fileName);
 			String line = "";
-			int lastInsertedResidue = 0;
-			int threshold = 10;// qtd aminoacids
+			String lastOffset = "-1";
+			int threshold = 15;// qtd aminoacids
 			int countAA = 0;
 			proteinOffsetInPDBSource = -1;
 
@@ -755,8 +764,9 @@ public class ProteinStructureManager {
 
 					byte[] pdbResidue = cols[5].getBytes();// Residue -> three characters
 					int newResidue = ResiduesDict.get(ByteBuffer.wrap(pdbResidue));
+					String currentOffset = cols[5];
 
-					if (newResidue != lastInsertedResidue) {
+					if (!currentOffset.equals(lastOffset)) {
 						byte[] _byte = new byte[1];
 						_byte[0] = (byte) newResidue;
 						String string = new String(_byte);
@@ -766,7 +776,7 @@ public class ProteinStructureManager {
 							break;
 						}
 					}
-					lastInsertedResidue = newResidue;
+					lastOffset = currentOffset;
 
 					if (proteinOffsetInPDBSource == -1) {
 						proteinOffsetInPDBSource = Integer.parseInt(cols[7]);
@@ -777,11 +787,6 @@ public class ProteinStructureManager {
 		} catch (Exception e) {
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Problems while reading PDB file: " + fileName);
 		}
-
-//		if (isProteinSource)
-//			proteinOffsetInPDBSource = -1;
-//		else
-//			proteinOffsetInPDBTarget = -1;
 
 		return sbSequence.toString();
 	}
@@ -855,55 +860,61 @@ public class ProteinStructureManager {
 		try {
 			parserFile = new ReaderWriterTextFile(fileName);
 			String line = "";
-			int lastInsertedResidue = 0;
-			int threshold = 9;// qtd aminoacids
+			String lastOffset = "-1";
+
+			int threshold = 15;// qtd aminoacids
 			int countAA = 0;
 			boolean getSequence = true;
 
 			while (parserFile.hasLine()) {
-				line = parserFile.getLine();
-				if (!(line.equals(""))) {
 
-					if (!line.startsWith("ATOM"))
-						continue;
+				try {
+					line = parserFile.getLine();
+					if (!(line.equals(""))) {
 
-					String[] cols = line.split("\\s+");
-
-					if (!getSequence) {
-						if (cols[4].equals(proteinChain)) {
+						if (!line.startsWith("ATOM"))
 							continue;
-						} else {
-							getSequence = true;
-							countAA = 0;
-							sbSequence = new StringBuilder();
+
+						String[] cols = line.split("\\s+");
+
+						if (!getSequence) {
+							if (cols[4].equals(proteinChain)) {
+								continue;
+							} else {
+								getSequence = true;
+								countAA = 0;
+								sbSequence = new StringBuilder();
+							}
 						}
-					}
 
-					proteinChain = cols[4];
+						proteinChain = cols[4];
 
-					byte[] pdbResidue = cols[3].getBytes();// Residue -> three characters
-					int newResidue = ResiduesDict.get(ByteBuffer.wrap(pdbResidue));
+						byte[] pdbResidue = cols[3].getBytes();// Residue -> three characters
+						int newResidue = ResiduesDict.get(ByteBuffer.wrap(pdbResidue));
+						String currentOffset = cols[5];
 
-					if (newResidue != lastInsertedResidue) {
+						if (!currentOffset.equals(lastOffset)) {
 
-						byte[] _byte = new byte[1];
-						_byte[0] = (byte) newResidue;
-						String string = new String(_byte);
-						sbSequence.append(string);
-						countAA++;
-						if (countAA > threshold) {
-							getSequence = false;
+							byte[] _byte = new byte[1];
+							_byte[0] = (byte) newResidue;
+							String string = new String(_byte);
+							sbSequence.append(string);
+							countAA++;
+							if (countAA > threshold) {
+								getSequence = false;
 
-							// Create Fasta
+								// Create Fasta
 
-							int proteinOffsetInPDBSource = Integer.parseInt(cols[5]);
-							String header = ">" + ptn.proteinID + "|Chain " + proteinChain + "|description";
-							Fasta fasta = new Fasta(header, sbSequence.toString(), proteinOffsetInPDBSource);
-							fastaList.add(fasta);
+								int proteinOffsetInPDBSource = Integer.parseInt(cols[5]);
+								String header = ">" + ptn.proteinID + "|Chain " + proteinChain + "|description";
+								Fasta fasta = new Fasta(header, sbSequence.toString(), proteinOffsetInPDBSource);
+								fastaList.add(fasta);
+							}
 						}
-					}
-					lastInsertedResidue = newResidue;
+						lastOffset = currentOffset;
 
+					}
+				} catch (Exception e) {
 				}
 			}
 

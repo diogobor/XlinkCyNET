@@ -341,9 +341,10 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 	 * @param ptnSource   protein source
 	 * @param ptnTarget   protein target
 	 * @param nodeName    node name
+	 * @throws Exception 
 	 */
 	public static void processPDBFile(TaskMonitor taskMonitor, String pdbID, Protein ptnSource, Protein ptnTarget,
-			String nodeName, boolean processTarget, String proteinChain_proteinSource) {
+			String nodeName, boolean processTarget, String proteinChain_proteinSource) throws Exception {
 
 		if (processTarget) { // process
 
@@ -498,9 +499,10 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 	 * @param ptnSource           protein source
 	 * @param ptnTarget           protein target
 	 * @param proteinChain_target chain of protein target
+	 * @throws Exception 
 	 */
 	public static void processPDBorCIFfileWithSpecificChain(TaskMonitor taskMonitor, Protein ptnSource,
-			Protein ptnTarget, String proteinChain_target) {
+			Protein ptnTarget, String proteinChain_target) throws Exception {
 
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Chain of protein target: " + proteinChain_target);
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting sequence of protein source: " + source_node_name);
@@ -518,9 +520,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR,
 					"No sequence has been found in pdb/cif file for: " + source_node_name);
 
-			JOptionPane.showMessageDialog(null, "No sequence has been found in pdb/cif file for: " + source_node_name,
-					"XlinkCyNET - Alert", JOptionPane.WARNING_MESSAGE);
-			return;
+			throw new Exception("No sequence has been found in pdb/cif file for: " + source_node_name);
 		}
 
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting sequence of protein target: " + target_node_name);
@@ -538,9 +538,8 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR,
 					"No sequence has been found in pdb/cif file for: " + target_node_name);
 
-			JOptionPane.showMessageDialog(null, "No sequence has been found in pdb/cif file for: " + target_node_name,
-					"XlinkCyNET - Alert", JOptionPane.WARNING_MESSAGE);
-			return;
+			throw new Exception("No sequence has been found in pdb/cif file for: " + target_node_name);
+			
 		}
 
 		// Filter cross-links to obtain only links that belong to source and target
@@ -561,9 +560,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 		if (tmpPyMOLScriptFile.equals("ERROR")) {
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Error creating PyMOL script file.");
 
-			JOptionPane.showMessageDialog(null, "Error creating PyMOL script file.", "XlinkCyNET - Alert",
-					JOptionPane.WARNING_MESSAGE);
-			return;
+			throw new Exception("Error creating PyMOL script file.");
 		}
 
 		ProteinStructureManager.executePyMOL(taskMonitor, tmpPyMOLScriptFile, null);
