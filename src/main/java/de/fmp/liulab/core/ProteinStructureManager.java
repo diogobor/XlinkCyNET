@@ -386,8 +386,14 @@ public class ProteinStructureManager {
 								.getClosestPeptideInASequence(fasta.sequence.toCharArray(), ptn.sequence.toCharArray());
 						String closestPept = (String) closestPeptideinProteinInfo.getSecond();
 
-						Tuple2 closestPeptInfo = align.getClosestPeptideInASequence(fasta.sequence.toCharArray(),
-								closestPept.toCharArray());
+						Tuple2 closestPeptInfo = null;
+
+						if (fasta.sequence.length() > closestPept.length())
+							closestPeptInfo = align.getClosestPeptideInASequence(closestPept.toCharArray(),
+									fasta.sequence.toCharArray());
+						else
+							closestPeptInfo = align.getClosestPeptideInASequence(fasta.sequence.toCharArray(),
+									closestPept.toCharArray());
 						int indexClosestPet = (int) closestPeptInfo.getFirst();
 
 						int countSameAA = 0;

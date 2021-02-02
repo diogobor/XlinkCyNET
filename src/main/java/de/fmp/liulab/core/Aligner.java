@@ -91,7 +91,7 @@ public class Aligner {
 	 */
 	public static int[] getMaxValue(int[] numbers) {
 		int maxValue = numbers[0];
-		int index = 1;
+		int index = 0;
 		int bestIndex = index;
 		for (index = 1; index < numbers.length; index++) {
 			if (numbers[index] > maxValue) {
