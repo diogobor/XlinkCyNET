@@ -262,7 +262,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 				throw new Exception("There is neither intralinks nor interlinks for the protein: " + nodeName
 						+ ".\nCheck the columns name.");
 			}
-			return; // Intralink (Source or Target) node
+			// Intralink (Source or Target) node
+			return; 
 		}
 
 		if (forcedWindowOpen && !IsCommandLine) {// Action comes from Context Menu item
