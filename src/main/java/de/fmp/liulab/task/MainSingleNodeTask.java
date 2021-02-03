@@ -66,6 +66,7 @@ import org.cytoscape.view.vizmap.VisualMappingManager;
 import org.cytoscape.view.vizmap.VisualStyle;
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.TaskMonitor;
+import org.cytoscape.work.TaskMonitor.Level;
 
 import de.fmp.liulab.core.ProteinStructureManager;
 import de.fmp.liulab.internal.UpdateViewListener;
@@ -248,13 +249,22 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	 * Method responsible for executing layout to a single node
 	 * 
 	 * @param taskMonitor
+	 * @throws Exception
 	 */
-	private void executeSingleNode(final TaskMonitor taskMonitor) {
+	private void executeSingleNode(final TaskMonitor taskMonitor) throws Exception {
 
-		getNodeInformation();
+		getNodeInformation(taskMonitor);
 
-		if (intraLinks.size() == 0 && interLinks.size() == 0)// It's a intralink_single_node
-			return;
+		if (intraLinks.size() == 0 && interLinks.size() == 0) {// It's a intralink_single_node
+
+			String nodeName = (String) myCurrentRow.getRaw(CyNetwork.NAME);
+			if (!nodeName.contains("- Source") && !nodeName.contains("- Target")) {
+				throw new Exception("There is neither intralinks nor interlinks for the protein: " + nodeName
+						+ ".\nCheck the columns name.");
+			}
+			// Intralink (Source or Target) node
+			return; 
+		}
 
 		if (forcedWindowOpen && !IsCommandLine) {// Action comes from Context Menu item
 
@@ -278,8 +288,9 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	 * Method responsible for executing layout to multiple nodes
 	 * 
 	 * @param taskMonitor
+	 * @throws Exception
 	 */
-	private void executeMultipleNodes(final TaskMonitor taskMonitor) {
+	private void executeMultipleNodes(final TaskMonitor taskMonitor) throws Exception {
 
 		forcedWindowOpen = false;
 		for (CyNode current_node : nodes) {
@@ -424,8 +435,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 	/**
 	 * Get all information of a node
+	 * 
+	 * @throws Exception
 	 */
-	public void getNodeInformation() {
+	public void getNodeInformation(TaskMonitor taskMonitor) throws Exception {
 
 		// ##### GET THE SELECTED NODE - ONLY ONE IS POSSIBLE TO APPLY CHANGES ######
 
@@ -439,9 +452,16 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			currentNodeWidth = 1;
 
 		if (length_protein_a == null) {
-			if (length_protein_b == null)
-				length_protein_a = 10;
-			else
+			if (length_protein_b == null) {
+
+				String nodeName = (String) myCurrentRow.getRaw(CyNetwork.NAME);
+				if (!nodeName.contains("- Source") && !nodeName.contains("- Target")) {
+					throw new Exception(
+							"There is no information in column 'length_protein_a' or 'length_protein_b' for the protein: "
+									+ nodeName);
+				}
+				length_protein_a = 10;// Intralink (Source or Target) node
+			} else
 				length_protein_a = length_protein_b;
 		}
 
@@ -938,25 +958,32 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 				String value = tableDataModel.getValueAt(row, 0) != null ? tableDataModel.getValueAt(row, 0).toString()
 						: "";
 
-				if (!isFromEdgeAction) {
+				try {
+					if (!isFromEdgeAction) {
 
-					if (processPDBfile) {
-						PDB pdb = new PDB(value, "", "", "");
-						processPDBFile(msgINFO, taskMonitor, pdb, ptnSource);
-					} else
-						processPDBorCiFfileWithSpecificChain(taskMonitor, pdbFile, ptnSource, HasMoreThanOneChain,
-								value);
+						if (processPDBfile) {
+							PDB pdb = new PDB(value, "", "", "");
+							processPDBFile(msgINFO, taskMonitor, pdb, ptnSource);
+						} else
+							processPDBorCiFfileWithSpecificChain(taskMonitor, pdbFile, ptnSource, HasMoreThanOneChain,
+									value);
 
-				} else {
+					} else {
 
-					if (processPDBfile)
-						MainSingleEdgeTask.processPDBFile(taskMonitor, value, ptnSource, ptnTarget, nodeName,
-								processTarget, "");
-					else
-						MainSingleEdgeTask.processPDBorCIFfileWithSpecificChain(taskMonitor, ptnSource, ptnTarget,
-								value);
+						if (processPDBfile)
+							MainSingleEdgeTask.processPDBFile(taskMonitor, value, ptnSource, ptnTarget, nodeName,
+									processTarget, "");
+						else
+							MainSingleEdgeTask.processPDBorCIFfileWithSpecificChain(taskMonitor, ptnSource, ptnTarget,
+									value);
 
+					}
+				} catch (Exception e) {
+					taskMonitor.showMessage(Level.ERROR, e.getMessage());
+					JOptionPane.showMessageDialog(null, e.getMessage(), "XlinkCyNET - Alert",
+							JOptionPane.ERROR_MESSAGE);
 				}
+
 			}
 		});
 		pdbPanel.add(okButton);
@@ -980,9 +1007,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	 * @param ptn                 protein
 	 * @param HasMoreThanOneChain has more than one protein chain
 	 * @param proteinChain        protein chain
+	 * @throws Exception
 	 */
 	private void processPDBorCiFfileWithSpecificChain(TaskMonitor taskMonitor, String pdbFile, Protein ptn,
-			boolean HasMoreThanOneChain, String proteinChain) {
+			boolean HasMoreThanOneChain, String proteinChain) throws Exception {
 
 		String msgINFO = "Creating tmp PyMOL script file...";
 		if (textLabel_status_result != null)
@@ -1004,17 +1032,19 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		if (tmpPyMOLScriptFile.equals("ERROR")) {
 
+			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Error creating PyMOL script file.");
 			if (textLabel_status_result != null) {
 
 				textLabel_status_result.setText("ERROR: Check Task History.");
 				pyMOLButton.setEnabled(true);
+				return;
 
 			} else {
-				JOptionPane.showMessageDialog(null, "Error creating PyMOL script file.", "XlinkCyNET - Alert",
-						JOptionPane.ERROR_MESSAGE);
+
+				throw new Exception("Error creating PyMOL script file.");
+
 			}
-			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Error creating PyMOL script file.");
-			return;
+
 		}
 
 		ProteinStructureManager.executePyMOL(taskMonitor, tmpPyMOLScriptFile, textLabel_status_result);
@@ -1034,8 +1064,9 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	 * @param taskMonitor taskmonitor
 	 * @param pdbID       pdb ID
 	 * @param ptn         protein
+	 * @throws Exception
 	 */
-	public void processPDBFile(String msgINFO, TaskMonitor taskMonitor, PDB pdbID, Protein ptn) {
+	public void processPDBFile(String msgINFO, TaskMonitor taskMonitor, PDB pdbID, Protein ptn) throws Exception {
 
 		msgINFO = "Creating tmp PDB file...";
 
@@ -1056,7 +1087,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 					textLabel_status_result.setText("ERROR: Check Task History.");
 					pyMOLButton.setEnabled(true);
 				}
-				
+
 				taskMonitor.showMessage(TaskMonitor.Level.ERROR, "There is no PDB for the protein: " + ptn.proteinID);
 				return;
 			}
@@ -1293,12 +1324,15 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 									try {
 										pyMOLThread.join();
 									} catch (InterruptedException e) {
-										// TODO Auto-generated catch block
 										e.printStackTrace();
 									}
 								}
 
-								processPDBFile(msgINFO, taskMonitor, pdbID, ptn);
+								try {
+									processPDBFile(msgINFO, taskMonitor, pdbID, ptn);
+								} catch (Exception e) {
+									taskMonitor.showMessage(TaskMonitor.Level.ERROR, e.getMessage());
+								}
 
 							} else {
 
