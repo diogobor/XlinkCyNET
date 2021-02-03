@@ -249,13 +249,21 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	 * Method responsible for executing layout to a single node
 	 * 
 	 * @param taskMonitor
+	 * @throws Exception
 	 */
-	private void executeSingleNode(final TaskMonitor taskMonitor) {
+	private void executeSingleNode(final TaskMonitor taskMonitor) throws Exception {
 
-		getNodeInformation();
+		getNodeInformation(taskMonitor);
 
-		if (intraLinks.size() == 0 && interLinks.size() == 0)// It's a intralink_single_node
-			return;
+		if (intraLinks.size() == 0 && interLinks.size() == 0) {// It's a intralink_single_node
+
+			String nodeName = (String) myCurrentRow.getRaw(CyNetwork.NAME);
+			if (!nodeName.contains("- Source") && !nodeName.contains("- Target")) {
+				throw new Exception("There is neither intralinks nor interlinks for the protein: " + nodeName
+						+ ".\nCheck the columns name.");
+			}
+			return; // Intralink (Source or Target) node
+		}
 
 		if (forcedWindowOpen && !IsCommandLine) {// Action comes from Context Menu item
 
@@ -279,8 +287,9 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	 * Method responsible for executing layout to multiple nodes
 	 * 
 	 * @param taskMonitor
+	 * @throws Exception
 	 */
-	private void executeMultipleNodes(final TaskMonitor taskMonitor) {
+	private void executeMultipleNodes(final TaskMonitor taskMonitor) throws Exception {
 
 		forcedWindowOpen = false;
 		for (CyNode current_node : nodes) {
@@ -425,8 +434,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 	/**
 	 * Get all information of a node
+	 * 
+	 * @throws Exception
 	 */
-	public void getNodeInformation() {
+	public void getNodeInformation(TaskMonitor taskMonitor) throws Exception {
 
 		// ##### GET THE SELECTED NODE - ONLY ONE IS POSSIBLE TO APPLY CHANGES ######
 
@@ -440,9 +451,16 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			currentNodeWidth = 1;
 
 		if (length_protein_a == null) {
-			if (length_protein_b == null)
-				length_protein_a = 10;
-			else
+			if (length_protein_b == null) {
+
+				String nodeName = (String) myCurrentRow.getRaw(CyNetwork.NAME);
+				if (!nodeName.contains("- Source") && !nodeName.contains("- Target")) {
+					throw new Exception(
+							"There is no information in column 'length_protein_a' or 'length_protein_b' for the protein: "
+									+ nodeName);
+				}
+				length_protein_a = 10;// Intralink (Source or Target) node
+			} else
 				length_protein_a = length_protein_b;
 		}
 
