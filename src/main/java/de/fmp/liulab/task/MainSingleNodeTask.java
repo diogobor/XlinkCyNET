@@ -207,7 +207,6 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		if (IsCommandLine) {
 			this.deselectNodes();
 		}
-
 	}
 
 	/**
