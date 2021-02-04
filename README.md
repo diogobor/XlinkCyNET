@@ -17,9 +17,8 @@ A detailed tutorial, which explains step by step the functionality of all parame
 
 ### Automation
 
-&#8618; XlinkCyNET supports Cytoscape Automation from both commands and CyREST by providing seven different commands: <br/>
+&#8618; XlinkCyNET supports Cytoscape Automation from both commands and CyREST by providing six different commands: <br/>
 
-##### _applyRestoreStyle_
 ##### _applyRestoreStyle_
 ##### _setParameters_
 ##### _loadProteinDomains_
