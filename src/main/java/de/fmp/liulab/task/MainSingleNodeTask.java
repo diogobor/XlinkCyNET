@@ -258,7 +258,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 			String nodeName = (String) myCurrentRow.getRaw(CyNetwork.NAME);
 			if (!nodeName.contains("- Source") && !nodeName.contains("- Target")) {
-				throw new Exception("There is neither intralinks nor interlinks for the protein: " + nodeName
+				throw new Exception("There is neither intralink nor interlink for the protein: " + nodeName
 						+ ".\nCheck the columns name.");
 			}
 			// Intralink (Source or Target) node
