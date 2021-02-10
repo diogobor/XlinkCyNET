@@ -364,7 +364,7 @@ public class UpdateViewListener
 				}
 			}
 
-			Util.filterUnselectedEdges(myNetwork, netView);
+			Util.filterUnmodifiedEdges(myNetwork, netView);
 
 		} catch (
 

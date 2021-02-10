@@ -1711,16 +1711,17 @@ public class Util {
 	}
 
 	/**
-	 * Method responsible for updating edges based on the score
+	 * Method responsible for updating unmodified edges based on the score
 	 * 
 	 * @param myNetwork current network
 	 * @param netView   current network view
 	 */
-	public static void filterUnselectedEdges(CyNetwork myNetwork, CyNetworkView netView) {
-		List<CyEdge> unSelectedEdges = CyTableUtil.getEdgesInState(myNetwork, CyNetwork.SELECTED, false);
-		if (unSelectedEdges.size() > 1) {
+	public static void filterUnmodifiedEdges(CyNetwork myNetwork, CyNetworkView netView) {
+		List<CyEdge> allEdges = myNetwork.getEdgeList();
+
+		if (allEdges.size() > 1) {
 			// Display edge score in all edges
-			for (CyEdge edge : unSelectedEdges) {
+			for (CyEdge edge : allEdges) {
 
 				CyNode sourceNode = myNetwork.getEdge(edge.getSUID()).getSource();
 				CyNode targetNode = myNetwork.getEdge(edge.getSUID()).getTarget();
@@ -1760,6 +1761,108 @@ public class Util {
 
 				} else if (!myCurrentRow.getRaw(CyNetwork.NAME).toString().contains("[Source")) {
 					break;// There is no score information to be displayed in the original edge.
+				}
+			}
+			// Apply the change to the view
+			netView.updateView();
+		}
+	}
+
+	/**
+	 * Method responsible for updating unmodified edges based on the score
+	 * 
+	 * @param myNetwork current network
+	 * @param netView   current network view
+	 */
+	public static void filterModifiedEdges(CyNetwork myNetwork, CyNetworkView netView) {
+		List<CyEdge> allEdges = myNetwork.getEdgeList();
+
+		if (allEdges.size() > 1) {
+			// Display edge score in all edges
+			for (CyEdge edge : allEdges) {
+
+				// Check if the edge was inserted by this app
+				String edge_name = myNetwork.getDefaultEdgeTable().getRow(edge.getSUID()).get(CyNetwork.NAME,
+						String.class);
+
+				if (!edge_name.contains("[Source:")) {// New edges
+					continue;
+				}
+
+				CyNode sourceNode = myNetwork.getEdge(edge.getSUID()).getSource();
+				String sourceName = myNetwork.getDefaultNodeTable().getRow(sourceNode.getSUID()).get(CyNetwork.NAME,
+						String.class);
+				CyNode targetNode = myNetwork.getEdge(edge.getSUID()).getTarget();
+				String targetName = myNetwork.getDefaultNodeTable().getRow(targetNode.getSUID()).get(CyNetwork.NAME,
+						String.class);
+
+				boolean IsIntraLink;
+
+				if (sourceName.contains("- Source") && targetName.contains("- Target"))// Intra link nodes
+					IsIntraLink = true;
+				else
+					IsIntraLink = false;
+
+				View<CyEdge> newEdgeView = netView.getEdgeView(edge);
+				while (newEdgeView == null) {
+					netView.updateView();
+					try {
+						Thread.sleep(200);
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
+					}
+					newEdgeView = netView.getEdgeView(edge);
+				}
+
+				if (!IsIntraLink) { // It's interlink
+					if (!Util.IsNodeModified(myNetwork, netView, sourceNode)
+							&& !Util.IsNodeModified(myNetwork, netView, targetNode))
+						continue;
+
+					try {
+						// Edge name e.g.: [Source: Ndufa9 (113)] [Target: Ndufs7 (62)] - Score:2.4E-23
+						// - Edge0
+						String[] cols = edge_name.split("Score:");
+						cols = cols[1].split("- Edge");
+						double interlink_score = Double.parseDouble(cols[0]);
+
+						if (interlink_score != Double.NaN && -Math.log10(interlink_score) < interlink_threshold_score) {// hide
+																														// interlink
+
+							newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+							newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, 0);
+						} else {
+
+							if (showLinksLegend)
+								newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY,
+										edge_label_opacity);
+							newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+						}
+
+					} catch (Exception e) {
+					}
+
+				} else {// It's intralink
+
+					try {
+						// EdgeName e.g.: Edge0 [Source: Ndufa9 (113)] [Target: Ndufa9 (157)] - Score:
+						// 5.44E-16
+						String[] cols = edge_name.split("Score:");
+						double intralink_score = Double.parseDouble(cols[1]);
+
+						View<CyNode> sourceNodeView = netView.getNodeView(sourceNode);
+						View<CyNode> targetNodeView = netView.getNodeView(targetNode);
+
+						if (intralink_score != Double.NaN && -Math.log10(intralink_score) < intralink_threshold_score) {// hide
+							sourceNodeView.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, false);
+							targetNodeView.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, false);
+						} else {
+							sourceNodeView.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, true);
+							targetNodeView.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, true);
+						}
+					} catch (Exception e) {
+					}
+
 				}
 			}
 			// Apply the change to the view

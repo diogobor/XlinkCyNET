@@ -472,6 +472,10 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 				Util.intralink_threshold_score = (double) spinner_score_intralink.getValue();
 				XlinkCyNETProps.setProperty("xlinkcynet.intralink_threshold_score",
 						String.valueOf(Util.intralink_threshold_score));
+				
+				if (myNetwork != null && netView != null) {
+					Util.filterModifiedEdges(myNetwork, netView);
+				}
 			}
 		});
 		link_score_panel.add(spinner_score_intralink);
@@ -495,6 +499,10 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 				Util.interlink_threshold_score = (double) spinner_score_interlink.getValue();
 				XlinkCyNETProps.setProperty("xlinkcynet.interlink_threshold_score",
 						String.valueOf(Util.interlink_threshold_score));
+				
+				if (myNetwork != null && netView != null) {
+					Util.filterModifiedEdges(myNetwork, netView);
+				}
 			}
 		});
 		link_score_panel.add(spinner_score_interlink);
@@ -519,7 +527,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 				XlinkCyNETProps.setProperty("xlinkcynet.combinedlink_threshold_score",
 						String.valueOf(Util.combinedlink_threshold_score));
 				if (myNetwork != null && netView != null) {
-					Util.filterUnselectedEdges(myNetwork, netView);
+					Util.filterUnmodifiedEdges(myNetwork, netView);
 				}
 
 			}
