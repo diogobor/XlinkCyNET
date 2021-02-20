@@ -755,8 +755,9 @@ public class Util {
 
 					if (intraLinks.get(countEdge).score != Double.NaN
 							&& -Math.log10(intraLinks.get(countEdge).score) < intralink_threshold_score) {
-						newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
-						newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, 0);
+
+						new_node_source_view.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, false);
+						new_node_target_view.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, false);
 					}
 
 				} else { // Update edge position
@@ -1769,25 +1770,25 @@ public class Util {
 	}
 
 	/**
-	 * Method responsible for updating unmodified edges based on the score
+	 * Method responsible for updating edges based on the score
 	 * 
 	 * @param myNetwork current network
 	 * @param netView   current network view
 	 */
-	public static void filterModifiedEdges(CyNetwork myNetwork, CyNetworkView netView) {
+	public static void updateEdgesStyle(CyNetwork myNetwork, CyNetworkView netView) {
 		List<CyEdge> allEdges = myNetwork.getEdgeList();
 
 		if (allEdges.size() > 1) {
-			// Display edge score in all edges
+
 			for (CyEdge edge : allEdges) {
+
+				if (!isEdgeModified(myNetwork, netView, edge)) {
+					continue;
+				}
 
 				// Check if the edge was inserted by this app
 				String edge_name = myNetwork.getDefaultEdgeTable().getRow(edge.getSUID()).get(CyNetwork.NAME,
 						String.class);
-
-				if (!edge_name.contains("[Source:")) {// New edges
-					continue;
-				}
 
 				CyNode sourceNode = myNetwork.getEdge(edge.getSUID()).getSource();
 				String sourceName = myNetwork.getDefaultNodeTable().getRow(sourceNode.getSUID()).get(CyNetwork.NAME,
@@ -1842,6 +1843,8 @@ public class Util {
 					} catch (Exception e) {
 					}
 
+					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_PAINT, InterLinksColor);
+
 				} else {// It's intralink
 
 					try {
@@ -1863,36 +1866,55 @@ public class Util {
 					} catch (Exception e) {
 					}
 
+					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_PAINT, IntraLinksColor);
+
 				}
+
+				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_SELECTED_PAINT, Color.RED);
+				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_STROKE_SELECTED_PAINT, Color.RED);
+				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TRANSPARENCY, edge_link_opacity);
+				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_FONT_SIZE, edge_label_font_size);
+				if (showLinksLegend) {
+					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, edge_label_opacity);
+					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_FONT_SIZE, edge_label_font_size);
+				} else {
+					newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, 0);
+				}
+				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_WIDTH, edge_link_width);
+
 			}
+
 			// Apply the change to the view
 			netView.updateView();
 		}
 	}
 
 	/**
-	 * Set style to node
+	 * Method responsible for updating the style of all nodes
 	 * 
 	 * @param myNetwork current network
-	 * @param node      current node
-	 * @param netView   current network view
+	 * @param netView   current netView
 	 */
-	public static void setNodeStyles(CyNetwork myNetwork, CyNode node, CyNetworkView netView) {
+	public static void updateNodesStyles(CyNetwork myNetwork, CyNetworkView netView) {
+		List<CyNode> allnodes = myNetwork.getNodeList();
+
+		if (allnodes.size() > 1) {
+
+			for (CyNode cyNode : allnodes) {
+				if (IsNodeModified(myNetwork, netView, cyNode)) {
+					updateNodeStyle(myNetwork, cyNode, netView);
+
+				}
+			}
+		}
+	}
+
+	private static void updateNodeStyle(CyNetwork myNetwork, CyNode node, CyNetworkView netView) {
 
 		if (myNetwork == null || node == null || netView == null)
 			return;
 
 		View<CyNode> nodeView = netView.getNodeView(node);
-
-		if (isProtein_expansion_horizontal) {
-			nodeView.setLockedValue(BasicVisualLexicon.NODE_WIDTH,
-					((Number) getProteinLengthScalingFactor()).doubleValue());
-			nodeView.setLockedValue(BasicVisualLexicon.NODE_HEIGHT, 15d);
-		} else {
-			nodeView.setLockedValue(BasicVisualLexicon.NODE_WIDTH, 15d);
-			nodeView.setLockedValue(BasicVisualLexicon.NODE_HEIGHT,
-					((Number) getProteinLengthScalingFactor()).doubleValue());
-		}
 
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_TRANSPARENCY, 200);
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_BORDER_TRANSPARENCY, Util.node_border_opacity);
@@ -1904,11 +1926,6 @@ public class Util {
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_BORDER_WIDTH, Util.node_border_width);
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_BORDER_PAINT, Util.NodeBorderColor);
 		nodeView.setLockedValue(BasicVisualLexicon.NODE_SHAPE, NodeShapeVisualProperty.ROUND_RECTANGLE);
-
-		if (myNetwork.getRow(node).get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME, Double.class) != null)
-			myNetwork.getRow(node).set(PROTEIN_SCALING_FACTOR_COLUMN_NAME, node_label_factor_size);
-		if (myNetwork.getRow(node).get(Util.HORIZONTAL_EXPANSION_COLUMN_NAME, Boolean.class) != null)
-			myNetwork.getRow(node).set(HORIZONTAL_EXPANSION_COLUMN_NAME, isProtein_expansion_horizontal);
 
 		// ######################### NODE_LABEL_POSITION ######################
 
@@ -1940,6 +1957,36 @@ public class Util {
 
 		}
 		// ######################### NODE_LABEL_POSITION ######################
+
+	}
+
+	/**
+	 * Set style to node
+	 * 
+	 * @param myNetwork current network
+	 * @param node      current node
+	 * @param netView   current network view
+	 */
+	public static void setNodeStyles(CyNetwork myNetwork, CyNode node, CyNetworkView netView) {
+
+		updateNodeStyle(myNetwork, node, netView);
+
+		View<CyNode> nodeView = netView.getNodeView(node);
+		
+		if (isProtein_expansion_horizontal) {
+			nodeView.setLockedValue(BasicVisualLexicon.NODE_WIDTH,
+					((Number) getProteinLengthScalingFactor()).doubleValue());
+			nodeView.setLockedValue(BasicVisualLexicon.NODE_HEIGHT, 15d);
+		} else {
+			nodeView.setLockedValue(BasicVisualLexicon.NODE_WIDTH, 15d);
+			nodeView.setLockedValue(BasicVisualLexicon.NODE_HEIGHT,
+					((Number) getProteinLengthScalingFactor()).doubleValue());
+		}
+
+		if (myNetwork.getRow(node).get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME, Double.class) != null)
+			myNetwork.getRow(node).set(PROTEIN_SCALING_FACTOR_COLUMN_NAME, node_label_factor_size);
+		if (myNetwork.getRow(node).get(Util.HORIZONTAL_EXPANSION_COLUMN_NAME, Boolean.class) != null)
+			myNetwork.getRow(node).set(HORIZONTAL_EXPANSION_COLUMN_NAME, isProtein_expansion_horizontal);
 
 	}
 

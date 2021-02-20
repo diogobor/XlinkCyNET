@@ -11,8 +11,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Properties;
@@ -29,7 +27,6 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
-import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
@@ -302,6 +299,10 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 							+ Util.IntraLinksColor.getGreen() + " B:" + Util.IntraLinksColor.getBlue() + " - "
 							+ String.format("#%02X%02X%02X", Util.IntraLinksColor.getRed(),
 									Util.IntraLinksColor.getGreen(), Util.IntraLinksColor.getBlue()));
+
+					if (myNetwork != null && netView != null) {
+						Util.updateEdgesStyle(myNetwork, netView);
+					}
 				}
 			}
 		});
@@ -338,6 +339,10 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 							+ Util.InterLinksColor.getGreen() + " B:" + Util.InterLinksColor.getBlue() + " - "
 							+ String.format("#%02X%02X%02X", Util.InterLinksColor.getRed(),
 									Util.InterLinksColor.getGreen(), Util.InterLinksColor.getBlue()));
+
+					if (myNetwork != null && netView != null) {
+						Util.updateEdgesStyle(myNetwork, netView);
+					}
 				}
 			}
 		});
@@ -386,6 +391,10 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			public void stateChanged(ChangeEvent e) {
 				Util.edge_link_opacity = (Integer) spinner_opacity_edge_link.getValue();
 				XlinkCyNETProps.setProperty("xlinkcynet.edge_link_opacity", Util.edge_link_opacity.toString());
+
+				if (myNetwork != null && netView != null) {
+					Util.updateEdgesStyle(myNetwork, netView);
+				}
 			}
 		});
 		spinner_opacity_edge_link.setToolTipText("Set a value between 0 (transparent) and 255 (opaque).");
@@ -409,6 +418,10 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			public void stateChanged(ChangeEvent e) {
 				Util.edge_link_width = (double) spinner_width_edge_link.getValue();
 				XlinkCyNETProps.setProperty("xlinkcynet.edge_link_width", String.valueOf(Util.edge_link_width));
+
+				if (myNetwork != null && netView != null) {
+					Util.updateEdgesStyle(myNetwork, netView);
+				}
 			}
 		});
 		spinner_width_edge_link.setToolTipText("Set a value between 1 and 10.");
@@ -472,9 +485,9 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 				Util.intralink_threshold_score = (double) spinner_score_intralink.getValue();
 				XlinkCyNETProps.setProperty("xlinkcynet.intralink_threshold_score",
 						String.valueOf(Util.intralink_threshold_score));
-				
+
 				if (myNetwork != null && netView != null) {
-					Util.filterModifiedEdges(myNetwork, netView);
+					Util.updateEdgesStyle(myNetwork, netView);
 				}
 			}
 		});
@@ -499,9 +512,9 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 				Util.interlink_threshold_score = (double) spinner_score_interlink.getValue();
 				XlinkCyNETProps.setProperty("xlinkcynet.interlink_threshold_score",
 						String.valueOf(Util.interlink_threshold_score));
-				
+
 				if (myNetwork != null && netView != null) {
-					Util.filterModifiedEdges(myNetwork, netView);
+					Util.updateEdgesStyle(myNetwork, netView);
 				}
 			}
 		});
@@ -546,7 +559,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		int offset_y = 40;
 		link_legend_panel = new JPanel();
 		link_legend_panel.setBackground(Color.WHITE);
-		link_legend_panel.setBorder(BorderFactory.createTitledBorder("Legend"));
+		link_legend_panel.setBorder(BorderFactory.createTitledBorder("Edge labels"));
 		link_legend_panel.setBounds(10, 255, 230, 115);
 		link_legend_panel.setLayout(null);
 		link_panel.add(link_legend_panel);
@@ -583,6 +596,10 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			public void stateChanged(ChangeEvent e) {
 				Util.edge_label_font_size = (Integer) spinner_font_size_link_legend.getValue();
 				XlinkCyNETProps.setProperty("xlinkcynet.edge_label_font_size", Util.edge_label_font_size.toString());
+
+				if (myNetwork != null && netView != null) {
+					Util.updateEdgesStyle(myNetwork, netView);
+				}
 			}
 		});
 		link_legend_panel.add(spinner_font_size_link_legend);
@@ -605,6 +622,10 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			public void stateChanged(ChangeEvent e) {
 				Util.edge_label_opacity = (Integer) spinner_opacity_edge_label.getValue();
 				XlinkCyNETProps.setProperty("xlinkcynet.edge_label_opacity", Util.edge_label_opacity.toString());
+
+				if (myNetwork != null && netView != null) {
+					Util.updateEdgesStyle(myNetwork, netView);
+				}
 			}
 		});
 		spinner_opacity_edge_label.setToolTipText("Set a value between 0 (transparent) and 255 (opaque).");
@@ -644,7 +665,10 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 					Util.showLinksLegend = false;
 					XlinkCyNETProps.setProperty("xlinkcynet.showLinksLegend", "false");
 				}
-				;
+
+				if (myNetwork != null && netView != null) {
+					Util.updateEdgesStyle(myNetwork, netView);
+				}
 			}
 		});
 		link_legend_panel.add(show_links_legend);
@@ -808,6 +832,10 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			public void stateChanged(ChangeEvent e) {
 				Util.node_label_font_size = (Integer) spinner_font_size_node.getValue();
 				XlinkCyNETProps.setProperty("xlinkcynet.node_label_font_size", Util.node_label_font_size.toString());
+
+				if (myNetwork != null && netView != null) {
+					Util.updateNodesStyles(myNetwork, netView);
+				}
 			}
 		});
 		node_panel.add(spinner_font_size_node);
@@ -880,6 +908,10 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 						+ Util.NodeBorderColor.getGreen() + " B:" + Util.NodeBorderColor.getBlue() + " - "
 						+ String.format("#%02X%02X%02X", Util.NodeBorderColor.getRed(), Util.NodeBorderColor.getGreen(),
 								Util.NodeBorderColor.getBlue()));
+
+				if (myNetwork != null && netView != null) {
+					Util.updateNodesStyles(myNetwork, netView);
+				}
 			}
 		});
 
@@ -905,6 +937,10 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			public void stateChanged(ChangeEvent e) {
 				Util.node_border_opacity = (Integer) spinner_opacity_node_border.getValue();
 				XlinkCyNETProps.setProperty("xlinkcynet.node_border_opacity", Util.node_border_opacity.toString());
+
+				if (myNetwork != null && netView != null) {
+					Util.updateNodesStyles(myNetwork, netView);
+				}
 			}
 		});
 		spinner_opacity_node_border.setToolTipText("Set a value between 0 (transparent) and 255 (opaque).");
@@ -928,6 +964,10 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			public void stateChanged(ChangeEvent e) {
 				Util.node_border_width = (double) spinner_width_node_border.getValue();
 				XlinkCyNETProps.setProperty("xlinkcynet.node_border_width", String.valueOf(Util.node_border_width));
+
+				if (myNetwork != null && netView != null) {
+					Util.updateNodesStyles(myNetwork, netView);
+				}
 			}
 		});
 		spinner_width_node_border.setToolTipText("Set a value between 1 and 10.");
