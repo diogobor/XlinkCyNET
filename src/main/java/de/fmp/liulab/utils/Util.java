@@ -1890,6 +1890,48 @@ public class Util {
 	}
 
 	/**
+	 * Method responsible for updating the style of all nodes from Settings panel
+	 * 
+	 * @param myNetwork      current network
+	 * @param netView        current netview
+	 * @param style          current style
+	 * @param handleFactory  current hf
+	 * @param bendFactory    current bf
+	 * @param lexicon        current lexicon
+	 * @param hideInterLinks checkbox on SettingsPanel is unselected
+	 */
+	public static void updateNodesStyles(CyNetwork myNetwork, CyNetworkView netView, VisualStyle style,
+			HandleFactory handleFactory, BendFactory bendFactory, VisualLexicon lexicon, boolean hideInterLinks) {
+
+		List<CyNode> allnodes = myNetwork.getNodeList();
+
+		if (allnodes.size() > 1) {
+
+			for (CyNode cyNode : allnodes) {
+				if (IsNodeModified(myNetwork, netView, cyNode)) {
+
+					updateNodeStyle(myNetwork, cyNode, netView);
+
+					/**
+					 * Get intra and interlinks
+					 */
+					Tuple2 inter_and_intralinks = Util.getAllLinksFromAdjacentEdgesNode(cyNode, myNetwork);
+					MainSingleNodeTask.interLinks = (ArrayList<CrossLink>) inter_and_intralinks.getFirst();
+					MainSingleNodeTask.intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
+
+					updateOrCreateEdgesFromSettingsPanel(myNetwork, cyNode, netView, style, handleFactory, bendFactory,
+							lexicon, MainSingleNodeTask.intraLinks, MainSingleNodeTask.interLinks);
+
+					if (hideInterLinks) {// hide all interlinks
+
+						hideAllInterLinks(myNetwork, cyNode, netView);
+					}
+				}
+			}
+		}
+	}
+
+	/**
 	 * Method responsible for updating the style of all nodes
 	 * 
 	 * @param myNetwork current network
@@ -1909,6 +1951,13 @@ public class Util {
 		}
 	}
 
+	/**
+	 * Method responsible for updating the style of a node
+	 * 
+	 * @param myNetwork
+	 * @param node
+	 * @param netView
+	 */
 	private static void updateNodeStyle(CyNetwork myNetwork, CyNode node, CyNetworkView netView) {
 
 		if (myNetwork == null || node == null || netView == null)
@@ -1960,6 +2009,45 @@ public class Util {
 
 	}
 
+	private static void updateOrCreateEdgesFromSettingsPanel(CyNetwork myNetwork, CyNode node, CyNetworkView netView,
+			VisualStyle style, HandleFactory handleFactory, BendFactory bendFactory, VisualLexicon lexicon,
+			ArrayList<CrossLink> intraLinks, ArrayList<CrossLink> interLinks) {
+
+		MainSingleNodeTask.isPlotDone = false;
+		LoadProteinDomainTask.isPlotDone = false;
+		Util.stopUpdateViewer = false;
+
+		View<CyNode> nodeView = netView.getNodeView(node);
+
+		node_label_factor_size = myNetwork.getRow(node).get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME,
+				Double.class) == null ? 1.0
+						: myNetwork.getRow(node).get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME, Double.class);
+		isProtein_expansion_horizontal = myNetwork.getRow(node).get(Util.HORIZONTAL_EXPANSION_COLUMN_NAME,
+				Boolean.class) == null ? true
+						: myNetwork.getRow(node).get(Util.HORIZONTAL_EXPANSION_COLUMN_NAME, Boolean.class);
+
+		CyRow proteinA_node_row = myNetwork.getRow(node);
+		Object length_other_protein_a = proteinA_node_row.getRaw(PROTEIN_LENGTH_A);
+		Object length_other_protein_b = proteinA_node_row.getRaw(PROTEIN_LENGTH_B);
+
+		if (length_other_protein_a == null) {
+			if (length_other_protein_b == null)
+				length_other_protein_a = 10;
+			else
+				length_other_protein_a = length_other_protein_b;
+		}
+
+		setProteinLength((float) ((Number) length_other_protein_a).doubleValue());
+
+		MainSingleNodeTask.isPlotDone = addOrUpdateEdgesToNetwork(myNetwork, node, style, netView, nodeView,
+				handleFactory, bendFactory, lexicon, getProteinLength(), intraLinks, interLinks, null, null);
+
+		// Apply the change to the view
+		style.apply(netView);
+		netView.updateView();
+
+	}
+
 	/**
 	 * Set style to node
 	 * 
@@ -1972,7 +2060,7 @@ public class Util {
 		updateNodeStyle(myNetwork, node, netView);
 
 		View<CyNode> nodeView = netView.getNodeView(node);
-		
+
 		if (isProtein_expansion_horizontal) {
 			nodeView.setLockedValue(BasicVisualLexicon.NODE_WIDTH,
 					((Number) getProteinLengthScalingFactor()).doubleValue());
@@ -2144,6 +2232,32 @@ public class Util {
 		}
 
 		// ######################### UPDATE EDGES #########################
+	}
+
+	/**
+	 * Method responsible for hiding all interlinks of a node
+	 * 
+	 * @param myNetwork current network
+	 * @param cyNode    current node
+	 * @param netView   current network view
+	 */
+	public static void hideAllInterLinks(CyNetwork myNetwork, CyNode cyNode, CyNetworkView netView) {
+
+		for (CyEdge edge : myNetwork.getAdjacentEdgeIterable(cyNode, CyEdge.Type.ANY)) {
+
+			View<CyEdge> newEdgeView = netView.getEdgeView(edge);
+			while (newEdgeView == null) {
+				netView.updateView();
+				try {
+					Thread.sleep(200);
+				} catch (InterruptedException e1) {
+					e1.printStackTrace();
+				}
+				newEdgeView = netView.getEdgeView(edge);
+			}
+
+			newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+		}
 	}
 
 	/**

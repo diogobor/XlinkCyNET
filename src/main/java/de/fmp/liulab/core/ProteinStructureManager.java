@@ -1103,8 +1103,10 @@ public class ProteinStructureManager {
 		String[] cmdArray = new String[2];
 		if (Util.isWindows())
 			cmdArray[0] = Util.PYMOL_PATH;
-		else
+		else if (Util.isMac())
 			cmdArray[0] = "open " + "\"" + Util.PYMOL_PATH + "\"";
+		else
+			cmdArray[0] = "\"" + Util.PYMOL_PATH + "\"";
 		cmdArray[1] = pymolScriptFile;
 
 		try {

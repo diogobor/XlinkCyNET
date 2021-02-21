@@ -27,6 +27,7 @@ import org.cytoscape.model.events.RowsSetListener;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.CyNetworkViewManager;
 import org.cytoscape.view.model.View;
+import org.cytoscape.view.model.VisualLexicon;
 import org.cytoscape.view.model.events.ViewChangeRecord;
 import org.cytoscape.view.model.events.ViewChangedEvent;
 import org.cytoscape.view.model.events.ViewChangedListener;
@@ -333,6 +334,10 @@ public class UpdateViewListener
 			// Load network and netview to XlinkCyNET setting to update the edges plot
 			MainControlPanel.myNetwork = myNetwork;
 			MainControlPanel.netView = netView;
+			MainControlPanel.style = this.style;
+			MainControlPanel.handleFactory = this.handleFactory;
+			MainControlPanel.bendFactory = this.bendFactory;
+			MainControlPanel.lexicon = cyApplicationManager.getCurrentRenderingEngine().getVisualLexicon();
 
 			MainSingleNodeTask.lexicon = cyApplicationManager.getCurrentRenderingEngine().getVisualLexicon();
 			MainSingleNodeTask.style = this.style;

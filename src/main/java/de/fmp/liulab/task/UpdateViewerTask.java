@@ -3,12 +3,14 @@ package de.fmp.liulab.task;
 import java.util.ArrayList;
 
 import org.cytoscape.application.CyApplicationManager;
+import org.cytoscape.model.CyEdge;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyRow;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.View;
 import org.cytoscape.view.model.VisualLexicon;
+import org.cytoscape.view.presentation.property.BasicVisualLexicon;
 import org.cytoscape.view.presentation.property.values.BendFactory;
 import org.cytoscape.view.presentation.property.values.HandleFactory;
 import org.cytoscape.view.vizmap.VisualStyle;
@@ -88,8 +90,8 @@ public class UpdateViewerTask extends AbstractTask {
 			Util.updateMapNodesPosition(current_node, nodeView);
 
 		CyRow proteinA_node_row = myNetwork.getRow(current_node);
-		Object length_other_protein_a = proteinA_node_row.getRaw("length_protein_a");
-		Object length_other_protein_b = proteinA_node_row.getRaw("length_protein_b");
+		Object length_other_protein_a = proteinA_node_row.getRaw(Util.PROTEIN_LENGTH_A);
+		Object length_other_protein_b = proteinA_node_row.getRaw(Util.PROTEIN_LENGTH_B);
 
 		if (length_other_protein_a == null) {
 			if (length_other_protein_b == null)
@@ -139,12 +141,17 @@ public class UpdateViewerTask extends AbstractTask {
 				this.resizeProtein(current_node, nodeView, lexicon, length_other_protein_a, style);
 			}
 
+			if (!Util.showInterLinks) {// hide all interlinks
+
+				Util.hideAllInterLinks(myNetwork, current_node, netView);
+			}
+
 		} else if (!IsIntraLink) {
 			Util.updateAllAssiciatedInterlinkNodes(myNetwork, cyApplicationManager, netView, handleFactory, bendFactory,
 					current_node);// Check if all associated nodes are
 									// unmodified
 			MainSingleNodeTask.isPlotDone = true;
-		} 
+		}
 //		else {// Nodes are not modified -> check comb_score to display edges or not
 //
 //			Util.checkUnmodifiedEdgeToDisplay(myNetwork, cyApplicationManager, netView, handleFactory, bendFactory,

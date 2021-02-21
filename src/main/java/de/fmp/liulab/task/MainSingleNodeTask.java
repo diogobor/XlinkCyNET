@@ -173,8 +173,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		Dimension appSize = null;
 		if (Util.isWindows()) {
 			appSize = new Dimension(540, 405);
-		} else {
+		} else if (Util.isMac()) {
 			appSize = new Dimension(520, 375);
+		} else {
+			appSize = new Dimension(520, 400);
 		}
 		mainFrame.setSize(appSize);
 		mainFrame.setResizable(false);
@@ -262,7 +264,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 						+ ".\nCheck the columns name.");
 			}
 			// Intralink (Source or Target) node
-			return; 
+			return;
 		}
 
 		if (forcedWindowOpen && !IsCommandLine) {// Action comes from Context Menu item
@@ -516,8 +518,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		protein_panel.setBorder(BorderFactory.createTitledBorder("Protein"));
 		if (Util.isWindows())
 			protein_panel.setBounds(10, 10, 250, 150);
-		else
+		else if (Util.isMac())
 			protein_panel.setBounds(10, 10, 275, 150);
+		else
+			protein_panel.setBounds(10, 10, 277, 150);
 		protein_panel.setLayout(null);
 		mainPanel.add(protein_panel);
 
@@ -529,7 +533,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		JLabel textLabel_Protein_result = new JLabel();
 		textLabel_Protein_result.setText((String) myCurrentRow.getRaw(CyNetwork.NAME));
 		textLabel_Protein_result.setFont(new java.awt.Font("Tahoma", Font.BOLD, 12));
-		textLabel_Protein_result.setBounds(95, offset_y, 100, 100);
+		if (Util.isUnix())
+			textLabel_Protein_result.setBounds(105, offset_y, 100, 100);
+		else
+			textLabel_Protein_result.setBounds(95, offset_y, 100, 100);
 		protein_panel.add(textLabel_Protein_result);
 		offset_y += 30;
 
@@ -541,7 +548,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		JLabel textLabel_Protein_size_result = new JLabel();
 		textLabel_Protein_size_result.setText((int) Util.getProteinLength() + " residues");
 		textLabel_Protein_size_result.setFont(new java.awt.Font("Tahoma", Font.BOLD, 12));
-		textLabel_Protein_size_result.setBounds(95, offset_y, 100, 100);
+		if (Util.isUnix())
+			textLabel_Protein_size_result.setBounds(105, offset_y, 100, 100);
+		else
+			textLabel_Protein_size_result.setBounds(95, offset_y, 100, 100);
 		protein_panel.add(textLabel_Protein_size_result);
 		offset_y += 30;
 
@@ -558,8 +568,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		protein_expansion_horizontal.setSelected(isHorizontalExpansion);
 		if (Util.isWindows()) {
 			protein_expansion_horizontal.setBounds(89, offset_y, 90, 20);
-		} else {
+		} else if (Util.isMac()) {
 			protein_expansion_horizontal.setBounds(89, offset_y, 105, 20);
+		} else {
+			protein_expansion_horizontal.setBounds(105, offset_y, 105, 20);
 		}
 		protein_expansion_horizontal.addItemListener(new ItemListener() {
 
@@ -581,8 +593,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		protein_expansion_vertical.setSelected(!isHorizontalExpansion);
 		if (Util.isWindows()) {
 			protein_expansion_vertical.setBounds(179, offset_y, 63, 20);
-		} else {
+		} else if (Util.isMac()) {
 			protein_expansion_vertical.setBounds(185, offset_y, 90, 20);
+		} else {
+			protein_expansion_vertical.setBounds(195, offset_y, 90, 20);
 		}
 		protein_expansion_vertical.addItemListener(new ItemListener() {
 
@@ -615,8 +629,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		protein_domain_pfam.setSelected(Util.isProteinDomainPfam);
 		if (Util.isWindows()) {
 			protein_domain_pfam.setBounds(179, offset_y, 50, 20);
-		} else {
+		} else if (Util.isMac()) {
 			protein_domain_pfam.setBounds(193, offset_y, 65, 20);
+		} else {
+			protein_domain_pfam.setBounds(198, offset_y, 65, 20);
 		}
 		protein_domain_pfam.addItemListener(new ItemListener() {
 
@@ -638,8 +654,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		protein_domain_supfam.setSelected(!Util.isProteinDomainPfam);
 		if (Util.isWindows()) {
 			protein_domain_supfam.setBounds(119, offset_y, 64, 20);
-		} else {
+		} else if (Util.isMac()) {
 			protein_domain_supfam.setBounds(119, offset_y, 79, 20);
+		} else {
+			protein_domain_supfam.setBounds(124, offset_y, 79, 20);
 		}
 		protein_domain_supfam.addItemListener(new ItemListener() {
 
@@ -682,8 +700,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		logo_panel.setBorder(BorderFactory.createTitledBorder(""));
 		if (Util.isWindows())
 			logo_panel.setBounds(265, 16, 245, 142);
-		else
+		else if (Util.isMac())
 			logo_panel.setBounds(290, 16, 220, 142);
+		else
+			logo_panel.setBounds(290, 25, 220, 132);
 		logo_panel.setLayout(null);
 		mainPanel.add(logo_panel);
 
@@ -704,8 +724,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		textLabel_PyMOL.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		if (Util.isWindows())
 			textLabel_PyMOL.setBounds(265, offset_y, 180, 40);
-		else
+		else if (Util.isMac())
 			textLabel_PyMOL.setBounds(290, offset_y, 180, 40);
+		else
+			textLabel_PyMOL.setBounds(292, offset_y, 180, 40);
 		mainPanel.add(textLabel_PyMOL);
 
 		if (Util.isWindows())
@@ -726,6 +748,451 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		textLabel_required_fields.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 10));
 		textLabel_required_fields.setBounds(10, offset_y, 150, 100);
 		mainPanel.add(textLabel_required_fields);
+	}
+
+	/**
+	 * Set all objects to the main Frame
+	 * 
+	 * @param taskMonitor
+	 */
+	private void setFrameObjects(final TaskMonitor taskMonitor) {
+
+		setFrameLabels();
+
+		double current_scaling_factor = myNetwork.getRow(node).get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME,
+				Double.class);
+
+		SpinnerModel factor_size_node = new SpinnerNumberModel(current_scaling_factor, // initial value
+				0.1, // min
+				1, // max
+				0.1); // step
+		final JSpinner spinner_factor_size_node = new JSpinner(factor_size_node);
+		if (Util.isUnix())
+			spinner_factor_size_node.setBounds(105, 110, 60, 20);
+		else
+			spinner_factor_size_node.setBounds(95, 110, 60, 20);
+		JComponent comp_factor_size_node = spinner_factor_size_node.getEditor();
+		JFormattedTextField field_factor_size_node = (JFormattedTextField) comp_factor_size_node.getComponent(0);
+		DefaultFormatter formatter_factor_size_node = (DefaultFormatter) field_factor_size_node.getFormatter();
+		formatter_factor_size_node.setCommitsOnValidEdit(true);
+		spinner_factor_size_node.addChangeListener(new ChangeListener() {
+
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				Util.node_label_factor_size = (double) spinner_factor_size_node.getValue();
+			}
+		});
+		spinner_factor_size_node.setToolTipText(
+				"Scaling factor to the protein length. It ranges between 0 (small) and 1 (original length).");
+		protein_panel.add(spinner_factor_size_node);
+
+		Icon iconBtn = new ImageIcon(getClass().getResource("/images/browse_Icon.png"));
+		proteinDomainServerButton = new JButton(iconBtn);
+		if (Util.isWindows())
+			proteinDomainServerButton.setBounds(228, 160, 30, 30);
+		else
+			proteinDomainServerButton.setBounds(253, 160, 30, 30);
+		proteinDomainServerButton.setEnabled(true);
+		proteinDomainServerButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+		proteinDomainServerButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				taskMonitor.setTitle("XL interactions");
+				proteinDomainServerButton.setEnabled(false);
+				try {
+
+					textLabel_status_result.setText("Accessing Pfam database...");
+					taskMonitor.showMessage(TaskMonitor.Level.INFO, "Accessing Pfam database...");
+					pfamThread = new Thread() {
+						public void run() {
+							taskMonitor.setTitle("XL interactions");
+
+							textLabel_status_result.setText("Getting protein domains...");
+							taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting protein domains...");
+							proteinDomainsServer = Util.getProteinDomains(myCurrentRow, taskMonitor);
+							taskMonitor.setProgress(0.4);
+							if (proteinDomainsServer.size() > 0)
+								textLabel_status_result.setText("Done!");
+							else {
+								textLabel_status_result.setText("WARNING: Check Task History.");
+								taskMonitor.showMessage(TaskMonitor.Level.WARN, "No protein domain has been found for '"
+										+ myNetwork.getDefaultNodeTable().getRow(node.getSUID()).getRaw(CyNetwork.NAME)
+										+ "'.");
+							}
+
+							Object[][] data = null;
+							if (proteinDomainsServer.size() > 0)
+								data = new Object[proteinDomainsServer.size()][5];
+							else
+								data = new Object[1][5];
+							tableDataModel.setDataVector(data, columnNames);
+
+							int countPtnDomain = 0;
+							for (ProteinDomain domain : proteinDomainsServer) {
+								tableDataModel.setValueAt(domain.name, countPtnDomain, 0);
+								tableDataModel.setValueAt(domain.startId, countPtnDomain, 1);
+								tableDataModel.setValueAt(domain.endId, countPtnDomain, 2);
+								tableDataModel.setValueAt(domain.eValue, countPtnDomain, 3);
+								countPtnDomain++;
+							}
+
+							if (proteinDomainsServer.size() > 0)
+								setTableProperties(proteinDomainsServer.size());
+							else
+								setTableProperties(1);
+							proteinDomainServerButton.setEnabled(true);
+						}
+					};
+
+					pfamThread.start();
+
+				} catch (Exception exception) {
+				}
+			}
+		});
+		mainPanel.add(proteinDomainServerButton);
+
+		Icon iconPyMOLBtn = new ImageIcon(getClass().getResource("/images/pyMOL_logo.png"));
+		pyMOLButton = new JButton(iconPyMOLBtn);
+		if (Util.isWindows())
+			pyMOLButton.setBounds(455, 160, 30, 30);
+		else
+			pyMOLButton.setBounds(480, 160, 30, 30);
+
+		pyMOLButton.setEnabled(true);
+		pyMOLButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		pyMOLButton.setToolTipText("Open PyMOL");
+
+		pyMOLButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				taskMonitor.setTitle("Visualize protein structure");
+				pyMOLButton.setEnabled(false);
+
+				try {
+
+					pyMOLThread = new Thread() {
+						public void run() {
+
+							String msgINFO = "";
+
+							if (intraLinks.size() == 0) {
+								msgINFO = "There is no intralinks";
+								textLabel_status_result.setText(msgINFO + ".");
+								taskMonitor.showMessage(TaskMonitor.Level.WARN,
+										msgINFO + " to protein: " + (String) myCurrentRow.getRaw(CyNetwork.NAME));
+
+								if (pyMOLButton != null)
+									pyMOLButton.setEnabled(true);
+								return;
+							}
+
+							if (textLabel_status_result != null)
+								textLabel_status_result.setText("Getting PDB information from Uniprot...");
+							taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB information from Uniprot...");
+
+							Protein ptn = Util.getPDBidFromUniprot(myCurrentRow, taskMonitor);
+							List<PDB> pdbIds = ptn.pdbIds;
+							if (pdbIds.size() > 0) {
+								PDB pdbID = pdbIds.get(0);
+
+								if (pdbIds.size() > 1) {
+
+									// Open a window to select only one PDB
+									getPDBInformation(pdbIds, msgINFO, taskMonitor, ptn, null, true, "", false, false,
+											(String) myCurrentRow.getRaw(CyNetwork.NAME), false);
+
+									try {
+										pyMOLThread.join();
+									} catch (InterruptedException e) {
+										e.printStackTrace();
+									}
+								}
+
+								try {
+									processPDBFile(msgINFO, taskMonitor, pdbID, ptn);
+								} catch (Exception e) {
+									taskMonitor.showMessage(TaskMonitor.Level.ERROR, e.getMessage());
+								}
+
+							} else {
+
+								textLabel_status_result.setText("ERROR: Check Task History.");
+								taskMonitor.showMessage(TaskMonitor.Level.ERROR,
+										"There is no PDB for the protein: " + ptn.proteinID);
+
+								if (pyMOLButton != null)
+									pyMOLButton.setEnabled(true);
+								return;
+							}
+
+						}
+					};
+
+					pyMOLThread.start();
+
+				} catch (Exception exception) {
+				}
+			}
+		});
+		mainPanel.add(pyMOLButton);
+
+		Object[][] data = new Object[1][5];
+		// create table model with data
+		tableDataModel = new DefaultTableModel(data, columnNames) {
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public boolean isCellEditable(int row, int column) {
+				return true;
+			}
+
+			@Override
+			public Class<?> getColumnClass(int columnIndex) {
+				return columnClass[columnIndex];
+			}
+		};
+
+		getProteinDomains(node); // Fill in myProteinDomains collection based on the main Map
+									// (Util.proteinDomainsMap)
+
+		mainProteinDomainTable = new JTable(tableDataModel);
+		// Create the scroll pane and add the table to it.
+		proteinDomainTableScrollPanel = new JScrollPane();
+		if (Util.isWindows())
+			proteinDomainTableScrollPanel.setBounds(10, 225, 500, 90);
+		else
+			proteinDomainTableScrollPanel.setBounds(10, 215, 500, 90);
+		proteinDomainTableScrollPanel.setViewportView(mainProteinDomainTable);
+		proteinDomainTableScrollPanel.setRowHeaderView(rowHeader);
+		mainPanel.add(proteinDomainTableScrollPanel);
+
+		if (myProteinDomains != null && myProteinDomains.size() > 0) {
+			data = new Object[myProteinDomains.size()][5];
+			tableDataModel.setDataVector(data, columnNames);
+
+			int countPtnDomain = 0;
+			for (ProteinDomain domain : myProteinDomains) {
+				tableDataModel.setValueAt(domain.name, countPtnDomain, 0);
+				tableDataModel.setValueAt(domain.startId, countPtnDomain, 1);
+				tableDataModel.setValueAt(domain.endId, countPtnDomain, 2);
+				tableDataModel.setValueAt(domain.eValue, countPtnDomain, 3);
+				Color color = domain.color;
+				if (color != null) {
+
+					String colorStr = color.getRed() + "#" + color.getGreen() + "#" + color.getBlue() + "#"
+							+ color.getAlpha();
+					tableDataModel.setValueAt(colorStr, countPtnDomain, 4);
+				}
+				countPtnDomain++;
+			}
+			setTableProperties(myProteinDomains.size());
+		} else {
+			setTableProperties(1);
+		}
+
+		mainProteinDomainTable.addMouseListener(new java.awt.event.MouseAdapter() {
+			@Override
+			public void mouseClicked(java.awt.event.MouseEvent evt) {
+				int viewRow = mainProteinDomainTable.rowAtPoint(evt.getPoint());
+				int viewColumn = mainProteinDomainTable.columnAtPoint(evt.getPoint());
+				if (viewColumn == 4) {
+					String currentColor = (String) tableDataModel.getValueAt(viewRow, viewColumn);
+					Color initialcolor = Color.RED;
+					if (currentColor != null && !currentColor.equals("")) {
+						String[] cols = currentColor.split("#");
+						initialcolor = new Color(Integer.parseInt(cols[0]), Integer.parseInt(cols[1]),
+								Integer.parseInt(cols[2]), Integer.parseInt(cols[3]));
+					}
+
+					Color color = JColorChooser.showDialog(null, "Select a color", initialcolor);
+					String colorStr = color.getRed() + "#" + color.getGreen() + "#" + color.getBlue() + "#"
+							+ color.getAlpha();
+					tableDataModel.setValueAt(colorStr, viewRow, viewColumn);
+				}
+
+			}
+		});
+
+		Action insertLineToTableAction = new AbstractAction("insertLineToTable") {
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			public void actionPerformed(ActionEvent evt) {
+				tableDataModel.addRow(new Object[] { "" });
+				Util.updateRowHeader(tableDataModel.getRowCount(), mainProteinDomainTable, rowHeader,
+						proteinDomainTableScrollPanel);
+				textLabel_status_result.setText("Row has been inserted.");
+			}
+		};
+
+		KeyStroke keyStrokeInsertLine = KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK);
+		mainProteinDomainTable.getActionMap().put("insertLineToTable", insertLineToTableAction);
+		mainProteinDomainTable.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(keyStrokeInsertLine,
+				"insertLineToTable");
+
+		Action deleteLineToTableAction = new AbstractAction("deleteLineToTable") {
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			public void actionPerformed(ActionEvent evt) {
+
+				if (mainProteinDomainTable.getSelectedRow() != -1) {
+
+					int input = JOptionPane.showConfirmDialog(null, "Do you confirm the removal of the line "
+							+ (mainProteinDomainTable.getSelectedRow() + 1) + "?");
+					// 0=yes, 1=no, 2=cancel
+					if (input == 0) {
+						// remove selected row from the model
+						tableDataModel.removeRow(mainProteinDomainTable.getSelectedRow());
+						Util.updateRowHeader(tableDataModel.getRowCount(), mainProteinDomainTable, rowHeader,
+								proteinDomainTableScrollPanel);
+					}
+				}
+
+				textLabel_status_result.setText("Row has been deleted.");
+			}
+		};
+
+		KeyStroke keyStrokeDeleteLine = KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK);
+		mainProteinDomainTable.getActionMap().put("deleteLineToTable", deleteLineToTableAction);
+		mainProteinDomainTable.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(keyStrokeDeleteLine,
+				"deleteLineToTable");
+
+		Icon iconBtnOk = new ImageIcon(getClass().getResource("/images/okBtn.png"));
+		okButton = new JButton(iconBtnOk);
+		okButton.setText("OK");
+
+		if (Util.isWindows()) {
+			okButton.setBounds(30, 335, 220, 25);
+		} else if (Util.isMac()) {
+			okButton.setBounds(30, 320, 220, 25);
+		} else {
+			okButton.setBounds(30, 325, 220, 25);
+		}
+		okButton.setEnabled(true);
+
+		okButton.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent ae) {
+
+				okButton.setEnabled(false);
+				proteinDomainServerButton.setEnabled(false);
+
+				isPlotDone = false;
+				LoadProteinDomainTask.isPlotDone = false;
+
+				if (netView == null) {
+					netView = cyApplicationManager.getCurrentNetworkView();
+				}
+
+				nodeView = netView.getNodeView(node);
+
+				applyLayoutThread = new Thread() {
+
+					public void run() {
+
+						textLabel_status_result.setText("Setting node styles...");
+						taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting node styles...");
+
+						Util.node_label_factor_size = 1;
+						Util.setNodeStyles(myNetwork, node, netView);
+						taskMonitor.setProgress(0.2);
+
+						textLabel_status_result.setText("Getting protein domains from table...");
+						try {
+							getNodeDomainsFromTable();
+							taskMonitor.setProgress(0.4);
+						} catch (Exception e2) {
+							textLabel_status_result.setText(e2.getMessage());
+							taskMonitor.showMessage(TaskMonitor.Level.WARN, e2.getMessage());
+						}
+
+						textLabel_status_result.setText("Setting protein domains to node...");
+						taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting protein domains to node...");
+						setNodeDomainColors(taskMonitor);
+						taskMonitor.setProgress(0.75);
+
+						update_protein_domain_table(taskMonitor, myProteinDomains);
+						taskMonitor.setProgress(0.85);
+
+						textLabel_status_result.setText("Setting styles to the edges...");
+						taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting styles to the edges...");
+						isPlotDone = false;
+						isPlotDone = Util.addOrUpdateEdgesToNetwork(myNetwork, node, style, netView, nodeView,
+								handleFactory, bendFactory, lexicon, Util.getProteinLengthScalingFactor(), intraLinks,
+								interLinks, taskMonitor, textLabel_status_result);
+						taskMonitor.setProgress(0.95);
+
+						Util.node_label_factor_size = (double) spinner_factor_size_node.getValue();
+						resizeProtein(taskMonitor);
+
+						// Apply the change to the view
+						style.apply(netView);
+						netView.updateView();
+						taskMonitor.setProgress(1.0);
+						textLabel_status_result.setText("Done!");
+
+						okButton.setEnabled(true);
+						proteinDomainServerButton.setEnabled(true);
+						Util.updateMapNodesPosition(node, nodeView);
+
+						mainFrame.dispose();
+					}
+				};
+
+				applyLayoutThread.start();
+
+			}
+		});
+		mainPanel.add(okButton);
+
+		Icon iconBtnCancel = new ImageIcon(getClass().getResource("/images/cancelBtn.png"));
+		JButton cancelButton = new JButton(iconBtnCancel);
+		cancelButton.setText("Cancel");
+
+		if (Util.isWindows()) {
+			cancelButton.setBounds(265, 335, 220, 25);
+		} else if (Util.isMac()) {
+			cancelButton.setBounds(265, 320, 220, 25);
+		} else {
+			cancelButton.setBounds(265, 325, 220, 25);
+		}
+
+		cancelButton.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent e) {
+				if (cancelProcess()) {
+					mainFrame.dispose();
+				}
+			}
+		});
+		mainPanel.add(cancelButton);
+
+		Icon iconBtnRestoreStyle = new ImageIcon(getClass().getResource("/images/restore.png"));
+		JButton restoreStyleButton = new JButton(iconBtnRestoreStyle);
+		restoreStyleButton.setText("Restore style");
+
+		if (Util.isWindows()) {
+			restoreStyleButton.setBounds(390, 195, 120, 25);
+		} else {
+			restoreStyleButton.setBounds(390, 190, 120, 25);
+		}
+
+		restoreStyleButton.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent e) {
+				taskMonitor.setProgress(0.6);
+				restoreDefaultStyle(taskMonitor);
+				taskMonitor.setProgress(1.0);
+				mainFrame.dispose();
+			}
+		});
+		mainPanel.add(restoreStyleButton);
 	}
 
 	/**
@@ -755,8 +1222,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		Dimension appSize = null;
 		if (Util.isWindows()) {
 			appSize = new Dimension(300, 345);
-		} else {
+		} else if (Util.isMac()) {
 			appSize = new Dimension(280, 325);
+		} else {
+			appSize = new Dimension(280, 345);
 		}
 		pdbFrame.setSize(appSize);
 		pdbFrame.setResizable(false);
@@ -807,7 +1276,10 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		JLabel textLabel_protein_name = new JLabel();
 		textLabel_protein_name.setFont(new java.awt.Font("Tahoma", Font.BOLD, 12));
-		textLabel_protein_name.setBounds(85, offset_y, 80, 40);
+		if (Util.isUnix())
+			textLabel_protein_name.setBounds(95, offset_y, 80, 40);
+		else
+			textLabel_protein_name.setBounds(85, offset_y, 80, 40);
 
 		String[] cols_nodeName = null;
 		if (nodeName.contains("#")) {
@@ -824,9 +1296,14 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			JLabel textLabel_protein_second_name = new JLabel();
 			textLabel_protein_second_name.setText(cols_nodeName[1]);
 			textLabel_protein_second_name.setFont(new java.awt.Font("Tahoma", Font.BOLD, 12));
-			textLabel_protein_second_name.setBounds(85, offset_y, 80, 40);
+			if (Util.isUnix()) {
+				textLabel_protein_second_name.setBounds(95, offset_y, 80, 40);
+				offset_y += 30;
+			} else {
+				textLabel_protein_second_name.setBounds(85, offset_y, 80, 40);
+				offset_y += 20;
+			}
 			pdbPanel.add(textLabel_protein_second_name);
-			offset_y += 20;
 
 		} else {
 			offset_y += 30;
@@ -835,7 +1312,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		JLabel textLabel_title = null;
 		if (isPDBInformation) {
 			textLabel_title = new JLabel("Select one item:");
-			textLabel_title.setBounds(10, offset_y, 100, 40);
+			textLabel_title.setBounds(10, offset_y, 150, 40);
 			textLabel_title.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 			pdbPanel.add(textLabel_title);
 		} else {
@@ -1170,444 +1647,6 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			}
 
 		}
-	}
-
-	/**
-	 * Set all objects to the main Frame
-	 * 
-	 * @param taskMonitor
-	 */
-	private void setFrameObjects(final TaskMonitor taskMonitor) {
-
-		setFrameLabels();
-
-		double current_scaling_factor = myNetwork.getRow(node).get(Util.PROTEIN_SCALING_FACTOR_COLUMN_NAME,
-				Double.class);
-
-		SpinnerModel factor_size_node = new SpinnerNumberModel(current_scaling_factor, // initial value
-				0.1, // min
-				1, // max
-				0.1); // step
-		final JSpinner spinner_factor_size_node = new JSpinner(factor_size_node);
-		spinner_factor_size_node.setBounds(95, 110, 60, 20);
-		JComponent comp_factor_size_node = spinner_factor_size_node.getEditor();
-		JFormattedTextField field_factor_size_node = (JFormattedTextField) comp_factor_size_node.getComponent(0);
-		DefaultFormatter formatter_factor_size_node = (DefaultFormatter) field_factor_size_node.getFormatter();
-		formatter_factor_size_node.setCommitsOnValidEdit(true);
-		spinner_factor_size_node.addChangeListener(new ChangeListener() {
-
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				Util.node_label_factor_size = (double) spinner_factor_size_node.getValue();
-			}
-		});
-		spinner_factor_size_node.setToolTipText(
-				"Scaling factor to the protein length. It ranges between 0 (small) and 1 (original length).");
-		protein_panel.add(spinner_factor_size_node);
-
-		Icon iconBtn = new ImageIcon(getClass().getResource("/images/browse_Icon.png"));
-		proteinDomainServerButton = new JButton(iconBtn);
-		if (Util.isWindows())
-			proteinDomainServerButton.setBounds(228, 160, 30, 30);
-		else
-			proteinDomainServerButton.setBounds(253, 160, 30, 30);
-		proteinDomainServerButton.setEnabled(true);
-		proteinDomainServerButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-		proteinDomainServerButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent ae) {
-				taskMonitor.setTitle("XL interactions");
-				proteinDomainServerButton.setEnabled(false);
-				try {
-
-					textLabel_status_result.setText("Accessing Pfam database...");
-					taskMonitor.showMessage(TaskMonitor.Level.INFO, "Accessing Pfam database...");
-					pfamThread = new Thread() {
-						public void run() {
-							taskMonitor.setTitle("XL interactions");
-
-							textLabel_status_result.setText("Getting protein domains...");
-							taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting protein domains...");
-							proteinDomainsServer = Util.getProteinDomains(myCurrentRow, taskMonitor);
-							taskMonitor.setProgress(0.4);
-							if (proteinDomainsServer.size() > 0)
-								textLabel_status_result.setText("Done!");
-							else {
-								textLabel_status_result.setText("WARNING: Check Task History.");
-								taskMonitor.showMessage(TaskMonitor.Level.WARN, "No protein domain has been found for '"
-										+ myNetwork.getDefaultNodeTable().getRow(node.getSUID()).getRaw(CyNetwork.NAME)
-										+ "'.");
-							}
-
-							Object[][] data = null;
-							if (proteinDomainsServer.size() > 0)
-								data = new Object[proteinDomainsServer.size()][5];
-							else
-								data = new Object[1][5];
-							tableDataModel.setDataVector(data, columnNames);
-
-							int countPtnDomain = 0;
-							for (ProteinDomain domain : proteinDomainsServer) {
-								tableDataModel.setValueAt(domain.name, countPtnDomain, 0);
-								tableDataModel.setValueAt(domain.startId, countPtnDomain, 1);
-								tableDataModel.setValueAt(domain.endId, countPtnDomain, 2);
-								tableDataModel.setValueAt(domain.eValue, countPtnDomain, 3);
-								countPtnDomain++;
-							}
-
-							if (proteinDomainsServer.size() > 0)
-								setTableProperties(proteinDomainsServer.size());
-							else
-								setTableProperties(1);
-							proteinDomainServerButton.setEnabled(true);
-						}
-					};
-
-					pfamThread.start();
-
-				} catch (Exception exception) {
-				}
-			}
-		});
-		mainPanel.add(proteinDomainServerButton);
-
-		Icon iconPyMOLBtn = new ImageIcon(getClass().getResource("/images/pyMOL_logo.png"));
-		pyMOLButton = new JButton(iconPyMOLBtn);
-		if (Util.isWindows())
-			pyMOLButton.setBounds(455, 160, 30, 30);
-		else
-			pyMOLButton.setBounds(480, 160, 30, 30);
-
-		pyMOLButton.setEnabled(true);
-		pyMOLButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-		pyMOLButton.setToolTipText("Open PyMOL");
-
-		pyMOLButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent ae) {
-				taskMonitor.setTitle("Visualize protein structure");
-				pyMOLButton.setEnabled(false);
-
-				try {
-
-					pyMOLThread = new Thread() {
-						public void run() {
-
-							String msgINFO = "";
-
-							if (intraLinks.size() == 0) {
-								msgINFO = "There is no intralinks";
-								textLabel_status_result.setText(msgINFO + ".");
-								taskMonitor.showMessage(TaskMonitor.Level.WARN,
-										msgINFO + " to protein: " + (String) myCurrentRow.getRaw(CyNetwork.NAME));
-
-								if (pyMOLButton != null)
-									pyMOLButton.setEnabled(true);
-								return;
-							}
-
-							if (textLabel_status_result != null)
-								textLabel_status_result.setText("Getting PDB information from Uniprot...");
-							taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB information from Uniprot...");
-
-							Protein ptn = Util.getPDBidFromUniprot(myCurrentRow, taskMonitor);
-							List<PDB> pdbIds = ptn.pdbIds;
-							if (pdbIds.size() > 0) {
-								PDB pdbID = pdbIds.get(0);
-
-								if (pdbIds.size() > 1) {
-
-									// Open a window to select only one PDB
-									getPDBInformation(pdbIds, msgINFO, taskMonitor, ptn, null, true, "", false, false,
-											(String) myCurrentRow.getRaw(CyNetwork.NAME), false);
-
-									try {
-										pyMOLThread.join();
-									} catch (InterruptedException e) {
-										e.printStackTrace();
-									}
-								}
-
-								try {
-									processPDBFile(msgINFO, taskMonitor, pdbID, ptn);
-								} catch (Exception e) {
-									taskMonitor.showMessage(TaskMonitor.Level.ERROR, e.getMessage());
-								}
-
-							} else {
-
-								textLabel_status_result.setText("ERROR: Check Task History.");
-								taskMonitor.showMessage(TaskMonitor.Level.ERROR,
-										"There is no PDB for the protein: " + ptn.proteinID);
-
-								if (pyMOLButton != null)
-									pyMOLButton.setEnabled(true);
-								return;
-							}
-
-						}
-					};
-
-					pyMOLThread.start();
-
-				} catch (Exception exception) {
-				}
-			}
-		});
-		mainPanel.add(pyMOLButton);
-
-		Object[][] data = new Object[1][5];
-		// create table model with data
-		tableDataModel = new DefaultTableModel(data, columnNames) {
-			/**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public boolean isCellEditable(int row, int column) {
-				return true;
-			}
-
-			@Override
-			public Class<?> getColumnClass(int columnIndex) {
-				return columnClass[columnIndex];
-			}
-		};
-
-		getProteinDomains(node); // Fill in myProteinDomains collection based on the main Map
-									// (Util.proteinDomainsMap)
-
-		mainProteinDomainTable = new JTable(tableDataModel);
-		// Create the scroll pane and add the table to it.
-		proteinDomainTableScrollPanel = new JScrollPane();
-		if (Util.isWindows())
-			proteinDomainTableScrollPanel.setBounds(10, 225, 500, 90);
-		else
-			proteinDomainTableScrollPanel.setBounds(10, 215, 500, 90);
-		proteinDomainTableScrollPanel.setViewportView(mainProteinDomainTable);
-		proteinDomainTableScrollPanel.setRowHeaderView(rowHeader);
-		mainPanel.add(proteinDomainTableScrollPanel);
-
-		if (myProteinDomains != null && myProteinDomains.size() > 0) {
-			data = new Object[myProteinDomains.size()][5];
-			tableDataModel.setDataVector(data, columnNames);
-
-			int countPtnDomain = 0;
-			for (ProteinDomain domain : myProteinDomains) {
-				tableDataModel.setValueAt(domain.name, countPtnDomain, 0);
-				tableDataModel.setValueAt(domain.startId, countPtnDomain, 1);
-				tableDataModel.setValueAt(domain.endId, countPtnDomain, 2);
-				tableDataModel.setValueAt(domain.eValue, countPtnDomain, 3);
-				Color color = domain.color;
-				if (color != null) {
-
-					String colorStr = color.getRed() + "#" + color.getGreen() + "#" + color.getBlue() + "#"
-							+ color.getAlpha();
-					tableDataModel.setValueAt(colorStr, countPtnDomain, 4);
-				}
-				countPtnDomain++;
-			}
-			setTableProperties(myProteinDomains.size());
-		} else {
-			setTableProperties(1);
-		}
-
-		mainProteinDomainTable.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseClicked(java.awt.event.MouseEvent evt) {
-				int viewRow = mainProteinDomainTable.rowAtPoint(evt.getPoint());
-				int viewColumn = mainProteinDomainTable.columnAtPoint(evt.getPoint());
-				if (viewColumn == 4) {
-					String currentColor = (String) tableDataModel.getValueAt(viewRow, viewColumn);
-					Color initialcolor = Color.RED;
-					if (currentColor != null && !currentColor.equals("")) {
-						String[] cols = currentColor.split("#");
-						initialcolor = new Color(Integer.parseInt(cols[0]), Integer.parseInt(cols[1]),
-								Integer.parseInt(cols[2]), Integer.parseInt(cols[3]));
-					}
-
-					Color color = JColorChooser.showDialog(null, "Select a color", initialcolor);
-					String colorStr = color.getRed() + "#" + color.getGreen() + "#" + color.getBlue() + "#"
-							+ color.getAlpha();
-					tableDataModel.setValueAt(colorStr, viewRow, viewColumn);
-				}
-
-			}
-		});
-
-		Action insertLineToTableAction = new AbstractAction("insertLineToTable") {
-			/**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
-
-			public void actionPerformed(ActionEvent evt) {
-				tableDataModel.addRow(new Object[] { "" });
-				Util.updateRowHeader(tableDataModel.getRowCount(), mainProteinDomainTable, rowHeader,
-						proteinDomainTableScrollPanel);
-				textLabel_status_result.setText("Row has been inserted.");
-			}
-		};
-
-		KeyStroke keyStrokeInsertLine = KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK);
-		mainProteinDomainTable.getActionMap().put("insertLineToTable", insertLineToTableAction);
-		mainProteinDomainTable.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(keyStrokeInsertLine,
-				"insertLineToTable");
-
-		Action deleteLineToTableAction = new AbstractAction("deleteLineToTable") {
-			/**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
-
-			public void actionPerformed(ActionEvent evt) {
-
-				if (mainProteinDomainTable.getSelectedRow() != -1) {
-
-					int input = JOptionPane.showConfirmDialog(null, "Do you confirm the removal of the line "
-							+ (mainProteinDomainTable.getSelectedRow() + 1) + "?");
-					// 0=yes, 1=no, 2=cancel
-					if (input == 0) {
-						// remove selected row from the model
-						tableDataModel.removeRow(mainProteinDomainTable.getSelectedRow());
-						Util.updateRowHeader(tableDataModel.getRowCount(), mainProteinDomainTable, rowHeader,
-								proteinDomainTableScrollPanel);
-					}
-				}
-
-				textLabel_status_result.setText("Row has been deleted.");
-			}
-		};
-
-		KeyStroke keyStrokeDeleteLine = KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK);
-		mainProteinDomainTable.getActionMap().put("deleteLineToTable", deleteLineToTableAction);
-		mainProteinDomainTable.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(keyStrokeDeleteLine,
-				"deleteLineToTable");
-
-		Icon iconBtnOk = new ImageIcon(getClass().getResource("/images/okBtn.png"));
-		okButton = new JButton(iconBtnOk);
-		okButton.setText("OK");
-
-		if (Util.isWindows()) {
-			okButton.setBounds(30, 335, 220, 25);
-		} else {
-			okButton.setBounds(30, 320, 220, 25);
-		}
-		okButton.setEnabled(true);
-
-		okButton.addActionListener(new ActionListener() {
-
-			public void actionPerformed(ActionEvent ae) {
-
-				okButton.setEnabled(false);
-				proteinDomainServerButton.setEnabled(false);
-
-				isPlotDone = false;
-				LoadProteinDomainTask.isPlotDone = false;
-
-				if (netView == null) {
-					netView = cyApplicationManager.getCurrentNetworkView();
-				}
-
-				nodeView = netView.getNodeView(node);
-
-				applyLayoutThread = new Thread() {
-
-					public void run() {
-
-						textLabel_status_result.setText("Setting node styles...");
-						taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting node styles...");
-
-						Util.node_label_factor_size = 1;
-						Util.setNodeStyles(myNetwork, node, netView);
-						taskMonitor.setProgress(0.2);
-
-						textLabel_status_result.setText("Getting protein domains from table...");
-						try {
-							getNodeDomainsFromTable();
-							taskMonitor.setProgress(0.4);
-						} catch (Exception e2) {
-							textLabel_status_result.setText(e2.getMessage());
-							taskMonitor.showMessage(TaskMonitor.Level.WARN, e2.getMessage());
-						}
-
-						textLabel_status_result.setText("Setting protein domains to node...");
-						taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting protein domains to node...");
-						setNodeDomainColors(taskMonitor);
-						taskMonitor.setProgress(0.75);
-
-						update_protein_domain_table(taskMonitor, myProteinDomains);
-						taskMonitor.setProgress(0.85);
-
-						textLabel_status_result.setText("Setting styles to the edges...");
-						taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting styles to the edges...");
-						isPlotDone = false;
-						isPlotDone = Util.addOrUpdateEdgesToNetwork(myNetwork, node, style, netView, nodeView,
-								handleFactory, bendFactory, lexicon, Util.getProteinLengthScalingFactor(), intraLinks,
-								interLinks, taskMonitor, textLabel_status_result);
-						taskMonitor.setProgress(0.95);
-
-						Util.node_label_factor_size = (double) spinner_factor_size_node.getValue();
-						resizeProtein(taskMonitor);
-
-						// Apply the change to the view
-						style.apply(netView);
-						netView.updateView();
-						taskMonitor.setProgress(1.0);
-						textLabel_status_result.setText("Done!");
-
-						okButton.setEnabled(true);
-						proteinDomainServerButton.setEnabled(true);
-						Util.updateMapNodesPosition(node, nodeView);
-
-						mainFrame.dispose();
-					}
-				};
-
-				applyLayoutThread.start();
-
-			}
-		});
-		mainPanel.add(okButton);
-
-		Icon iconBtnCancel = new ImageIcon(getClass().getResource("/images/cancelBtn.png"));
-		JButton cancelButton = new JButton(iconBtnCancel);
-		cancelButton.setText("Cancel");
-
-		if (Util.isWindows()) {
-			cancelButton.setBounds(265, 335, 220, 25);
-		} else {
-			cancelButton.setBounds(265, 320, 220, 25);
-		}
-
-		cancelButton.addMouseListener(new MouseAdapter() {
-			public void mouseClicked(MouseEvent e) {
-				if (cancelProcess()) {
-					mainFrame.dispose();
-				}
-			}
-		});
-		mainPanel.add(cancelButton);
-
-		Icon iconBtnRestoreStyle = new ImageIcon(getClass().getResource("/images/restore.png"));
-		JButton restoreStyleButton = new JButton(iconBtnRestoreStyle);
-		restoreStyleButton.setText("Restore style");
-
-		if (Util.isWindows()) {
-			restoreStyleButton.setBounds(390, 195, 120, 25);
-		} else {
-			restoreStyleButton.setBounds(390, 190, 120, 25);
-		}
-
-		restoreStyleButton.addMouseListener(new MouseAdapter() {
-			public void mouseClicked(MouseEvent e) {
-				taskMonitor.setProgress(0.6);
-				restoreDefaultStyle(taskMonitor);
-				taskMonitor.setProgress(1.0);
-				mainFrame.dispose();
-			}
-		});
-		mainPanel.add(restoreStyleButton);
 	}
 
 	public static boolean cancelProcess() {

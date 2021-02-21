@@ -37,6 +37,10 @@ import org.cytoscape.application.swing.CytoPanelComponent;
 import org.cytoscape.application.swing.CytoPanelName;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.view.model.CyNetworkView;
+import org.cytoscape.view.model.VisualLexicon;
+import org.cytoscape.view.presentation.property.values.BendFactory;
+import org.cytoscape.view.presentation.property.values.HandleFactory;
+import org.cytoscape.view.vizmap.VisualStyle;
 
 import de.fmp.liulab.core.ConfigurationManager;
 import de.fmp.liulab.utils.Util;
@@ -79,8 +83,13 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 	private Properties XlinkCyNETProps;
 
+	// Update nodes and edges
 	public static CyNetwork myNetwork;
 	public static CyNetworkView netView;
+	public static VisualStyle style;
+	public static HandleFactory handleFactory;
+	public static BendFactory bendFactory;
+	public static VisualLexicon lexicon;
 
 	/**
 	 * Constructor
@@ -735,7 +744,15 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 						show_links_legend.setEnabled(true);
 					}
 				}
-				;
+
+				if (myNetwork != null && netView != null && style != null && handleFactory != null
+						&& bendFactory != null && lexicon != null) {
+					if (Util.showInterLinks)
+						Util.updateNodesStyles(myNetwork, netView, style, handleFactory, bendFactory, lexicon, false);
+					else
+						Util.updateNodesStyles(myNetwork, netView, style, handleFactory, bendFactory, lexicon, true);
+
+				}
 			}
 		});
 		link_panel.add(show_intra_link);
@@ -788,7 +805,13 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 						show_links_legend.setEnabled(true);
 					}
 				}
-				;
+
+				if (myNetwork != null && netView != null && style != null && handleFactory != null
+						&& bendFactory != null && lexicon != null) {
+					Util.updateNodesStyles(myNetwork, netView, style, handleFactory, bendFactory, lexicon,
+							e.getStateChange() == ItemEvent.DESELECTED);
+
+				}
 			}
 		});
 		link_panel.add(show_inter_link);
@@ -989,7 +1012,10 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		int offset_y = 10;
 		JLabel pymolPath_label = new JLabel("Application path:");
 		pymolPath_label.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		pymolPath_label.setBounds(10, offset_y, 100, 40);
+		if (Util.isUnix())
+			pymolPath_label.setBounds(10, offset_y, 130, 40);
+		else
+			pymolPath_label.setBounds(10, offset_y, 100, 40);
 		pymol_panel.add(pymolPath_label);
 		offset_y += 30;
 

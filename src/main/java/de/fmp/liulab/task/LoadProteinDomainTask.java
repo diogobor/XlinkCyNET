@@ -134,8 +134,10 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		Dimension appSize = null;
 		if (Util.isWindows()) {
 			appSize = new Dimension(540, 345);
-		} else {
+		} else if (Util.isMac()) {
 			appSize = new Dimension(525, 315);
+		} else {
+			appSize = new Dimension(525, 335);
 		}
 		mainFrame.setSize(appSize);
 		mainFrame.setResizable(false);
@@ -203,16 +205,25 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		information_panel.setLayout(null);
 		mainPanel.add(information_panel);
 
-		JLabel textLabel_Protein_lbl_1 = new JLabel(
-				"Fill in the table below to indicate what proteins will have their");
+		JLabel textLabel_Protein_lbl_1 = null;
+		if (Util.isUnix())
+			textLabel_Protein_lbl_1 = new JLabel("Fill in the table below to indicate what proteins will");
+		else
+			textLabel_Protein_lbl_1 = new JLabel("Fill in the table below to indicate what proteins will have their");
 		textLabel_Protein_lbl_1.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		textLabel_Protein_lbl_1.setBounds(10, offset_y, 450, 40);
 		information_panel.add(textLabel_Protein_lbl_1);
 		offset_y += 20;
 
-		JLabel textLabel_Protein_lbl_2 = new JLabel("domains loaded.");
+		JLabel textLabel_Protein_lbl_2 = null;
+		if (Util.isUnix()) {
+			textLabel_Protein_lbl_2 = new JLabel("have their domains loaded.");
+			textLabel_Protein_lbl_2.setBounds(10, offset_y, 250, 40);
+		} else {
+			textLabel_Protein_lbl_2 = new JLabel("domains loaded.");
+			textLabel_Protein_lbl_2.setBounds(10, offset_y, 100, 40);
+		}
 		textLabel_Protein_lbl_2.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_Protein_lbl_2.setBounds(10, offset_y, 100, 40);
 		information_panel.add(textLabel_Protein_lbl_2);
 		offset_y += 30;
 
@@ -226,8 +237,10 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		protein_domain_pfam.setSelected(Util.isProteinDomainPfam);
 		if (Util.isWindows()) {
 			protein_domain_pfam.setBounds(179, offset_y, 50, 20);
-		} else {
+		} else if (Util.isMac()) {
 			protein_domain_pfam.setBounds(203, offset_y, 65, 20);
+		} else {
+			protein_domain_pfam.setBounds(228, offset_y, 65, 20);
 		}
 		protein_domain_pfam.addItemListener(new ItemListener() {
 
@@ -249,8 +262,10 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		protein_domain_supfam.setSelected(!Util.isProteinDomainPfam);
 		if (Util.isWindows()) {
 			protein_domain_supfam.setBounds(119, offset_y, 64, 20);
-		} else {
+		} else if (Util.isMac()) {
 			protein_domain_supfam.setBounds(119, offset_y, 79, 20);
+		} else {
+			protein_domain_supfam.setBounds(149, offset_y, 79, 20);
 		}
 		protein_domain_supfam.addItemListener(new ItemListener() {
 
@@ -277,7 +292,10 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		textLabel_status_result = new JLabel("");
 		textLabel_status_result.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		textLabel_status_result.setForeground(new Color(159, 17, 17));
-		textLabel_status_result.setBounds(55, offset_y, 350, 40);
+		if (Util.isUnix())
+			textLabel_status_result.setBounds(65, offset_y, 350, 40);
+		else
+			textLabel_status_result.setBounds(55, offset_y, 350, 40);
 
 		JPanel logo_panel = new JPanel();
 		logo_panel.setBorder(BorderFactory.createTitledBorder(""));
@@ -456,8 +474,10 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		proteinDomainServerButton = new JButton(iconBtn);
 		if (Util.isWindows())
 			proteinDomainServerButton.setBounds(250, 55, 30, 30);
-		else
+		else if (Util.isMac())
 			proteinDomainServerButton.setBounds(280, 55, 30, 30);
+		else
+			proteinDomainServerButton.setBounds(295, 55, 30, 30);
 
 		proteinDomainServerButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		proteinDomainServerButton.addActionListener(new ActionListener() {
@@ -836,8 +856,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	 * @param node
 	 * @param myProteinDomains
 	 */
-	public static void updateProteinDomainsMap(CyNetwork myNetwork, CyNode node,
-			List<ProteinDomain> myProteinDomains) {
+	public static void updateProteinDomainsMap(CyNetwork myNetwork, CyNode node, List<ProteinDomain> myProteinDomains) {
 		String network_name = myNetwork.toString();
 		if (Util.proteinDomainsMap.containsKey(network_name)) {
 

@@ -97,8 +97,10 @@ public class SetDomainColorTask extends AbstractTask implements ActionListener {
 		Dimension appSize = null;
 		if (Util.isWindows()) {
 			appSize = new Dimension(375, 330);
-		} else {
+		} else if(Util.isMac()){
 			appSize = new Dimension(360, 315);
+		}else {
+			appSize = new Dimension(360, 325);
 		}
 		mainFrame.setSize(appSize);
 		mainFrame.setResizable(false);
