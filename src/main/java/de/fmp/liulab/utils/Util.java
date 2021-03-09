@@ -314,6 +314,14 @@ public class Util {
 				length_other_protein_a = length_other_protein_b;
 		}
 
+		// Check if 'length_other_protein_a' is a number
+		try {
+			String _length_other_protein_a = length_other_protein_a.toString();
+			Integer.parseInt(_length_other_protein_a);
+		} catch (NumberFormatException e) {
+			return true;
+		}
+
 		View<CyNode> proteinA_nodeView = netView.getNodeView(node);
 		float proteinA_node_width = ((Number) proteinA_nodeView.getVisualProperty(BasicVisualLexicon.NODE_WIDTH))
 				.floatValue();
@@ -1720,53 +1728,57 @@ public class Util {
 	public static void filterUnmodifiedEdges(CyNetwork myNetwork, CyNetworkView netView) {
 		List<CyEdge> allEdges = myNetwork.getEdgeList();
 
-		if (allEdges.size() > 1) {
-			// Display edge score in all edges
-			for (CyEdge edge : allEdges) {
+		try {
+			if (allEdges.size() > 0) {
+				// Display edge score in all edges
+				for (CyEdge edge : allEdges) {
 
-				CyNode sourceNode = myNetwork.getEdge(edge.getSUID()).getSource();
-				CyNode targetNode = myNetwork.getEdge(edge.getSUID()).getTarget();
+					CyNode sourceNode = myNetwork.getEdge(edge.getSUID()).getSource();
+					CyNode targetNode = myNetwork.getEdge(edge.getSUID()).getTarget();
 
-				if (Util.IsNodeModified(myNetwork, netView, sourceNode)
-						|| Util.IsNodeModified(myNetwork, netView, targetNode))
-					continue;
+					if (Util.IsNodeModified(myNetwork, netView, sourceNode)
+							|| Util.IsNodeModified(myNetwork, netView, targetNode))
+						continue;
 
-				CyRow myCurrentRow = myNetwork.getDefaultEdgeTable().getRow(edge.getSUID());
-				if (myCurrentRow.getRaw(Util.XL_COMB_SCORE) != null) {
+					CyRow myCurrentRow = myNetwork.getDefaultEdgeTable().getRow(edge.getSUID());
+					if (myCurrentRow.getRaw(Util.XL_COMB_SCORE) != null) {
 
-					View<CyEdge> edgeView = netView.getEdgeView(edge);
-					edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+						View<CyEdge> edgeView = netView.getEdgeView(edge);
+						edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
 
-					double log_comb_score = -1;
+						double log_comb_score = -1;
 
-					try {
-						double comb_score = Double.parseDouble(myCurrentRow.getRaw(Util.XL_COMB_SCORE).toString());
-						log_comb_score = Util.round(-Math.log10(comb_score), 2);
+						try {
+							double comb_score = Double.parseDouble(myCurrentRow.getRaw(Util.XL_COMB_SCORE).toString());
+							log_comb_score = Util.round(-Math.log10(comb_score), 2);
 
-						if (edgeView.getVisualProperty(BasicVisualLexicon.EDGE_TOOLTIP).isBlank()
-								|| edgeView.getVisualProperty(BasicVisualLexicon.EDGE_TOOLTIP).isEmpty()) {
+							if (edgeView.getVisualProperty(BasicVisualLexicon.EDGE_TOOLTIP).isBlank()
+									|| edgeView.getVisualProperty(BasicVisualLexicon.EDGE_TOOLTIP).isEmpty()) {
 
-							String tooltip = "<html><p><i>Score: " + comb_score + "</i></p><p><i>-Log(score): "
-									+ log_comb_score + "</i></p></html>";
-							edgeView.setLockedValue(BasicVisualLexicon.EDGE_TOOLTIP, tooltip);
+								String tooltip = "<html><p><i>Score: " + comb_score + "</i></p><p><i>-Log(score): "
+										+ log_comb_score + "</i></p></html>";
+								edgeView.setLockedValue(BasicVisualLexicon.EDGE_TOOLTIP, tooltip);
+							}
+
+							if (log_comb_score < Util.combinedlink_threshold_score) {
+								edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+							} else {
+								edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+							}
+
+						} catch (Exception e) {
 						}
 
-						if (log_comb_score < Util.combinedlink_threshold_score) {
-							edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
-						} else {
-							edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
-						}
-
-					} catch (Exception e) {
+					} else if (!myCurrentRow.getRaw(CyNetwork.NAME).toString().contains("[Source")) {
+						continue;// There is no score information to be displayed in the original edge.
 					}
-
-				} else if (!myCurrentRow.getRaw(CyNetwork.NAME).toString().contains("[Source")) {
-					break;// There is no score information to be displayed in the original edge.
 				}
+				// Apply the change to the view
+				netView.updateView();
 			}
-			// Apply the change to the view
-			netView.updateView();
+		} catch (Exception e) {
 		}
+
 	}
 
 	/**
