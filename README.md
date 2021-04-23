@@ -19,13 +19,15 @@ XlinkCyNET can be downloaded at Cytoscape App Store (https://apps.cytoscape.org/
 
 ### Automation
 
-&#8618; XlinkCyNET supports Cytoscape Automation from both commands and CyREST by providing six different commands: <br/>
+&#8618; XlinkCyNET supports Cytoscape Automation from both commands and CyREST by providing eight different commands: <br/>
 
 ##### _applyRestoreStyle_
 ##### _setParameters_
 ##### _loadProteinDomains_
 ##### _exportProteinDomains_
 ##### _setProteinDomainsColor_
+##### _loadPTMs_
+##### _exportPTMs_
 ##### _readMe_
 
 <hr/>
