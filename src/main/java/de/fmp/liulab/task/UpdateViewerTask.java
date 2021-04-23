@@ -1,16 +1,16 @@
 package de.fmp.liulab.task;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import org.cytoscape.application.CyApplicationManager;
-import org.cytoscape.model.CyEdge;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyRow;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.View;
 import org.cytoscape.view.model.VisualLexicon;
-import org.cytoscape.view.presentation.property.BasicVisualLexicon;
 import org.cytoscape.view.presentation.property.values.BendFactory;
 import org.cytoscape.view.presentation.property.values.HandleFactory;
 import org.cytoscape.view.vizmap.VisualStyle;
@@ -18,6 +18,7 @@ import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.TaskMonitor;
 
 import de.fmp.liulab.model.CrossLink;
+import de.fmp.liulab.model.PTM;
 import de.fmp.liulab.utils.Tuple2;
 import de.fmp.liulab.utils.Util;
 
@@ -146,6 +147,14 @@ public class UpdateViewerTask extends AbstractTask {
 				Util.hideAllInterLinks(myNetwork, current_node, netView);
 			}
 
+			if (Util.showPTMs) {
+
+				ArrayList<PTM> myPTMs = this.getPTMs(node);
+				Util.setNodePTMs(taskMonitor, myNetwork, netView, node, style, handleFactory, bendFactory, lexicon,
+						myPTMs, true);
+
+			}
+
 		} else if (!IsIntraLink) {
 			Util.updateAllAssiciatedInterlinkNodes(myNetwork, cyApplicationManager, netView, handleFactory, bendFactory,
 					current_node);// Check if all associated nodes are
@@ -158,6 +167,28 @@ public class UpdateViewerTask extends AbstractTask {
 //					current_node);
 //			MainSingleNodeTask.isPlotDone = true;
 //		}
+	}
+
+	/**
+	 * Method responsible for getting all ptms of the selected node from the main
+	 * map (Util.ptmsMap)
+	 * 
+	 * @param node
+	 * @return ptms list
+	 */
+	private ArrayList<PTM> getPTMs(CyNode node) {
+
+		String network_name = myNetwork.toString();
+		if (Util.ptmsMap.containsKey(network_name)) {
+
+			Map<Long, List<PTM>> all_ptms = Util.ptmsMap.get(network_name);
+
+			if (all_ptms.containsKey(node.getSUID())) {
+				return (ArrayList<PTM>) all_ptms.get(node.getSUID());
+			}
+		}
+
+		return new ArrayList<PTM>();
 	}
 
 	/**

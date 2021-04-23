@@ -8,6 +8,7 @@ import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 
+import de.fmp.liulab.task.LoadPTMsTask;
 import de.fmp.liulab.task.LoadProteinDomainTask;
 import de.fmp.liulab.task.MainSingleNodeTask;
 
@@ -40,6 +41,9 @@ public class JFrameWithoutMaxAndMinButton extends JDialog {
 						frame.dispose();
 				} else if (originalFrame == 1) {
 					if (LoadProteinDomainTask.cancelProcess())
+						frame.dispose();
+				} else if (originalFrame == 2) {
+					if (LoadPTMsTask.cancelProcess())
 						frame.dispose();
 				} else if (originalFrame == -1) {
 					frame.dispose();

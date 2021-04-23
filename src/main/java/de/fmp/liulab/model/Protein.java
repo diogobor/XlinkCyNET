@@ -17,6 +17,7 @@ public class Protein {
 	public String sequence;
 	public String checksum;
 	public List<PDB> pdbIds;
+	public List<PTM> ptms;
 
 	/**
 	 * Constructor
@@ -24,7 +25,7 @@ public class Protein {
 	 * @param sequence protein sequence
 	 * @param pdbIds   pdb IDs
 	 */
-	public Protein(String proteinID, String gene, String fullName, String sequence, String checksum, List<PDB> pdbIds) {
+	public Protein(String proteinID, String gene, String fullName, String sequence, String checksum, List<PDB> pdbIds, List<PTM> ptms) {
 		this.proteinID = proteinID;
 		this.gene = gene;
 		this.fullName = fullName;
@@ -38,5 +39,6 @@ public class Protein {
 	 */
 	public Protein() {
 		this.pdbIds = new ArrayList<PDB>();
+		this.ptms = new ArrayList<PTM>();
 	}
 }

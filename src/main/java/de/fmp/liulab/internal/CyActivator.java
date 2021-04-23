@@ -36,13 +36,16 @@ import org.osgi.framework.BundleContext;
 
 import de.fmp.liulab.core.ConfigurationManager;
 import de.fmp.liulab.internal.action.ControlURLAction;
+import de.fmp.liulab.internal.action.ExportPTMsAction;
 import de.fmp.liulab.internal.action.ExportProteinDomainsAction;
+import de.fmp.liulab.internal.action.LoadPTMsAction;
 import de.fmp.liulab.internal.action.LoadProteinDomainsAction;
 import de.fmp.liulab.internal.action.MainPanelAction;
 import de.fmp.liulab.internal.action.ReadMeAction;
 import de.fmp.liulab.internal.action.SetDomainColorAction;
 import de.fmp.liulab.internal.action.ShortcutSingleNodeExecuteAction;
 import de.fmp.liulab.internal.action.ShortcutWindowSingleNodeLayout;
+import de.fmp.liulab.task.LoadPTMsTaskFactory;
 import de.fmp.liulab.task.LoadProteinDomainsTaskFactory;
 import de.fmp.liulab.task.MainSingleEdgeTaskFactory;
 import de.fmp.liulab.task.MainSingleNodeTaskFactory;
@@ -51,8 +54,12 @@ import de.fmp.liulab.task.SetDomainColorTaskFactory;
 import de.fmp.liulab.task.UpdateViewerTaskFactory;
 import de.fmp.liulab.task.command_lines.ApplyRestoreStyleCommandTask;
 import de.fmp.liulab.task.command_lines.ApplyRestoreStyleCommandTaskFactory;
+import de.fmp.liulab.task.command_lines.ExportPTMsCommandTask;
+import de.fmp.liulab.task.command_lines.ExportPTMsCommandTaskFactory;
 import de.fmp.liulab.task.command_lines.ExportProteinDomainsCommandTask;
 import de.fmp.liulab.task.command_lines.ExportProteinDomainsCommandTaskFactory;
+import de.fmp.liulab.task.command_lines.LoadPTMsCommandTask;
+import de.fmp.liulab.task.command_lines.LoadPTMsCommandTaskFactory;
 import de.fmp.liulab.task.command_lines.LoadProteinDomainsCommandTask;
 import de.fmp.liulab.task.command_lines.LoadProteinDomainsCommandTaskFactory;
 import de.fmp.liulab.task.command_lines.ReadMeCommandTask;
@@ -98,14 +105,28 @@ public class CyActivator extends AbstractCyActivator {
 		BendFactory bendFactory = getService(bc, BendFactory.class);
 		DialogTaskManager dialogTaskManager = getService(bc, DialogTaskManager.class);
 
-		// ### 3 - PROTEIN DOMAINS ###
+		// ### 3 - POST-TRANSLATIONAL MODIFICATIONS ###
 
 		// ### 3.1 - EXPORT ###
+		ExportPTMsAction myExportPTMsAction = new ExportPTMsAction(cyApplicationManager);
+
+		// ### 3.2 - LOAD ####
+
+		TaskFactory myLoadPTMsFactory = new LoadPTMsTaskFactory(cyApplicationManager, vmmServiceRef,
+				customChartListener);
+
+		LoadPTMsAction myLoadPTMsAction = new LoadPTMsAction(dialogTaskManager, myLoadPTMsFactory);
+
+		// ############################################
+
+		// ### 4 - PROTEIN DOMAINS ###
+
+		// ### 4.1 - EXPORT ###
 		ExportProteinDomainsAction myExportProteinDomainsAction = new ExportProteinDomainsAction(cyApplicationManager);
 
 		// ####################
 
-		// ### 3.2 - LOAD ####
+		// ### 4.2 - LOAD ####
 		TaskFactory myLoadProteinDomainsFactory = new LoadProteinDomainsTaskFactory(cyApplicationManager, vmmServiceRef,
 				customChartListener);
 
@@ -114,7 +135,7 @@ public class CyActivator extends AbstractCyActivator {
 
 		// ###################
 
-		// ### 3.2 - LOAD ####
+		// ### 4.3 - SET ####
 		TaskFactory mySetProteinDomainsColorFactory = new SetDomainColorTaskFactory(cyApplicationManager, vmmServiceRef,
 				customChartListener);
 
@@ -147,7 +168,7 @@ public class CyActivator extends AbstractCyActivator {
 
 		TaskFactory mySingleNodeContextMenuFactory = new MainSingleNodeTaskFactory(cyApplicationManager, vmmServiceRef,
 				customChartListener, bendFactory, handleFactory, true);
-		
+
 		TaskFactory mySingleEdgeContextMenuFactory = new MainSingleEdgeTaskFactory(cyApplicationManager, vmmServiceRef,
 				customChartListener, bendFactory, handleFactory, true);
 
@@ -190,6 +211,9 @@ public class CyActivator extends AbstractCyActivator {
 		// ##############################
 
 		// #### SERVICES #####
+
+		registerService(bc, myLoadPTMsAction, CyAction.class, new Properties());
+		registerService(bc, myExportPTMsAction, CyAction.class, new Properties());
 		registerService(bc, myShortcutWindowSingleNodeAction, CyAction.class, new Properties());
 		registerService(bc, myLoadProteinDomainsAction, CyAction.class, new Properties());
 		registerService(bc, myShortcutSingleNodeAction, CyAction.class, new Properties());
@@ -295,6 +319,32 @@ public class CyActivator extends AbstractCyActivator {
 
 		TaskFactory setProteinDomainsColorTaskFactory = new SetProteinDomainsColorCommandTaskFactory();
 		registerAllServices(bc, setProteinDomainsColorTaskFactory, setProteinDomainsColorProperties);
+
+		// Register load ptms function
+		Properties loadPTMsProperties = new Properties();
+		loadPTMsProperties.setProperty(COMMAND_NAMESPACE, XLINKCYNET_COMMAND_NAMESPACE);
+		loadPTMsProperties.setProperty(COMMAND, "loadPTMs");
+		loadPTMsProperties.setProperty(COMMAND_DESCRIPTION, LoadPTMsCommandTaskFactory.DESCRIPTION);
+		loadPTMsProperties.setProperty(COMMAND_LONG_DESCRIPTION, LoadPTMsCommandTaskFactory.LONG_DESCRIPTION);
+		loadPTMsProperties.setProperty(COMMAND_EXAMPLE_JSON, LoadPTMsCommandTask.getExample());
+		loadPTMsProperties.setProperty(COMMAND_SUPPORTS_JSON, "true");
+
+		TaskFactory loadPTMsTaskFactory = new LoadPTMsCommandTaskFactory(cyApplicationManager);
+		registerAllServices(bc, loadPTMsTaskFactory, loadPTMsProperties);
+
+		// Register export PTM(s) function
+		Properties exportPTMsProperties = new Properties();
+		exportPTMsProperties.setProperty(COMMAND_NAMESPACE, XLINKCYNET_COMMAND_NAMESPACE);
+		exportPTMsProperties.setProperty(COMMAND, "exportPTMs");
+		exportPTMsProperties.setProperty(COMMAND_DESCRIPTION, ExportPTMsCommandTaskFactory.DESCRIPTION);
+		exportPTMsProperties.setProperty(COMMAND_LONG_DESCRIPTION,
+				ExportPTMsCommandTaskFactory.LONG_DESCRIPTION);
+		exportPTMsProperties.setProperty(COMMAND_EXAMPLE_JSON, ExportPTMsCommandTask.getExample());
+		exportPTMsProperties.setProperty(COMMAND_SUPPORTS_JSON, "true");
+
+		TaskFactory exportPTMsTaskFactory = new ExportPTMsCommandTaskFactory(cyApplicationManager);
+		registerAllServices(bc, exportPTMsTaskFactory, exportPTMsProperties);
+
 	}
 
 	private void init_default_params(BundleContext bc) {

@@ -27,7 +27,6 @@ import org.cytoscape.model.events.RowsSetListener;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.CyNetworkViewManager;
 import org.cytoscape.view.model.View;
-import org.cytoscape.view.model.VisualLexicon;
 import org.cytoscape.view.model.events.ViewChangeRecord;
 import org.cytoscape.view.model.events.ViewChangedEvent;
 import org.cytoscape.view.model.events.ViewChangedListener;
@@ -199,11 +198,11 @@ public class UpdateViewListener
 					}
 				}).findFirst();
 				if (!isNodePresent.isPresent()) {
-					if (!(node_name.contains("Source") || node_name.contains("Target")))
+					if (!(node_name.contains("Source") || node_name.contains("Target") || node_name.contains("PTM")))
 						return;
 				}
 
-				if (node_name.contains("Source") || node_name.contains("Target")) {
+				if (node_name.contains("Source") || node_name.contains("Target") || node_name.contains("PTM")) {
 					nodes_to_be_updated.add(_node);
 				} else {
 					Optional<Long> isNodePresent_SUID = nodes_suids.stream().filter(new Predicate<Long>() {
@@ -237,7 +236,7 @@ public class UpdateViewListener
 		current_node = _iterator_CyNode.next();
 
 		String node_name = myNetwork.getRow(current_node).get(CyNetwork.NAME, String.class);
-		while (node_name.contains("Source") || node_name.contains("Target")) {
+		while (node_name.contains("Source") || node_name.contains("Target") || node_name.contains("PTM")) {
 			if (_iterator_CyNode.hasNext()) {
 				current_node = _iterator_CyNode.next();
 				node_name = myNetwork.getRow(current_node).get(CyNetwork.NAME, String.class);

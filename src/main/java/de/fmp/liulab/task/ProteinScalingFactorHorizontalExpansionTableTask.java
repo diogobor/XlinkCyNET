@@ -14,6 +14,7 @@ import org.cytoscape.model.CyTable;
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.TaskMonitor;
 
+import de.fmp.liulab.model.PTM;
 import de.fmp.liulab.model.ProteinDomain;
 import de.fmp.liulab.utils.Util;
 
@@ -90,6 +91,7 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 
 		}
 
+		// ###### HORIZONTAL OR VERTICAL EXPANSION #######
 		if (nodeTable.getColumn(Util.HORIZONTAL_EXPANSION_COLUMN_NAME) == null) {
 			try {
 				nodeTable.createColumn(Util.HORIZONTAL_EXPANSION_COLUMN_NAME, Boolean.class, false);
@@ -123,6 +125,7 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 
 		}
 
+		// ######## PROTEIN DOMAINS ########
 		if (nodeTable.getColumn(Util.PROTEIN_DOMAIN_COLUMN) == null) {
 			try {
 				nodeTable.createColumn(Util.PROTEIN_DOMAIN_COLUMN, String.class, false);
@@ -144,12 +147,12 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 
 		} else { // The column exists, but it's necessary to check the cells
 			try {
-				
-				//Check if proteinDomainsMap has been initialized
+
+				// Check if proteinDomainsMap has been initialized
 				boolean proteinDomainsMapOK = true;
 				if (Util.proteinDomainsMap == null)
 					proteinDomainsMapOK = false;
-				
+
 				// Initialize protein domain colors map if LoadProteinDomainTask has not been
 				// initialized
 				Util.init_availableProteinDomainColorsMap();
@@ -164,6 +167,51 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 						if (!(domains.isBlank() || domains.isEmpty()) && proteinDomainsMapOK) {
 
 							updateProteinDomainsMap(nodeName, domains, taskMonitor);
+						}
+					}
+				}
+			} catch (Exception e) {
+			}
+		}
+
+		// ####### POST-TRANSLATIONAL MODIFICATIONS #########
+		if (nodeTable.getColumn(Util.PTM_COLUMN) == null) {
+			try {
+				nodeTable.createColumn(Util.PTM_COLUMN, String.class, false);
+
+				for (CyRow row : myNetwork.getDefaultNodeTable().getAllRows()) {
+					row.set(Util.PTM_COLUMN, "");
+				}
+
+			} catch (IllegalArgumentException e) {
+				try {
+					for (CyRow row : myNetwork.getDefaultNodeTable().getAllRows()) {
+						if (row.get(Util.PTM_COLUMN, String.class) == null)
+							row.set(Util.PTM_COLUMN, "");
+					}
+				} catch (Exception e2) {
+				}
+			} catch (Exception e) {
+			}
+
+		} else { // The column exists, but it's necessary to check the cells
+			try {
+
+				// Check if proteinDomainsMap has been initialized
+				boolean ptmsMapOK = true;
+				if (Util.ptmsMap == null)
+					ptmsMapOK = false;
+
+				for (CyRow row : myNetwork.getDefaultNodeTable().getAllRows()) {
+					if (row.get(Util.PTM_COLUMN, String.class) == null)
+						row.set(Util.PTM_COLUMN, "");
+					else {
+						String nodeName = row.get(CyNetwork.NAME, String.class);
+						String ptms = row.get(Util.PTM_COLUMN, String.class);
+
+						if (!(ptms.isBlank() || ptms.isEmpty()) && ptmsMapOK) {
+
+							updatePTMsMap(nodeName, ptms, taskMonitor);
 						}
 					}
 				}
@@ -216,6 +264,56 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 
 			if (proteinDomains.size() > 0) {
 				LoadProteinDomainTask.updateProteinDomainsMap(myNetwork, currentNode, proteinDomains);
+
+			}
+		} else {
+			taskMonitor.showMessage(TaskMonitor.Level.WARN, "WARNING: Node " + nodeName + " has not been found.\n");
+		}
+
+	}
+
+	/**
+	 * Method responsible for updating ptms map
+	 * 
+	 * @param nodeName    node name
+	 * @param ptmsStr     ptms stored in Cytoscape Table
+	 * @param taskMonitor task monitor
+	 */
+	private void updatePTMsMap(String nodeName, String ptmsStr, TaskMonitor taskMonitor) {
+
+		List<PTM> ptmsList = new ArrayList<PTM>();
+		try {
+			String[] cols = ptmsStr.split(",");
+			for (String col : cols) {
+				String[] domainsArray = col.split("\\[|\\]");
+				String ptmName = domainsArray[0].trim();
+				String[] colRange = domainsArray[1].split("-");
+				char residue = colRange[0].charAt(0);
+				int position = Integer.parseInt(colRange[1]);
+				ptmsList.add(new PTM(ptmName, residue, position));
+			}
+		} catch (Exception e) {
+			taskMonitor.showMessage(TaskMonitor.Level.WARN, "ERROR: Node: " + nodeName
+					+ " - PTMs don't match with the pattern 'name[residue-position]'\n");
+			return;
+		}
+
+		CyNode currentNode = null;
+
+		// Check if the node exists in the network
+		Optional<CyRow> isNodePresent = myNetwork.getDefaultNodeTable().getAllRows().stream()
+				.filter(new Predicate<CyRow>() {
+					public boolean test(CyRow o) {
+						return o.get(CyNetwork.NAME, String.class).equals(nodeName);
+					}
+				}).findFirst();
+
+		if (isNodePresent.isPresent()) {// Get node if exists
+			CyRow _node_row = isNodePresent.get();
+			currentNode = myNetwork.getNode(Long.parseLong(_node_row.getRaw(CyIdentifiable.SUID).toString()));
+
+			if (ptmsList.size() > 0) {
+				LoadPTMsTask.updatePTMsMap(myNetwork, currentNode, ptmsList);
 
 			}
 		} else {

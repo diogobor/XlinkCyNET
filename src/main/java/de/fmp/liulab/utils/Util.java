@@ -37,7 +37,6 @@ import org.cytoscape.model.CyIdentifiable;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyRow;
-import org.cytoscape.model.CyTableUtil;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.View;
 import org.cytoscape.view.model.VisualLexicon;
@@ -65,6 +64,7 @@ import de.fmp.liulab.model.CrossLink;
 import de.fmp.liulab.model.Fasta;
 import de.fmp.liulab.model.GeneDomain;
 import de.fmp.liulab.model.PDB;
+import de.fmp.liulab.model.PTM;
 import de.fmp.liulab.model.Protein;
 import de.fmp.liulab.model.ProteinDomain;
 import de.fmp.liulab.task.LoadProteinDomainTask;
@@ -81,6 +81,7 @@ public class Util {
 	public static String PROTEIN_SCALING_FACTOR_COLUMN_NAME = "scaling_factor";
 	public static String HORIZONTAL_EXPANSION_COLUMN_NAME = "is_horizontal_expansion";
 	public static String PROTEIN_DOMAIN_COLUMN = "domain_annotation";
+	public static String PTM_COLUMN = "ptms";
 	public static String PROTEIN_LENGTH_A = "length_protein_a";
 	public static String PROTEIN_LENGTH_B = "length_protein_b";
 	public static String NODE_LABEL_POSITION = "NODE_LABEL_POSITION";
@@ -96,15 +97,19 @@ public class Util {
 	public static List<CyNetwork> myCyNetworkList = new ArrayList<CyNetwork>();
 
 	private static String OS = System.getProperty("os.name").toLowerCase();
+
 	private final static float OFFSET_BEND = 2;
+	private final static float PTM_LENGTH = 45;
 	private static String edge_label_blank_spaces = "\n\n";
 
+	public static Color PTMColor = new Color(153, 153, 153);
 	public static Color IntraLinksColor = new Color(0, 153, 255);
 	public static Color InterLinksColor = new Color(102, 102, 0);
 	public static Color NodeBorderColor = new Color(315041);// Dark green
 	public static boolean showLinksLegend = false;
 	public static boolean showIntraLinks = false;
 	public static boolean showInterLinks = true;
+	public static boolean showPTMs = true;
 	public static Integer edge_label_font_size = 12;
 	public static Integer node_label_font_size = 12;
 	public static double node_label_factor_size = 1;
@@ -125,9 +130,12 @@ public class Util {
 	public static Map<String, Color> proteinDomainsColorMap = new HashMap<String, Color>();
 	public static List<java.awt.Color> available_domain_colors = new ArrayList<Color>();
 
+	// Map<Network name, Map<Protein - Node SUID, List<PTM>>
+	public static Map<String, Map<Long, List<PTM>>> ptmsMap = new HashMap<String, Map<Long, List<PTM>>>();
+
 	public static Map<CyNode, Tuple2> mapLastNodesPosition = new HashMap<CyNode, Tuple2>();
 
-	private static float proteinLength;
+	public static float proteinLength;
 
 	public static void setProteinLength(float value) {
 		proteinLength = value;
@@ -462,7 +470,7 @@ public class Util {
 
 			try {
 
-				if (stopUpdateViewer)// This variable is set true when applyLayoutThread is interruput
+				if (stopUpdateViewer)// This variable is set true when applyLayoutThread is interrupted
 										// (MainSingleNodeTask)
 					break;
 
@@ -490,7 +498,7 @@ public class Util {
 					currentEdgeView = netView.getEdgeView(edge);
 				}
 
-				if (!edge_name.startsWith("[Source:")) {// New edges
+				if (!edge_name.startsWith("[Source:") && !edge_name.contains("PTM")) {// New edges
 					HasAdjacentEdges = true;
 
 					if (IsIntraLink) {
@@ -520,16 +528,19 @@ public class Util {
 				} else { // Update all sites of the current selected node
 					HasAdjacentEdges = true;
 
-					if (isEdgeModified(myNetwork, netView, edge)) {
-						restoreEdgeStyle(myNetwork, node, netView, handleFactory, bendFactory, style, lexicon, edge,
-								sourceNode, targetNode, edge_name, proteinLength, IsIntraLink);
-					} else {// Hide de modified edge (interlink)
-						currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
-					}
+					if (!edge_name.contains("PTM")) {
 
-					if (showInterLinks) {
-						updateInterLinkEdgesPosition(myNetwork, node, netView, handleFactory, bendFactory, style,
-								lexicon, edge, sourceNode, targetNode, edge_name, proteinLength);
+						if (isEdgeModified(myNetwork, netView, edge)) {
+							restoreEdgeStyle(myNetwork, node, netView, handleFactory, bendFactory, style, lexicon, edge,
+									sourceNode, targetNode, edge_name, proteinLength, IsIntraLink);
+						} else {// Hide the modified edge (interlink)
+							currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
+						}
+
+						if (showInterLinks) {
+							updateInterLinkEdgesPosition(myNetwork, node, netView, handleFactory, bendFactory, style,
+									lexicon, edge, sourceNode, targetNode, edge_name, proteinLength);
+						}
 					}
 				}
 			} catch (Exception e) {
@@ -844,11 +855,64 @@ public class Util {
 					sb_domains.append("], ");
 				}
 
-				if (myNetwork.getRow(node).get(Util.PROTEIN_DOMAIN_COLUMN, String.class) != null)
+				if (myNetwork.getRow(node).get(PROTEIN_DOMAIN_COLUMN, String.class) != null)
 					myNetwork.getRow(node).set(PROTEIN_DOMAIN_COLUMN, sb_domains.substring(0, sb_domains.length() - 2));
 				sb_domains.delete(0, sb_domains.length());
 			}
 		}
+	}
+
+	/**
+	 * 
+	 * @param taskMonitor
+	 * @param myNetwork
+	 * @param AllPtmsList
+	 */
+	public static void update_PTMColumn(TaskMonitor taskMonitor, CyNetwork myNetwork,
+			Map<Long, List<PTM>> AllPtmsList) {
+		for (Map.Entry<Long, List<PTM>> entry : AllPtmsList.entrySet()) {
+			Long key = entry.getKey();
+			CyNode node = getNode(myNetwork, key);
+			if (node == null)
+				continue;
+			List<PTM> ptmList = entry.getValue();
+			if (ptmList.size() > 0)
+				update_PTMColumn(taskMonitor, myNetwork, ptmList, node);
+		}
+	}
+
+	/**
+	 * Update PTM column
+	 * 
+	 * @param taskMonitor task monitor
+	 * @param myNetwork   current network
+	 * @param ptmList     list of ptms
+	 * @param node        current node
+	 */
+	public static void update_PTMColumn(TaskMonitor taskMonitor, CyNetwork myNetwork, List<PTM> ptmList, CyNode node) {
+
+		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Updating ptm column...");
+
+		if (myNetwork == null)
+			return;
+
+		StringBuilder sb_ptms = new StringBuilder();
+		for (final PTM current_ptm : ptmList) {
+
+			sb_ptms.append(current_ptm.name);
+			sb_ptms.append("[");
+			sb_ptms.append(current_ptm.residue);
+			sb_ptms.append("-");
+			sb_ptms.append(current_ptm.position);
+			sb_ptms.append("], ");
+
+		}
+
+		if (node != null) {
+			if (myNetwork.getRow(node).get(PTM_COLUMN, String.class) != null)
+				myNetwork.getRow(node).set(PTM_COLUMN, sb_ptms.substring(0, sb_ptms.length() - 2));
+		}
+
 	}
 
 	/**
@@ -1430,6 +1494,242 @@ public class Util {
 			// ###########################
 		}
 		// ####################
+	}
+
+	/**
+	 * Method responsible for removing all PTMs of a protein
+	 * 
+	 * @param taskMonitor task monitor
+	 * @param myNetwork   current network
+	 * @param node        current node
+	 */
+	private static List<CyEdge> getPTMsEdges(final TaskMonitor taskMonitor, CyNetwork myNetwork, CyNode node) {
+
+		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Updating PTM(s)...");
+
+		List<CyEdge> edges_to_be_removed = new ArrayList<CyEdge>();
+//		List<CyNode> nodes_to_be_removed = new ArrayList<CyNode>();
+		for (CyEdge edge : myNetwork.getAdjacentEdgeIterable(node, CyEdge.Type.ANY)) {
+
+			// Check if the edge was inserted by this app
+			String edge_name = myNetwork.getDefaultEdgeTable().getRow(edge.getSUID()).get(CyNetwork.NAME, String.class);
+
+			if (edge_name.contains("[Source: PTM - ")) {
+				edges_to_be_removed.add(edge);
+
+//				CyNode node_to_be_removed = null;
+//				if (node.getSUID() == edge.getSource().getSUID())
+//					node_to_be_removed = edge.getTarget();
+//				else
+//					node_to_be_removed = edge.getSource();
+
+//				nodes_to_be_removed.add(node_to_be_removed);
+			}
+		}
+
+		return edges_to_be_removed;
+
+//		myNetwork.removeEdges(edges_to_be_removed);
+//		myNetwork.removeNodes(nodes_to_be_removed);
+	}
+
+	private static void setPTMStyle(CyNetworkView netView, HandleFactory handleFactory, BendFactory bendFactory,
+			VisualLexicon lexicon, final TaskMonitor taskMonitor, CyEdge newEdge, double x_or_y_Pos_source,
+			double xl_pos_source, double center_position_source_node, double initial_position_source_node,
+			View<CyNode> sourceNodeView, CyNode new_ptm_node, PTM ptm) {
+
+		View<CyEdge> newEdgeView = netView.getEdgeView(newEdge);
+		while (newEdgeView == null) {
+			netView.updateView();
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
+			newEdgeView = netView.getEdgeView(newEdge);
+		}
+
+		newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_PAINT, Util.PTMColor);
+		newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_SELECTED_PAINT, Color.RED);
+		newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_STROKE_SELECTED_PAINT, Color.RED);
+		newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TRANSPARENCY, Util.edge_link_opacity);
+		newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_WIDTH, Util.edge_link_width);
+		newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TARGET_ARROW_SHAPE, ArrowShapeVisualProperty.DIAMOND);
+		newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_SOURCE_ARROW_SHAPE, ArrowShapeVisualProperty.NONE);
+		newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LINE_TYPE, LineTypeVisualProperty.SOLID);
+
+		String tooltip = "<html><p><b>PTM: </b>" + ptm.name + "<br/><b>Residue: </b>" + ptm.residue + "[" + ptm.position
+				+ "]</p></html>";
+
+		newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_TOOLTIP, tooltip);
+		newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL,
+				"PTM: " + ptm.name + "[" + ptm.residue + "(" + ptm.position + ")]");
+
+		if (Util.showLinksLegend) {
+			newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, Util.edge_label_opacity);
+			newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_FONT_SIZE, Util.edge_label_font_size);
+		} else {
+			newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_LABEL_TRANSPARENCY, 0);
+		}
+
+		xl_pos_source = ptm.position * Util.node_label_factor_size;
+
+		if (xl_pos_source <= center_position_source_node) { // [-protein_length/2, 0]
+			x_or_y_Pos_source = (-center_position_source_node) + xl_pos_source;
+		} else { // [0, protein_length/2]
+			x_or_y_Pos_source = xl_pos_source - center_position_source_node;
+		}
+		x_or_y_Pos_source += initial_position_source_node;
+
+		View<CyNode> targetNodeView = netView.getNodeView(new_ptm_node);
+
+		if (Util.isProtein_expansion_horizontal) {
+			targetNodeView.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION,
+					(x_or_y_Pos_source) /** Util.node_label_factor_size */
+			);
+			targetNodeView.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION,
+					Util.getYPositionOf(sourceNodeView) - PTM_LENGTH);
+		} else {
+			targetNodeView.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION,
+					Util.getXPositionOf(sourceNodeView) - PTM_LENGTH);
+			targetNodeView.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION,
+					(x_or_y_Pos_source) /** Util.node_label_factor_size */
+			);
+		}
+
+		targetNodeView.setLockedValue(BasicVisualLexicon.NODE_WIDTH, 0.01);
+		targetNodeView.setLockedValue(BasicVisualLexicon.NODE_LABEL_TRANSPARENCY, 0);
+		targetNodeView.setLockedValue(BasicVisualLexicon.NODE_LABEL, "");
+		targetNodeView.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, true);
+		targetNodeView.setLockedValue(BasicVisualLexicon.NODE_BORDER_WIDTH, 0.0);
+		targetNodeView.setLockedValue(BasicVisualLexicon.NODE_BORDER_PAINT, Color.WHITE);
+
+		Bend bend = bendFactory.createBend();
+
+		Handle h = null;
+
+		if (Util.isProtein_expansion_horizontal) {
+			h = handleFactory.createHandle(netView, newEdgeView, (x_or_y_Pos_source - OFFSET_BEND),
+					Util.getYPositionOf(sourceNodeView));
+		} else {
+			h = handleFactory.createHandle(netView, newEdgeView, Util.getXPositionOf(sourceNodeView),
+					(x_or_y_Pos_source - OFFSET_BEND));
+		}
+
+		bend.insertHandleAt(0, h);
+		newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_BEND, bend);
+
+		VisualProperty<?> vp_edge_curved = lexicon.lookup(CyEdge.class, "EDGE_CURVED");
+		if (vp_edge_curved != null) {
+			Object edge_curved_obj = vp_edge_curved.parseSerializableString("false");
+			if (edge_curved_obj != null) {
+				newEdgeView.setLockedValue(vp_edge_curved, edge_curved_obj);
+			}
+		}
+	}
+
+	/**
+	 * Plot PTM in the protein view
+	 * 
+	 * @param taskMonitor
+	 */
+	public static void setNodePTMs(final TaskMonitor taskMonitor, CyNetwork myNetwork, CyNetworkView netView,
+			CyNode node, VisualStyle style, HandleFactory handleFactory, BendFactory bendFactory, VisualLexicon lexicon,
+			ArrayList<PTM> myPTMs, boolean updateEdge) {
+		if (myNetwork == null || node == null || style == null || netView == null) {
+			return;
+		}
+
+		final String node_name = myNetwork.getDefaultNodeTable().getRow(node.getSUID()).getRaw(CyNetwork.NAME)
+				.toString();
+
+		View<CyNode> sourceNodeView = netView.getNodeView(node);
+
+		List<CyEdge> ptms_edges = new ArrayList<CyEdge>();
+		if (!updateEdge) {
+			ptms_edges = getPTMsEdges(taskMonitor, myNetwork, node);
+		}
+
+		double x_or_y_Pos_source = 0;
+		double xl_pos_source = 0;
+		double center_position_source_node = (Util.proteinLength * Util.node_label_factor_size) / 2.0;
+
+		double initial_position_source_node = 0;
+		if (Util.isProtein_expansion_horizontal) {
+			initial_position_source_node = Util.getXPositionOf(sourceNodeView);
+		} else {
+			initial_position_source_node = Util.getYPositionOf(sourceNodeView);
+		}
+
+		int countPTM = 0;
+		for (PTM ptm : myPTMs) {
+
+			final String egde_name_added_by_app = "Edge" + countPTM + " [Source: PTM - " + node_name + " ("
+					+ ptm.residue + "-" + ptm.position + ")]";
+
+			CyEdge current_edge = Util.getEdge(myNetwork, egde_name_added_by_app);
+			if (current_edge == null) {// Add a new edge if does not exist
+
+				final String node_name_source = "PTM - " + node_name + " (" + ptm.residue + "-" + ptm.position + ")";
+
+				CyNode new_ptm_node = myNetwork.addNode();
+				myNetwork.getRow(new_ptm_node).set(CyNetwork.NAME, node_name_source);
+
+				CyEdge newEdge = myNetwork.addEdge(node, new_ptm_node, true);
+				myNetwork.getRow(newEdge).set(CyNetwork.NAME, egde_name_added_by_app);
+
+				setPTMStyle(netView, handleFactory, bendFactory, lexicon, taskMonitor, newEdge, x_or_y_Pos_source,
+						xl_pos_source, center_position_source_node, initial_position_source_node, sourceNodeView,
+						new_ptm_node, ptm);
+
+			} else { // Update edge position
+
+				View<CyEdge> edgeView = netView.getEdgeView(current_edge);
+				edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, true);
+
+				String node_name_source = "PTM - " + node_name + " (" + ptm.residue + "-" + ptm.position + ")";
+				CyNode target_node = Util.getNode(myNetwork, node_name_source);
+				if (target_node != null) {
+
+					setPTMStyle(netView, handleFactory, bendFactory, lexicon, taskMonitor, current_edge,
+							x_or_y_Pos_source, xl_pos_source, center_position_source_node, initial_position_source_node,
+							sourceNodeView, target_node, ptm);
+				}
+
+				ptms_edges.remove(current_edge);
+			}
+			countPTM++;
+		}
+
+		String network_name = myNetwork.toString();
+		if (Util.ptmsMap.containsKey(network_name)) {
+
+			Map<Long, List<PTM>> all_ptms = Util.ptmsMap.get(network_name);
+			all_ptms.put(node.getSUID(), myPTMs);
+
+		} else {// Network does not exists
+
+			Map<Long, List<PTM>> ptms = new HashMap<Long, List<PTM>>();
+			ptms.put(node.getSUID(), myPTMs);
+			Util.ptmsMap.put(network_name, ptms);
+		}
+
+		if (ptms_edges.size() > 0) {
+			
+			List<CyNode> nodes_to_be_removed = new ArrayList<CyNode>();
+			for (CyEdge edge : ptms_edges) {
+				CyNode node_to_be_removed = null;
+				if (node.getSUID() == edge.getSource().getSUID())
+					node_to_be_removed = edge.getTarget();
+				else
+					node_to_be_removed = edge.getSource();
+
+				nodes_to_be_removed.add(node_to_be_removed);
+			}
+			
+			myNetwork.removeEdges(ptms_edges);
+			myNetwork.removeNodes(nodes_to_be_removed);
+		}
 	}
 
 	/**
@@ -2189,7 +2489,7 @@ public class Util {
 
 			}
 			View<CyEdge> currentEdgeView = netView.getEdgeView(edge);
-			if (!edge_name.startsWith("[Source:")) {// original edges
+			if (!edge_name.contains("[Source:")) {// original edges
 
 				if (IsIntraLink) {
 
@@ -2606,12 +2906,145 @@ public class Util {
 	}
 
 	/**
+	 * Get post-translational modifications from Uniprot
+	 * 
+	 * @param myCurrentRow current row of the table
+	 * @param taskMonitor  domains
+	 * @return
+	 */
+	public static ArrayList<PTM> getPTMs(CyRow myCurrentRow, TaskMonitor taskMonitor) {
+
+		ArrayList<PTM> ptmsServer = new ArrayList<PTM>(0);
+		String proteinID = getProteinID(myCurrentRow);
+		if (!(proteinID.isBlank() || proteinID.isEmpty())) {
+			ptmsServer = getPTMs(proteinID, taskMonitor);
+			Collections.sort(ptmsServer);
+		}
+		return ptmsServer;
+	}
+
+	/**
+	 * Get post-translational modifications from Uniprot
+	 * 
+	 * @param myCurrentRow current row of the table
+	 * @param taskMonitor  domains
+	 * @return
+	 */
+	private static ArrayList<PTM> getPTMs(String proteinID, TaskMonitor taskMonitor) {
+
+		String description = "";
+		int position = -1;
+
+		ArrayList<PTM> ptmList = new ArrayList<PTM>();
+
+		try {
+			String _url = "https://www.uniprot.org/uniprot/" + proteinID + ".xml";
+			final URL url = new URL(_url);
+			final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setRequestMethod("POST");
+			connection.setDoOutput(true);
+			connection.setReadTimeout(5000);
+			connection.setConnectTimeout(5000);
+			connection.connect();
+
+			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+
+				// Get Response
+				InputStream inputStream = connection.getErrorStream(); // first check for error.
+				if (inputStream == null) {
+					inputStream = connection.getInputStream();
+				}
+				BufferedReader rd = new BufferedReader(new InputStreamReader(inputStream));
+				String line;
+				StringBuilder response = new StringBuilder();
+				int total_lines = connection.getContentLength();
+
+				int old_progress = 0;
+				int summary_processed = 0;
+				while ((line = rd.readLine()) != null) {
+					response.append(line);
+					response.append('\r');
+
+					summary_processed += line.toCharArray().length + 1;
+					int new_progress = (int) ((double) summary_processed / (total_lines) * 100);
+					if (new_progress > old_progress) {
+						old_progress = new_progress;
+
+						taskMonitor.showMessage(TaskMonitor.Level.INFO,
+								"Downloading protein information from Uniprot: " + old_progress + "%");
+					}
+
+				}
+				rd.close();
+				String responseString = response.toString();
+
+				if (responseString.startsWith("<!DOCTYPE html PUBLIC"))
+					return new ArrayList<PTM>();
+
+				// Use method to convert XML string content to XML Document object
+				Document doc = convertStringToXMLDocument(responseString);
+
+				if (doc == null)
+					return new ArrayList<PTM>();
+
+				// check if exists error
+				NodeList xmlnodes = doc.getElementsByTagName("error");
+				if (xmlnodes.getLength() > 0) {
+					throw new Exception("XlinkCyNET ERROR: " + xmlnodes.item(0).getNodeValue());
+				}
+
+				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting protein sequence...");
+				xmlnodes = doc.getElementsByTagName("sequence");
+
+				String ptnSequence = "";
+				for (int i = 0; i < xmlnodes.getLength(); i++) {
+					Node node = xmlnodes.item(i);
+					if (node instanceof Element) {
+						if (node.getAttributes().item(0).getNodeName().equals("checksum")) {
+							Node nodeChild = node.getFirstChild();
+							ptnSequence = nodeChild.getNodeValue();
+							break;
+						}
+					}
+				}
+
+				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting protein features...");
+				xmlnodes = doc.getElementsByTagName("feature");
+				if (xmlnodes.getLength() == 0) {
+					throw new Exception("XlinkCyNET ERROR: There is no feature tag");
+				}
+				for (int i = 0; i < xmlnodes.getLength(); i++) {
+					Node node = xmlnodes.item(i);
+					if (node.getAttributes().getLength() < 3)
+						continue;
+					String featureType = node.getAttributes().item(2).getNodeValue();
+					if (featureType.equals("modified residue") || featureType.equals("disulfide bond")) {
+						description = node.getAttributes().item(0).getNodeValue().replaceAll(",", "_");
+						Node child = node.getChildNodes().item(1).getChildNodes().item(1);
+						position = Integer.parseInt(child.getAttributes().item(0).getNodeValue());
+						PTM ptm = new PTM(description, ptnSequence.charAt(position - 1), position);
+						ptmList.add(ptm);
+					}
+				}
+				return ptmList;
+
+			} else {
+				return new ArrayList<PTM>();
+			}
+
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			return new ArrayList<PTM>();
+		}
+	}
+
+	/**
 	 * Get protein domains in PFam database
 	 * 
 	 * @param myCurrentRow current row of the table
 	 * @return all protein domains
 	 */
-	public static ArrayList<ProteinDomain> getProteinDomains(CyRow myCurrentRow, TaskMonitor taskMonitor) {
+	public static ArrayList<ProteinDomain> getProteinDomainsFromServer(CyRow myCurrentRow, TaskMonitor taskMonitor) {
 
 		// ############ GET PROTEIN DOMAINS #################
 		ArrayList<ProteinDomain> proteinDomainsServer = new ArrayList<ProteinDomain>(0);
@@ -3142,7 +3575,7 @@ public class Util {
 				}
 
 				Collections.sort(pdbs);
-				Protein ptn = new Protein(proteinID, geneName, fullName, ptnSequence, checksum, pdbs);
+				Protein ptn = new Protein(proteinID, geneName, fullName, ptnSequence, checksum, pdbs, null);
 				return ptn;
 
 			} else {
@@ -3437,7 +3870,7 @@ public class Util {
 	 * @param nodeView current node view
 	 * @return position
 	 */
-	private static double getXPositionOf(View<CyNode> nodeView) {
+	public static double getXPositionOf(View<CyNode> nodeView) {
 		return nodeView.getVisualProperty(BasicVisualLexicon.NODE_X_LOCATION);
 	}
 
@@ -3447,7 +3880,7 @@ public class Util {
 	 * @param nodeView current node view
 	 * @return position
 	 */
-	private static double getYPositionOf(View<CyNode> nodeView) {
+	public static double getYPositionOf(View<CyNode> nodeView) {
 		return nodeView.getVisualProperty(BasicVisualLexicon.NODE_Y_LOCATION);
 	}
 

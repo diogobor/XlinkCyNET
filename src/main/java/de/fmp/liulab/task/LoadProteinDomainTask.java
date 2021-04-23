@@ -135,7 +135,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		if (Util.isWindows()) {
 			appSize = new Dimension(540, 345);
 		} else if (Util.isMac()) {
-			appSize = new Dimension(525, 315);
+			appSize = new Dimension(525, 325);
 		} else {
 			appSize = new Dimension(525, 335);
 		}
@@ -434,7 +434,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 			if (current_node != null) {
 				myCurrentRow = myNetwork.getRow(current_node);
 
-				List<ProteinDomain> new_proteinDomains = Util.getProteinDomains(myCurrentRow, taskMonitor);
+				List<ProteinDomain> new_proteinDomains = Util.getProteinDomainsFromServer(myCurrentRow, taskMonitor);
 				if (new_proteinDomains.size() > 0) {
 					geneDomain.proteinDomains = new_proteinDomains;
 				}
@@ -482,7 +482,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		proteinDomainServerButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		proteinDomainServerButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
-				taskMonitor.setTitle("XL interactions");
+				taskMonitor.setTitle("Load protein domains...");
 
 				if (isPfamLoaded) {
 					try {
@@ -954,7 +954,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 			String nodeName = myNetwork.getRow(cyNode).get(CyNetwork.NAME, String.class);
 
-			if (nodeName.contains("Target") || nodeName.contains("Source"))
+			if (nodeName.contains("Target") || nodeName.contains("Source") || nodeName.contains("PTM"))
 				continue;
 
 			sb_data_to_be_stored.append(nodeName).append("\n");

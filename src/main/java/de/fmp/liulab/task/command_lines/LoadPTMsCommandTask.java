@@ -1,4 +1,4 @@
-	package de.fmp.liulab.task.command_lines;
+package de.fmp.liulab.task.command_lines;
 
 import java.util.Arrays;
 import java.util.List;
@@ -12,41 +12,31 @@ import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.Tunable;
 
 import de.fmp.liulab.parser.Parser;
-import de.fmp.liulab.task.LoadProteinDomainTask;
-import de.fmp.liulab.utils.Util;
+import de.fmp.liulab.task.LoadPTMsTask;
 
-/**
- * Class responsible for loading protein domains via command line
- * 
- * @author diogobor
- *
- */
-public class LoadProteinDomainsCommandTask extends CyRESTAbstractTask {
+public class LoadPTMsCommandTask extends CyRESTAbstractTask {
 
 	private CyNetwork myNetwork;
 	private Parser parserFile;
 
-	private String[] columnNames = { "Node Name", "Domain(s)" };
+	private String[] columnNames = { "Node Name", "PTM(s)" };
 	private final Class[] columnClass = new Class[] { String.class, String.class };
 
 	@ProvidesTitle
 	public String getTitle() {
-		return "Load protein domains";
+		return "Load PTM(s)";
 	}
 
-	@Tunable(description = "Protein domains file name", longDescription = "Name of the protein domain file. (Supported formats: *.tab and *.csv)", exampleStringValue = "proteinDomains.csv")
+	@Tunable(description = "PTM(s) file name", longDescription = "Name of the PTM(s) file. (Supported formats: *.csv)", exampleStringValue = "ptms.csv")
 	public String fileName = "";
 
-	@Tunable(description = "Node(s) to get domain", longDescription = "Give the node(s) name, separated by comma, to get domains. (type 'all' to get domains of all nodes)", exampleStringValue = "PDE12")
+	@Tunable(description = "Node(s) to find PTM(s)", longDescription = "Give the node(s) name, separated by comma, to find PTM(s). (type 'all' to get PTM(s) of all nodes)", exampleStringValue = "PDE12")
 	public String nodesName = "";
-
-	@Tunable(description = "Set server to get domain(s).", longDescription = "Set which server the protein domains will be retrieved. (true = Pfam, false = Supfam)", exampleStringValue = "true")
-	public boolean fromPfamServer = Util.isProteinDomainPfam;
 
 	/**
 	 * Constructor
 	 */
-	public LoadProteinDomainsCommandTask(CyApplicationManager cyApplicationManager) {
+	public LoadPTMsCommandTask(CyApplicationManager cyApplicationManager) {
 		this.myNetwork = cyApplicationManager.getCurrentNetwork();
 	}
 
@@ -62,7 +52,7 @@ public class LoadProteinDomainsCommandTask extends CyRESTAbstractTask {
 			this.parserFile(taskMonitor);
 
 		if (!(nodesName.isBlank() || nodesName.isEmpty()))
-			this.getProteinDomainsFromServer(taskMonitor);
+			this.getPTMsFromServer(taskMonitor);
 
 	}
 
@@ -72,7 +62,7 @@ public class LoadProteinDomainsCommandTask extends CyRESTAbstractTask {
 	private void init_table_data_model_protein_domains() {
 		Object[][] data = new Object[1][2];
 		// create table model with data
-		LoadProteinDomainTask.tableDataModel = new DefaultTableModel(data, columnNames) {
+		LoadPTMsTask.ptmTableDataModel = new DefaultTableModel(data, columnNames) {
 			/**
 			 * 
 			 */
@@ -100,13 +90,13 @@ public class LoadProteinDomainsCommandTask extends CyRESTAbstractTask {
 
 		parserFile = new Parser(fileName);
 		// Update data table model
-		parserFile.updateDataModel(false);
+		parserFile.updateDataModel(true);
 
-		// Store protein domains
-		LoadProteinDomainTask.storeProteinDomains(taskMonitor, myNetwork, false);
+		// Store PTM(s)
+		LoadPTMsTask.storePTMs(taskMonitor, myNetwork, false);
 	}
 
-	private void getProteinDomainsFromServer(TaskMonitor taskMonitor) throws Exception {
+	private void getPTMsFromServer(TaskMonitor taskMonitor) throws Exception {
 
 		List<String> names = Arrays.asList(nodesName.split(","));
 
@@ -115,22 +105,18 @@ public class LoadProteinDomainsCommandTask extends CyRESTAbstractTask {
 			int countPtnDomain = 0;
 			for (String name : names) {
 
-				LoadProteinDomainTask.tableDataModel.setValueAt(name, countPtnDomain, 0);
+				LoadPTMsTask.ptmTableDataModel.setValueAt(name, countPtnDomain, 0);
 				countPtnDomain++;
 			}
 
-			// Fill geneListFromTable variable with gene and protein domains
-			// If nodesName == 'all', table data model will be empty and getNodesFromTable
-			// will retrieve all nodes.
-			LoadProteinDomainTask.getNodesFromTable(myNetwork, false);
+			LoadPTMsTask.getNodesFromTable(myNetwork, false);
 		} else {
-			LoadProteinDomainTask.getNodesFromTable(myNetwork, true);
+			LoadPTMsTask.getNodesFromTable(myNetwork, true);
 		}
 
-		// Get protein domains from server.
-		// At the end, storeProteinDomains will be called.
-		Util.isProteinDomainPfam = fromPfamServer;
-		LoadProteinDomainTask.getProteinDomainsFromServer(taskMonitor, myNetwork, false);
+		// Get PTM(s) from server.
+		// At the end, storePTMs will be called.
+		LoadPTMsTask.getPTMsFromServer(taskMonitor, myNetwork, false);
 
 	}
 

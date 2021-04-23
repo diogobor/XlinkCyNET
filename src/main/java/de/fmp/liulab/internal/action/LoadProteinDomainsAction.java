@@ -13,7 +13,7 @@ import org.cytoscape.work.TaskIterator;
 import org.cytoscape.work.swing.DialogTaskManager;
 
 /**
- * Class responsible for applying the layout to many different nodes
+ * Class responsible for loading protein domains
  * @author borges.diogo
  *
  */
