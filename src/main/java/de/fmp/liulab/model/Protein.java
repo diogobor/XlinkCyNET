@@ -17,7 +17,7 @@ public class Protein {
 	public String sequence;
 	public String checksum;
 	public List<PDB> pdbIds;
-	public List<PTM> ptms;
+	public List<CrossLink> monolinks;
 
 	/**
 	 * Constructor
@@ -25,7 +25,8 @@ public class Protein {
 	 * @param sequence protein sequence
 	 * @param pdbIds   pdb IDs
 	 */
-	public Protein(String proteinID, String gene, String fullName, String sequence, String checksum, List<PDB> pdbIds, List<PTM> ptms) {
+	public Protein(String proteinID, String gene, String fullName, String sequence, String checksum, List<PDB> pdbIds,
+			List<PTM> ptms) {
 		this.proteinID = proteinID;
 		this.gene = gene;
 		this.fullName = fullName;
@@ -35,10 +36,22 @@ public class Protein {
 	}
 
 	/**
+	 * Constructor
+	 * 
+	 * @param proteinID protein ID
+	 * @param sequence  protein sequence
+	 */
+	public Protein(String proteinID, String sequence, List<CrossLink> monolinks) {
+		this.proteinID = proteinID;
+		this.sequence = sequence;
+		this.monolinks = monolinks;
+	}
+
+	/**
 	 * Empty constructor
 	 */
 	public Protein() {
 		this.pdbIds = new ArrayList<PDB>();
-		this.ptms = new ArrayList<PTM>();
+		this.monolinks = new ArrayList<CrossLink>();
 	}
 }

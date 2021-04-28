@@ -12,6 +12,7 @@ public class CrossLink implements Comparable<CrossLink> {
 	public int pos_site_a;
 	public int pos_site_b;
 	public double score;
+	public String sequence;
 
 	/**
 	 * Empty Constructor
@@ -51,6 +52,23 @@ public class CrossLink implements Comparable<CrossLink> {
 		this.pos_site_a = pos_a;
 		this.pos_site_b = pos_b;
 		this.score = Double.NaN;
+	}
+
+	/**
+	 * Constructor with sequence and start/end positions
+	 * 
+	 * @param ptn_a protein a name
+	 * @param ptn_b protein b name
+	 * @param pos_a position a
+	 * @param pos_b position b
+	 */
+	public CrossLink(String sequence, int pos_a, int pos_b) {
+		this.protein_a = "";
+		this.protein_b = "";
+		this.pos_site_a = pos_a;
+		this.pos_site_b = pos_b;
+		this.score = Double.NaN;
+		this.sequence = sequence;
 	}
 
 	/**

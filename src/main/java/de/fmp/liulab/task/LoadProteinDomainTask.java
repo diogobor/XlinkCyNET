@@ -492,6 +492,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 						taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting protein domains...");
 						String msgError = getNodesFromTable(myNetwork, true);
 						if (!msgError.isBlank() && !msgError.isEmpty()) {
+							textLabel_status_result.setText("ERROR: Check Task History.");
 							taskMonitor.showMessage(TaskMonitor.Level.ERROR, msgError);
 						} else {
 

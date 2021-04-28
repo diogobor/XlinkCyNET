@@ -19,6 +19,7 @@ import org.cytoscape.work.TaskMonitor;
 
 import de.fmp.liulab.model.CrossLink;
 import de.fmp.liulab.model.PTM;
+import de.fmp.liulab.model.Protein;
 import de.fmp.liulab.utils.Tuple2;
 import de.fmp.liulab.utils.Util;
 
@@ -155,6 +156,12 @@ public class UpdateViewerTask extends AbstractTask {
 
 			}
 
+			if (Util.showMonolinksNodes) {
+				ArrayList<CrossLink> myMonolinks = this.getMonolinks(current_node);
+				Util.setMonolinksToNode(taskMonitor, myNetwork, netView, current_node, style, handleFactory,
+						bendFactory, lexicon, myMonolinks, "");
+			}
+
 		} else if (!IsIntraLink) {
 			Util.updateAllAssiciatedInterlinkNodes(myNetwork, cyApplicationManager, netView, handleFactory, bendFactory,
 					current_node);// Check if all associated nodes are
@@ -189,6 +196,59 @@ public class UpdateViewerTask extends AbstractTask {
 		}
 
 		return new ArrayList<PTM>();
+	}
+
+	/**
+	 * Method responsible for getting all monolinks of the selected node from the
+	 * main map (Util.ptmsMap)
+	 * 
+	 * @param node
+	 * @return ptms list
+	 */
+	private ArrayList<CrossLink> getMonolinks(CyNode node) {
+
+		String network_name = myNetwork.toString();
+		if (Util.monolinksMap.containsKey(network_name)) {
+
+			Map<Long, Protein> all_monolinks = Util.monolinksMap.get(network_name);
+
+			if (all_monolinks.containsKey(node.getSUID())) {
+				return (ArrayList<CrossLink>) ((Protein) all_monolinks.get(node.getSUID())).monolinks;
+			}
+		}
+
+		return new ArrayList<CrossLink>();
+
+	}
+
+	/**
+	 * Method responsible for getting the protein sequence of a respective node with
+	 * monolinks
+	 * 
+	 * @param node
+	 * @return
+	 */
+	private String getPtnSequenceOfMonolinks(CyNode node) {
+		boolean hasMonolinks = false;
+		String ptnSequence = "";
+
+		String network_name = myNetwork.toString();
+		if (Util.monolinksMap.containsKey(network_name)) {
+
+			Map<Long, Protein> all_monolinks = Util.monolinksMap.get(network_name);
+
+			if (all_monolinks.containsKey(node.getSUID())) {
+				hasMonolinks = true;
+
+				ptnSequence = (String) ((Protein) all_monolinks.get(node.getSUID())).sequence;
+			}
+		}
+
+		if (!hasMonolinks) {
+			ptnSequence = "";
+		}
+
+		return ptnSequence;
 	}
 
 	/**

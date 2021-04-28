@@ -18,8 +18,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -49,6 +52,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.text.DefaultFormatter;
 
 import org.cytoscape.application.CyApplicationManager;
+import org.cytoscape.model.CyIdentifiable;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyRow;
@@ -108,6 +112,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 	private ArrayList<ProteinDomain> myProteinDomains;
 	private ArrayList<PTM> myPTMs;
+	private ArrayList<CrossLink> myMonolinks;
 
 	// Window
 	private JFrameWithoutMaxAndMinButton mainFrame;
@@ -357,13 +362,25 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		setNodeDomainColors(taskMonitor);
 		taskMonitor.setProgress(0.75);
 
-		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting post-translational modifications...");
-		getPTMs(node);
+		if (Util.showPTMs) {
+			taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting post-translational modifications...");
+			getPTMs(node);
 
-		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting post-translational modifications to node...");
-		Util.setNodePTMs(taskMonitor, myNetwork, netView, node, style, handleFactory, bendFactory, lexicon, myPTMs,
-				false);
-		taskMonitor.setProgress(0.85);
+			taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting post-translational modifications to node...");
+			Util.setNodePTMs(taskMonitor, myNetwork, netView, node, style, handleFactory, bendFactory, lexicon, myPTMs,
+					false);
+			taskMonitor.setProgress(0.85);
+		}
+
+		if (Util.showMonolinksNodes) {
+			taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting monolinks...");
+			getMonolinks(node);
+
+			taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting monolinks to node...");
+			Util.setMonolinksToNode(taskMonitor, myNetwork, netView, node, style, handleFactory, bendFactory, lexicon,
+					myMonolinks, getPtnSequenceOfMonolinks(node));
+			taskMonitor.setProgress(0.85);
+		}
 
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Defining styles for cross-links...");
 		isPlotDone = Util.addOrUpdateEdgesToNetwork(myNetwork, node, style, netView, nodeView, handleFactory,
@@ -426,6 +443,9 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		Util.setNodePTMs(taskMonitor, myNetwork, netView, node, style, handleFactory, bendFactory, lexicon, myPTMs,
 				true);
 
+		Util.setMonolinksToNode(taskMonitor, myNetwork, netView, node, style, handleFactory, bendFactory, lexicon,
+				myMonolinks, getPtnSequenceOfMonolinks(node));
+
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Resizing edges...");
 		isPlotDone = Util.addOrUpdateEdgesToNetwork(myNetwork, node, style, netView, nodeView, handleFactory,
 				bendFactory, lexicon, Util.getProteinLength(), intraLinks, interLinks, taskMonitor, null);
@@ -454,6 +474,63 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		if (!hasPTMs) {
 			myPTMs = new ArrayList<PTM>();
+		}
+	}
+
+	/**
+	 * Method responsible for getting the protein sequence of a respective node with
+	 * monolinks
+	 * 
+	 * @param node
+	 * @return
+	 */
+	private String getPtnSequenceOfMonolinks(CyNode node) {
+		boolean hasMonolinks = false;
+		String ptnSequence = "";
+
+		String network_name = myNetwork.toString();
+		if (Util.monolinksMap.containsKey(network_name)) {
+
+			Map<Long, Protein> all_monolinks = Util.monolinksMap.get(network_name);
+
+			if (all_monolinks.containsKey(node.getSUID())) {
+				hasMonolinks = true;
+
+				ptnSequence = (String) ((Protein) all_monolinks.get(node.getSUID())).sequence;
+			}
+		}
+
+		if (!hasMonolinks) {
+			ptnSequence = "";
+		}
+
+		return ptnSequence;
+	}
+
+	/**
+	 * Method responsible for getting all monolinks of the selected node from the
+	 * main map (Util.ptmsMap)
+	 * 
+	 * @param node
+	 */
+	private void getMonolinks(CyNode node) {
+
+		boolean hasMonolinks = false;
+
+		String network_name = myNetwork.toString();
+		if (Util.monolinksMap.containsKey(network_name)) {
+
+			Map<Long, Protein> all_monolinks = Util.monolinksMap.get(network_name);
+
+			if (all_monolinks.containsKey(node.getSUID())) {
+				hasMonolinks = true;
+
+				myMonolinks = (ArrayList<CrossLink>) ((Protein) all_monolinks.get(node.getSUID())).monolinks;
+			}
+		}
+
+		if (!hasMonolinks) {
+			myMonolinks = new ArrayList<CrossLink>();
 		}
 	}
 
@@ -511,7 +588,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		interLinks = new ArrayList<CrossLink>();
 		intraLinks = new ArrayList<CrossLink>();
-				
+
 		String nodeName = (String) myCurrentRow.getRaw(CyNetwork.NAME);
 		if (nodeName.contains("PTM - "))
 			return;
@@ -1257,6 +1334,15 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			public Class<?> getColumnClass(int columnIndex) {
 				return columnClassPTMTable[columnIndex];
 			}
+
+			@Override
+			public void setValueAt(Object data, int row, int column) {
+				if (column == 1)
+					super.setValueAt(data.toString().toUpperCase().charAt(0), row, column);
+				else
+					super.setValueAt(data, row, column);
+			}
+
 		};
 
 		getPTMs(node); // Fill in myPTMs collection based on the main Map
@@ -1418,12 +1504,25 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 						textLabel_status_result.setText("Setting ptms to node...");
 						taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting ptms to node...");
-						Util.setNodePTMs(taskMonitor, myNetwork, netView, node, style, handleFactory, bendFactory,
-								lexicon, myPTMs, false);
-						taskMonitor.setProgress(0.90);
 
-						update_ptms_table(taskMonitor, myPTMs);
-						taskMonitor.setProgress(0.92);
+						if (Util.showPTMs) {
+							Util.setNodePTMs(taskMonitor, myNetwork, netView, node, style, handleFactory, bendFactory,
+									lexicon, myPTMs, false);
+							taskMonitor.setProgress(0.90);
+
+							update_ptms_table(taskMonitor, myPTMs);
+							taskMonitor.setProgress(0.92);
+						}
+
+						if (Util.showMonolinksNodes) {
+							taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting monolinks...");
+							getMonolinks(node);
+
+							taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting monolinks to node...");
+							Util.setMonolinksToNode(taskMonitor, myNetwork, netView, node, style, handleFactory,
+									bendFactory, lexicon, myMonolinks, getPtnSequenceOfMonolinks(node));
+							taskMonitor.setProgress(0.93);
+						}
 
 						textLabel_status_result.setText("Setting styles to the edges...");
 						taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting styles to the edges...");
@@ -2052,6 +2151,9 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		UpdateViewListener.isNodeModified = false;
 		Util.restoreEdgesStyle(taskMonitor, myNetwork, cyApplicationManager, netView, handleFactory, bendFactory, node);
 
+		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Removing monolinks...");
+		this.hideMonolinks();
+
 		// Apply the change to the view
 		style.apply(netView);
 		netView.updateView();
@@ -2059,6 +2161,37 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Done!");
 
 		isPlotDone = true;
+	}
+
+	/**
+	 * Method responsible for hiding monolink nodes
+	 */
+	private void hideMonolinks() {
+
+		if (myNetwork == null)
+			return;
+
+		String nodeName = (String) myCurrentRow.getRaw(CyNetwork.NAME);
+
+		// Check if the node exists in the network
+		Stream<CyRow> monolinksRows = myNetwork.getDefaultNodeTable().getAllRows().stream()
+				.filter(new Predicate<CyRow>() {
+					public boolean test(CyRow o) {
+						return o.get(CyNetwork.NAME, String.class).contains("MONOLINK")
+								&& o.get(CyNetwork.NAME, String.class).contains(nodeName);
+					}
+				});
+
+		for (Iterator<CyRow> i = monolinksRows.iterator(); i.hasNext();) {
+
+			CyRow _node_row = i.next();
+
+			CyNode _node = myNetwork.getNode(Long.parseLong(_node_row.getRaw(CyIdentifiable.SUID).toString()));
+
+			View<CyNode> monolinkNodeView = netView.getNodeView(_node);
+			monolinkNodeView.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, false);
+		}
+
 	}
 
 	/**

@@ -82,6 +82,7 @@ public class Util {
 	public static String HORIZONTAL_EXPANSION_COLUMN_NAME = "is_horizontal_expansion";
 	public static String PROTEIN_DOMAIN_COLUMN = "domain_annotation";
 	public static String PTM_COLUMN = "ptms";
+	public static String MONOLINK_COLUMN = "monolinks";
 	public static String PROTEIN_LENGTH_A = "length_protein_a";
 	public static String PROTEIN_LENGTH_B = "length_protein_b";
 	public static String NODE_LABEL_POSITION = "NODE_LABEL_POSITION";
@@ -99,6 +100,7 @@ public class Util {
 	private static String OS = System.getProperty("os.name").toLowerCase();
 
 	private final static float OFFSET_BEND = 2;
+	private final static float OFFSET_MONOLINK = 4;
 	private final static float PTM_LENGTH = 45;
 	private static String edge_label_blank_spaces = "\n\n";
 
@@ -110,6 +112,7 @@ public class Util {
 	public static boolean showIntraLinks = false;
 	public static boolean showInterLinks = true;
 	public static boolean showPTMs = true;
+	public static boolean showMonolinksNodes = true;
 	public static Integer edge_label_font_size = 12;
 	public static Integer node_label_font_size = 12;
 	public static double node_label_factor_size = 1;
@@ -132,6 +135,9 @@ public class Util {
 
 	// Map<Network name, Map<Protein - Node SUID, List<PTM>>
 	public static Map<String, Map<Long, List<PTM>>> ptmsMap = new HashMap<String, Map<Long, List<PTM>>>();
+
+	// Map<Network name, Map<Protein - Node SUID, Protein>
+	public static Map<String, Map<Long, Protein>> monolinksMap = new HashMap<String, Map<Long, Protein>>();
 
 	public static Map<CyNode, Tuple2> mapLastNodesPosition = new HashMap<CyNode, Tuple2>();
 
@@ -863,10 +869,69 @@ public class Util {
 	}
 
 	/**
+	 * Update monolink column
 	 * 
-	 * @param taskMonitor
-	 * @param myNetwork
-	 * @param AllPtmsList
+	 * @param taskMonitor             task monitor
+	 * @param myNetwork               current network
+	 * @param AllproteinWithMonolinks list with all monolinks
+	 */
+	public static void update_MonolinkColumn(TaskMonitor taskMonitor, CyNetwork myNetwork,
+			Map<Long, Protein> AllproteinWithMonolinks) {
+		for (Map.Entry<Long, Protein> entry : AllproteinWithMonolinks.entrySet()) {
+			Long key = entry.getKey();
+			CyNode node = getNode(myNetwork, key);
+			if (node == null)
+				continue;
+			Protein current_protein_with_mononlinks = entry.getValue();
+			if (current_protein_with_mononlinks != null && current_protein_with_mononlinks.monolinks.size() > 0)
+				update_MonolinkColumn(taskMonitor, myNetwork, current_protein_with_mononlinks, node);
+		}
+	}
+
+	/**
+	 * Update Monolink column
+	 * 
+	 * @param taskMonitor            task monitor
+	 * @param myNetwork              current network
+	 * @param protein_with_monolinks list of ptms
+	 * @param node                   current node
+	 */
+	public static void update_MonolinkColumn(TaskMonitor taskMonitor, CyNetwork myNetwork,
+			Protein protein_with_monolinks, CyNode node) {
+
+		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Updating monolink column...");
+
+		if (myNetwork == null)
+			return;
+
+		if (protein_with_monolinks == null || protein_with_monolinks.monolinks.size() == 0)
+			return;
+
+		StringBuilder sb_monolinks = new StringBuilder();
+		for (final CrossLink current_ptm : protein_with_monolinks.monolinks) {
+
+			sb_monolinks.append(current_ptm.sequence);
+			sb_monolinks.append("[");
+			sb_monolinks.append(current_ptm.pos_site_a);// start position in protein sequence
+			sb_monolinks.append("-");
+			sb_monolinks.append(current_ptm.pos_site_b);// end position in protein sequence
+			sb_monolinks.append("], ");
+
+		}
+
+		if (node != null) {
+			if (myNetwork.getRow(node).get(MONOLINK_COLUMN, String.class) != null)
+				myNetwork.getRow(node).set(MONOLINK_COLUMN, sb_monolinks.substring(0, sb_monolinks.length() - 2));
+		}
+
+	}
+
+	/**
+	 * Update PTM column
+	 * 
+	 * @param taskMonitor task monitor
+	 * @param myNetwork   current network
+	 * @param AllPtmsList list with all ptms
 	 */
 	public static void update_PTMColumn(TaskMonitor taskMonitor, CyNetwork myNetwork,
 			Map<Long, List<PTM>> AllPtmsList) {
@@ -1508,7 +1573,6 @@ public class Util {
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Updating PTM(s)...");
 
 		List<CyEdge> edges_to_be_removed = new ArrayList<CyEdge>();
-//		List<CyNode> nodes_to_be_removed = new ArrayList<CyNode>();
 		for (CyEdge edge : myNetwork.getAdjacentEdgeIterable(node, CyEdge.Type.ANY)) {
 
 			// Check if the edge was inserted by this app
@@ -1517,20 +1581,11 @@ public class Util {
 			if (edge_name.contains("[Source: PTM - ")) {
 				edges_to_be_removed.add(edge);
 
-//				CyNode node_to_be_removed = null;
-//				if (node.getSUID() == edge.getSource().getSUID())
-//					node_to_be_removed = edge.getTarget();
-//				else
-//					node_to_be_removed = edge.getSource();
-
-//				nodes_to_be_removed.add(node_to_be_removed);
 			}
 		}
 
 		return edges_to_be_removed;
 
-//		myNetwork.removeEdges(edges_to_be_removed);
-//		myNetwork.removeNodes(nodes_to_be_removed);
 	}
 
 	private static void setPTMStyle(CyNetworkView netView, HandleFactory handleFactory, BendFactory bendFactory,
@@ -1629,6 +1684,146 @@ public class Util {
 	}
 
 	/**
+	 * Plot monolink in the protein view
+	 * 
+	 * @param taskMonitor
+	 */
+	public static void setMonolinksToNode(final TaskMonitor taskMonitor, CyNetwork myNetwork, CyNetworkView netView,
+			CyNode node, VisualStyle style, HandleFactory handleFactory, BendFactory bendFactory, VisualLexicon lexicon,
+			ArrayList<CrossLink> myMonolinks, String proteinSequence) {
+
+		if (myNetwork == null || node == null || style == null || netView == null || myMonolinks == null
+				|| myMonolinks.size() == 0) {
+			return;
+		}
+
+		final String node_name = myNetwork.getDefaultNodeTable().getRow(node.getSUID()).getRaw(CyNetwork.NAME)
+				.toString();
+
+		View<CyNode> sourceNodeView = netView.getNodeView(node);
+
+		double x_or_y_Pos_source = 0;
+		double xl_pos_source = 0;
+		double center_position_source_node = (Util.proteinLength * Util.node_label_factor_size) / 2.0;
+
+		double initial_position_source_node = 0;
+		if (Util.isProtein_expansion_horizontal) {
+			initial_position_source_node = Util.getXPositionOf(sourceNodeView);
+		} else {
+			initial_position_source_node = Util.getYPositionOf(sourceNodeView);
+		}
+
+		int countMonolink = 0;
+		for (CrossLink monolink : myMonolinks) {
+
+			final String node_name_added_by_app = "MONOLINK" + countMonolink + " [Source: " + node_name + " ("
+					+ monolink.sequence + ")]";
+
+			CyNode current_node = Util.getNode(myNetwork, node_name_added_by_app);
+			if (current_node == null) {// Add a new node if does not exist
+
+				CyNode new_monolink_node = myNetwork.addNode();
+				myNetwork.getRow(new_monolink_node).set(CyNetwork.NAME, node_name_added_by_app);
+
+				setMonolinkStyle(netView, new_monolink_node, sourceNodeView, monolink, xl_pos_source,
+						center_position_source_node, x_or_y_Pos_source, initial_position_source_node);
+
+			} else {
+				setMonolinkStyle(netView, current_node, sourceNodeView, monolink, xl_pos_source,
+						center_position_source_node, x_or_y_Pos_source, initial_position_source_node);
+
+			}
+			countMonolink++;
+		}
+
+		String network_name = myNetwork.toString();
+		if (Util.monolinksMap.containsKey(network_name)) {
+
+			Map<Long, Protein> protein_with_all_monolinks = Util.monolinksMap.get(network_name);
+
+			Protein ptn = null;
+			if (protein_with_all_monolinks.containsKey(node.getSUID())) {// Protein belongs to this network
+				ptn = protein_with_all_monolinks.get(node.getSUID());
+				ptn.monolinks = myMonolinks;
+			} else {// Create a new protein
+
+				ptn = new Protein(node_name, proteinSequence, myMonolinks);
+			}
+			protein_with_all_monolinks.put(node.getSUID(), ptn);
+
+		} else {// Network does not exists
+
+			Map<Long, Protein> protein_with_monolinks = new HashMap<Long, Protein>();
+
+			Protein ptn = new Protein(node_name, proteinSequence, myMonolinks);
+			protein_with_monolinks.put(node.getSUID(), ptn);
+			Util.monolinksMap.put(network_name, protein_with_monolinks);
+		}
+	}
+
+	/**
+	 * Method responsible for setting style to monolink
+	 * 
+	 * @param netView                      current netview
+	 * @param current_node                 current node
+	 * @param sourceNodeView               current source node
+	 * @param monolink                     monolink
+	 * @param xl_pos_source                xl position
+	 * @param center_position_source_node  center position
+	 * @param x_or_y_Pos_source            final xl position
+	 * @param initial_position_source_node initial source node position
+	 */
+	private static void setMonolinkStyle(CyNetworkView netView, CyNode current_node, View<CyNode> sourceNodeView,
+			CrossLink monolink, double xl_pos_source, double center_position_source_node, double x_or_y_Pos_source,
+			double initial_position_source_node) {
+
+		View<CyNode> newMonolinkView = netView.getNodeView(current_node);
+		while (newMonolinkView == null) {
+			netView.updateView();
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
+			newMonolinkView = netView.getNodeView(current_node);
+		}
+
+		double node_width = (monolink.pos_site_b - monolink.pos_site_a) * node_label_factor_size;
+
+		newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_WIDTH, node_width);
+		newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_HEIGHT, 4.0);
+		newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_LABEL, "");
+		newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, true);
+		newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_BORDER_WIDTH, 0.0);
+		newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_BORDER_PAINT, Color.WHITE);
+		newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_FILL_COLOR, Color.RED);
+		newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_SELECTED_PAINT, Color.RED);
+		newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_Z_LOCATION, 1.0);
+
+		String tooltip = "<html><p><b>Monolink: </b>" + monolink.sequence + "<br/><b>Start position: </b>"
+				+ monolink.pos_site_a + "<br/><b>End position: </b>" + monolink.pos_site_b + "</p></html>";
+
+		newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_TOOLTIP, tooltip);
+
+		xl_pos_source = monolink.pos_site_a * Util.node_label_factor_size;
+
+		if (xl_pos_source <= center_position_source_node) { // [-protein_length/2, 0]
+			x_or_y_Pos_source = (-center_position_source_node) + xl_pos_source;
+		} else { // [0, protein_length/2]
+			x_or_y_Pos_source = xl_pos_source - center_position_source_node;
+		}
+		x_or_y_Pos_source += initial_position_source_node;
+
+		if (Util.isProtein_expansion_horizontal) {
+			newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, (x_or_y_Pos_source + OFFSET_MONOLINK));
+			newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, Util.getYPositionOf(sourceNodeView));
+		} else {
+			newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, Util.getXPositionOf(sourceNodeView));
+			newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, (x_or_y_Pos_source + OFFSET_MONOLINK));
+		}
+	}
+
+	/**
 	 * Plot PTM in the protein view
 	 * 
 	 * @param taskMonitor
@@ -1636,7 +1831,9 @@ public class Util {
 	public static void setNodePTMs(final TaskMonitor taskMonitor, CyNetwork myNetwork, CyNetworkView netView,
 			CyNode node, VisualStyle style, HandleFactory handleFactory, BendFactory bendFactory, VisualLexicon lexicon,
 			ArrayList<PTM> myPTMs, boolean updateEdge) {
-		if (myNetwork == null || node == null || style == null || netView == null) {
+
+		if (myNetwork == null || node == null || style == null || netView == null || myPTMs == null
+				|| myPTMs.size() == 0) {
 			return;
 		}
 
@@ -1715,7 +1912,7 @@ public class Util {
 		}
 
 		if (ptms_edges.size() > 0) {
-			
+
 			List<CyNode> nodes_to_be_removed = new ArrayList<CyNode>();
 			for (CyEdge edge : ptms_edges) {
 				CyNode node_to_be_removed = null;
@@ -1726,7 +1923,7 @@ public class Util {
 
 				nodes_to_be_removed.add(node_to_be_removed);
 			}
-			
+
 			myNetwork.removeEdges(ptms_edges);
 			myNetwork.removeNodes(nodes_to_be_removed);
 		}

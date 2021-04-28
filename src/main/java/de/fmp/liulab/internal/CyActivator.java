@@ -38,6 +38,7 @@ import de.fmp.liulab.core.ConfigurationManager;
 import de.fmp.liulab.internal.action.ControlURLAction;
 import de.fmp.liulab.internal.action.ExportPTMsAction;
 import de.fmp.liulab.internal.action.ExportProteinDomainsAction;
+import de.fmp.liulab.internal.action.LoadMonolinksAction;
 import de.fmp.liulab.internal.action.LoadPTMsAction;
 import de.fmp.liulab.internal.action.LoadProteinDomainsAction;
 import de.fmp.liulab.internal.action.MainPanelAction;
@@ -45,6 +46,7 @@ import de.fmp.liulab.internal.action.ReadMeAction;
 import de.fmp.liulab.internal.action.SetDomainColorAction;
 import de.fmp.liulab.internal.action.ShortcutSingleNodeExecuteAction;
 import de.fmp.liulab.internal.action.ShortcutWindowSingleNodeLayout;
+import de.fmp.liulab.task.LoadMonolinksTaskFactory;
 import de.fmp.liulab.task.LoadPTMsTaskFactory;
 import de.fmp.liulab.task.LoadProteinDomainsTaskFactory;
 import de.fmp.liulab.task.MainSingleEdgeTaskFactory;
@@ -105,12 +107,23 @@ public class CyActivator extends AbstractCyActivator {
 		BendFactory bendFactory = getService(bc, BendFactory.class);
 		DialogTaskManager dialogTaskManager = getService(bc, DialogTaskManager.class);
 
-		// ### 3 - POST-TRANSLATIONAL MODIFICATIONS ###
-
-		// ### 3.1 - EXPORT ###
-		ExportPTMsAction myExportPTMsAction = new ExportPTMsAction(cyApplicationManager);
+		// ### 3 - MONOLINKS ####
 
 		// ### 3.2 - LOAD ####
+
+		TaskFactory myLoadMonolinksFactory = new LoadMonolinksTaskFactory(cyApplicationManager, vmmServiceRef,
+				customChartListener);
+
+		LoadMonolinksAction myLoadMonolinksAction = new LoadMonolinksAction(dialogTaskManager, myLoadMonolinksFactory);
+
+		// ######################
+
+		// ### 4 - POST-TRANSLATIONAL MODIFICATIONS ###
+
+		// ### 4.1 - EXPORT ###
+		ExportPTMsAction myExportPTMsAction = new ExportPTMsAction(cyApplicationManager);
+
+		// ### 4.2 - LOAD ####
 
 		TaskFactory myLoadPTMsFactory = new LoadPTMsTaskFactory(cyApplicationManager, vmmServiceRef,
 				customChartListener);
@@ -119,14 +132,14 @@ public class CyActivator extends AbstractCyActivator {
 
 		// ############################################
 
-		// ### 4 - PROTEIN DOMAINS ###
+		// ### 5 - PROTEIN DOMAINS ###
 
-		// ### 4.1 - EXPORT ###
+		// ### 5.1 - EXPORT ###
 		ExportProteinDomainsAction myExportProteinDomainsAction = new ExportProteinDomainsAction(cyApplicationManager);
 
 		// ####################
 
-		// ### 4.2 - LOAD ####
+		// ### 5.2 - LOAD ####
 		TaskFactory myLoadProteinDomainsFactory = new LoadProteinDomainsTaskFactory(cyApplicationManager, vmmServiceRef,
 				customChartListener);
 
@@ -135,7 +148,7 @@ public class CyActivator extends AbstractCyActivator {
 
 		// ###################
 
-		// ### 4.3 - SET ####
+		// ### 5.3 - SET ####
 		TaskFactory mySetProteinDomainsColorFactory = new SetDomainColorTaskFactory(cyApplicationManager, vmmServiceRef,
 				customChartListener);
 
@@ -146,7 +159,7 @@ public class CyActivator extends AbstractCyActivator {
 
 		// ##############################
 
-		// #### 4 - EXECUTE SINGLE NODE ####
+		// #### 6 - EXECUTE SINGLE NODE ####
 
 		registerServiceListener(bc, customChartListener, "addCustomGraphicsFactory", "removeCustomGraphicsFactory",
 				CyCustomGraphics2Factory.class);
@@ -212,6 +225,7 @@ public class CyActivator extends AbstractCyActivator {
 
 		// #### SERVICES #####
 
+		registerService(bc, myLoadMonolinksAction, CyAction.class, new Properties());
 		registerService(bc, myLoadPTMsAction, CyAction.class, new Properties());
 		registerService(bc, myExportPTMsAction, CyAction.class, new Properties());
 		registerService(bc, myShortcutWindowSingleNodeAction, CyAction.class, new Properties());
@@ -337,8 +351,7 @@ public class CyActivator extends AbstractCyActivator {
 		exportPTMsProperties.setProperty(COMMAND_NAMESPACE, XLINKCYNET_COMMAND_NAMESPACE);
 		exportPTMsProperties.setProperty(COMMAND, "exportPTMs");
 		exportPTMsProperties.setProperty(COMMAND_DESCRIPTION, ExportPTMsCommandTaskFactory.DESCRIPTION);
-		exportPTMsProperties.setProperty(COMMAND_LONG_DESCRIPTION,
-				ExportPTMsCommandTaskFactory.LONG_DESCRIPTION);
+		exportPTMsProperties.setProperty(COMMAND_LONG_DESCRIPTION, ExportPTMsCommandTaskFactory.LONG_DESCRIPTION);
 		exportPTMsProperties.setProperty(COMMAND_EXAMPLE_JSON, ExportPTMsCommandTask.getExample());
 		exportPTMsProperties.setProperty(COMMAND_SUPPORTS_JSON, "true");
 

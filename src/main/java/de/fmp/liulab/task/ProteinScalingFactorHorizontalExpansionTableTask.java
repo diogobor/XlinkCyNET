@@ -197,7 +197,7 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 		} else { // The column exists, but it's necessary to check the cells
 			try {
 
-				// Check if proteinDomainsMap has been initialized
+				// Check if ptmsMap has been initialized
 				boolean ptmsMapOK = true;
 				if (Util.ptmsMap == null)
 					ptmsMapOK = false;
@@ -212,6 +212,51 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 						if (!(ptms.isBlank() || ptms.isEmpty()) && ptmsMapOK) {
 
 							updatePTMsMap(nodeName, ptms, taskMonitor);
+						}
+					}
+				}
+			} catch (Exception e) {
+			}
+		}
+
+		// ####### MONOLINKS #########
+		if (nodeTable.getColumn(Util.MONOLINK_COLUMN) == null) {
+			try {
+				nodeTable.createColumn(Util.MONOLINK_COLUMN, String.class, false);
+
+				for (CyRow row : myNetwork.getDefaultNodeTable().getAllRows()) {
+					row.set(Util.MONOLINK_COLUMN, "");
+				}
+
+			} catch (IllegalArgumentException e) {
+				try {
+					for (CyRow row : myNetwork.getDefaultNodeTable().getAllRows()) {
+						if (row.get(Util.MONOLINK_COLUMN, String.class) == null)
+							row.set(Util.MONOLINK_COLUMN, "");
+					}
+				} catch (Exception e2) {
+				}
+			} catch (Exception e) {
+			}
+
+		} else { // The column exists, but it's necessary to check the cells
+			try {
+
+				// Check if monolinksMap has been initialized
+				boolean monolinksMapOK = true;
+				if (Util.monolinksMap == null)
+					monolinksMapOK = false;
+
+				for (CyRow row : myNetwork.getDefaultNodeTable().getAllRows()) {
+					if (row.get(Util.MONOLINK_COLUMN, String.class) == null)
+						row.set(Util.MONOLINK_COLUMN, "");
+					else {
+						String nodeName = row.get(CyNetwork.NAME, String.class);
+						String monolinks = row.get(Util.MONOLINK_COLUMN, String.class);
+
+						if (!(monolinks.isBlank() || monolinks.isEmpty()) && monolinksMapOK) {
+
+							updatePTMsMap(nodeName, monolinks, taskMonitor);
 						}
 					}
 				}
@@ -293,8 +338,8 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 				ptmsList.add(new PTM(ptmName, residue, position));
 			}
 		} catch (Exception e) {
-			taskMonitor.showMessage(TaskMonitor.Level.WARN, "ERROR: Node: " + nodeName
-					+ " - PTMs don't match with the pattern 'name[residue-position]'\n");
+			taskMonitor.showMessage(TaskMonitor.Level.WARN,
+					"ERROR: Node: " + nodeName + " - PTMs don't match with the pattern 'name[residue-position]'\n");
 			return;
 		}
 

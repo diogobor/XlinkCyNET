@@ -9,11 +9,11 @@ import org.cytoscape.work.TaskIterator;
 import de.fmp.liulab.internal.CustomChartListener;
 
 /**
- * Class responsible for calling post-translational modifications task
+ * Class responsible for loading monolinks factory
  * @author borges.diogo
  *
  */
-public class LoadPTMsTaskFactory extends AbstractTaskFactory {
+public class LoadMonolinksTaskFactory extends AbstractTaskFactory {
 
 	private CyApplicationManager cyApplicationManager;
 	private VisualMappingManager vmmServiceRef;
@@ -26,7 +26,7 @@ public class LoadPTMsTaskFactory extends AbstractTaskFactory {
 	 * @param vmmServiceRef        visual mapping manager
 	 * @param customChartListener  chart style listener
 	 */
-	public LoadPTMsTaskFactory(CyApplicationManager cyApplicationManager, final VisualMappingManager vmmServiceRef,
+	public LoadMonolinksTaskFactory(CyApplicationManager cyApplicationManager, final VisualMappingManager vmmServiceRef,
 			CustomChartListener customChartListener) {
 		this.cyApplicationManager = cyApplicationManager;
 		this.vmmServiceRef = vmmServiceRef;
@@ -36,14 +36,14 @@ public class LoadPTMsTaskFactory extends AbstractTaskFactory {
 	/**
 	 * Empty constructor
 	 */
-	public LoadPTMsTaskFactory() {
+	public LoadMonolinksTaskFactory() {
 	}
 
 	/**
 	 * Method responsible for initializing task
 	 */
 	public TaskIterator createTaskIterator() {
-		return new TaskIterator(new LoadPTMsTask(cyApplicationManager, vmmServiceRef, vgFactory));
+		return new TaskIterator(new LoadMonolinksTask(cyApplicationManager, vmmServiceRef, vgFactory));
 	}
 
 }
