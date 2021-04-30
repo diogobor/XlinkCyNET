@@ -1,6 +1,6 @@
 package de.fmp.liulab.internal.action;
 
-import static java.awt.event.InputEvent.SHIFT_DOWN_MASK;
+import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -20,7 +20,7 @@ import org.cytoscape.work.swing.DialogTaskManager;
 public class LoadMonolinksAction extends AbstractCyAction {
 
 	private static final String MENU_NAME = "Load";
-	private static final String MENU_CATEGORY = "Apps.XlinkCyNET.Monolinks";
+	private static final String MENU_CATEGORY = "Apps.XlinkCyNET.Monolinked peptides";
 	private static final long serialVersionUID = 1L;
 	private DialogTaskManager dialogTaskManager;
 	private TaskFactory myFactory;
@@ -34,7 +34,7 @@ public class LoadMonolinksAction extends AbstractCyAction {
 	public LoadMonolinksAction(DialogTaskManager dialogTaskManager, TaskFactory myFactory) {
 		super(MENU_NAME);
 		setPreferredMenu(MENU_CATEGORY);
-		setAcceleratorKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_T, SHIFT_DOWN_MASK));
+		setAcceleratorKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_GREATER, CTRL_DOWN_MASK));
 		this.dialogTaskManager = dialogTaskManager;
 		this.myFactory = myFactory;
 	}

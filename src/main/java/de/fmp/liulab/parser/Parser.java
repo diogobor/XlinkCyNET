@@ -4,8 +4,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.cytoscape.model.CyNetwork;
+import org.cytoscape.model.CyNode;
+
+import de.fmp.liulab.task.LoadMonolinksTask;
 import de.fmp.liulab.task.LoadPTMsTask;
 import de.fmp.liulab.task.LoadProteinDomainTask;
+import de.fmp.liulab.utils.Util;
 
 /**
  * Class responsible for parsing input files
@@ -19,6 +24,7 @@ public class Parser {
 	private List<String> qtdParser = new ArrayList<String>();
 	private String[] columnNames = { "Node Name", "Domain(s)" };
 	private String[] columnNamesPTMTable = { "Node Name", "PTM(s)" };
+	private String[] columnNamesMonolinksTable = { "Node Name", "Sequence", "Monolink(s)" };
 
 	/**
 	 * UNIPROT lines
@@ -54,9 +60,11 @@ public class Parser {
 	/**
 	 * Method responsible for updating data model table
 	 * 
+	 * @param domain_ptm_or_monolink indicate if the method was called by
+	 *                               ProteinDomain (0) or PTM (1) or Monolink (2)
 	 * @throws Exception
 	 */
-	public void updateDataModel(boolean isFromPTM) throws Exception {
+	public void updateDataModel(int domain_ptm_or_monolink) throws Exception {
 
 		StringBuilder sb_data_to_be_stored = new StringBuilder();
 
@@ -64,7 +72,7 @@ public class Parser {
 			try {
 
 				// ##### Load Protein Domains ########
-				if (!isFromPTM) {
+				if (domain_ptm_or_monolink == 0) {
 
 					String gene_name = "";
 					String domains = "";
@@ -144,18 +152,38 @@ public class Parser {
 					}
 				}
 				// #### Load PTMs #####
-				else {
+				else if (domain_ptm_or_monolink == 1) {
 					int firstComma = line.indexOf(',');
 					String gene_name = line.substring(0, firstComma);
 					String ptms = line.substring(firstComma + 1).replace('\"', ' ').trim();
 
-					String[] cols_gene = gene_name.split(" ");
-					for (String each_gene : cols_gene) {
-						if (each_gene.isBlank() || each_gene.isEmpty() || each_gene.trim().equals("\t"))
+					String[] cols_ptm = gene_name.split(" ");
+					for (String each_ptm : cols_ptm) {
+						if (each_ptm.isBlank() || each_ptm.isEmpty() || each_ptm.trim().equals("\t"))
 							continue;
-						sb_data_to_be_stored.append(each_gene);
+						sb_data_to_be_stored.append(each_ptm);
 						sb_data_to_be_stored.append("\t");
 						sb_data_to_be_stored.append(ptms).append("\n");
+					}
+
+				}
+				// #### Load Monolinks ####
+				else if (domain_ptm_or_monolink == 2) {
+					int firstComma = line.indexOf(',');
+					String gene_name = line.substring(0, firstComma);
+					int secondComma = line.indexOf(',', firstComma + 1);
+					String sequence = line.substring(firstComma + 1, secondComma);
+					String monolinks = line.substring(secondComma + 1).replace('\"', ' ').trim();
+
+					String[] cols_monolinks = gene_name.split(" ");
+					for (String each_monolink : cols_monolinks) {
+						if (each_monolink.isBlank() || each_monolink.isEmpty() || each_monolink.trim().equals("\t"))
+							continue;
+						sb_data_to_be_stored.append(each_monolink);
+						sb_data_to_be_stored.append("\t");
+						sb_data_to_be_stored.append(sequence);
+						sb_data_to_be_stored.append("\t");
+						sb_data_to_be_stored.append(monolinks).append("\n");
 					}
 
 				}
@@ -170,8 +198,10 @@ public class Parser {
 		String[] data_to_be_stored = sb_data_to_be_stored.toString().split("\n");
 
 		Object[][] data = new Object[data_to_be_stored.length][2];
-		if (isFromPTM)
+		if (domain_ptm_or_monolink == 1)
 			LoadPTMsTask.ptmTableDataModel.setDataVector(data, columnNamesPTMTable);
+		else if (domain_ptm_or_monolink == 2)
+			LoadMonolinksTask.monolinkTableDataModel.setDataVector(data, columnNamesMonolinksTable);
 		else
 			LoadProteinDomainTask.tableDataModel.setDataVector(data, columnNames);
 
@@ -179,15 +209,22 @@ public class Parser {
 			try {
 				String[] cols_line = line.split("\t");
 
-				if (isFromPTM)
+				if (domain_ptm_or_monolink == 1)
 					LoadPTMsTask.ptmTableDataModel.setValueAt(cols_line[0], countPtnDomain, 0);
+				else if (domain_ptm_or_monolink == 2)
+					LoadMonolinksTask.monolinkTableDataModel.setValueAt(cols_line[0], countPtnDomain, 0);
 				else
 					LoadProteinDomainTask.tableDataModel.setValueAt(cols_line[0], countPtnDomain, 0);
 
 				if (cols_line.length > 1) {
-					if (isFromPTM)
+					if (domain_ptm_or_monolink == 1)
 						LoadPTMsTask.ptmTableDataModel.setValueAt(cols_line[1], countPtnDomain, 1);
-					else
+					else if (domain_ptm_or_monolink == 2) {
+						LoadMonolinksTask.monolinkTableDataModel.setValueAt(cols_line[1], countPtnDomain, 1);
+						if (cols_line.length > 2)
+							LoadMonolinksTask.monolinkTableDataModel.setValueAt(cols_line[2], countPtnDomain, 2);
+
+					} else
 						LoadProteinDomainTask.tableDataModel.setValueAt(cols_line[1], countPtnDomain, 1);
 
 				}
@@ -200,8 +237,10 @@ public class Parser {
 
 		}
 
-		if (isFromPTM)
+		if (domain_ptm_or_monolink == 1)
 			LoadPTMsTask.setTableProperties(countPtnDomain);
+		else if (domain_ptm_or_monolink == 2)
+			LoadMonolinksTask.setTableProperties(countPtnDomain);
 		else
 			LoadProteinDomainTask.setTableProperties(countPtnDomain);
 	}

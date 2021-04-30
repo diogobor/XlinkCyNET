@@ -372,7 +372,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			taskMonitor.setProgress(0.85);
 		}
 
-		if (Util.showMonolinksNodes) {
+		if (Util.showMonolinkedPeptides) {
 			taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting monolinks...");
 			getMonolinks(node);
 
@@ -1514,7 +1514,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 							taskMonitor.setProgress(0.92);
 						}
 
-						if (Util.showMonolinksNodes) {
+						if (Util.showMonolinkedPeptides) {
 							taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting monolinks...");
 							getMonolinks(node);
 

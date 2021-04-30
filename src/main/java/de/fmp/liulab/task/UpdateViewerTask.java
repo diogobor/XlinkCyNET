@@ -156,7 +156,7 @@ public class UpdateViewerTask extends AbstractTask {
 
 			}
 
-			if (Util.showMonolinksNodes) {
+			if (Util.showMonolinkedPeptides) {
 				ArrayList<CrossLink> myMonolinks = this.getMonolinks(current_node);
 				Util.setMonolinksToNode(taskMonitor, myNetwork, netView, current_node, style, handleFactory,
 						bendFactory, lexicon, myMonolinks, "");
@@ -219,36 +219,6 @@ public class UpdateViewerTask extends AbstractTask {
 
 		return new ArrayList<CrossLink>();
 
-	}
-
-	/**
-	 * Method responsible for getting the protein sequence of a respective node with
-	 * monolinks
-	 * 
-	 * @param node
-	 * @return
-	 */
-	private String getPtnSequenceOfMonolinks(CyNode node) {
-		boolean hasMonolinks = false;
-		String ptnSequence = "";
-
-		String network_name = myNetwork.toString();
-		if (Util.monolinksMap.containsKey(network_name)) {
-
-			Map<Long, Protein> all_monolinks = Util.monolinksMap.get(network_name);
-
-			if (all_monolinks.containsKey(node.getSUID())) {
-				hasMonolinks = true;
-
-				ptnSequence = (String) ((Protein) all_monolinks.get(node.getSUID())).sequence;
-			}
-		}
-
-		if (!hasMonolinks) {
-			ptnSequence = "";
-		}
-
-		return ptnSequence;
 	}
 
 	/**

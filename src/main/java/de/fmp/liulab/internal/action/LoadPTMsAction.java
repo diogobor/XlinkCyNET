@@ -1,6 +1,6 @@
 package de.fmp.liulab.internal.action;
 
-import static java.awt.event.InputEvent.SHIFT_DOWN_MASK;
+import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -14,6 +14,7 @@ import org.cytoscape.work.swing.DialogTaskManager;
 
 /**
  * Class responsible for loading post-translational modifications
+ * 
  * @author borges.diogo
  *
  */
@@ -34,7 +35,7 @@ public class LoadPTMsAction extends AbstractCyAction {
 	public LoadPTMsAction(DialogTaskManager dialogTaskManager, TaskFactory myFactory) {
 		super(MENU_NAME);
 		setPreferredMenu(MENU_CATEGORY);
-		setAcceleratorKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_P, SHIFT_DOWN_MASK));
+		setAcceleratorKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_COMMA, CTRL_DOWN_MASK));
 		this.dialogTaskManager = dialogTaskManager;
 		this.myFactory = myFactory;
 	}

@@ -12,31 +12,28 @@ import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.Tunable;
 
 import de.fmp.liulab.parser.Parser;
-import de.fmp.liulab.task.LoadPTMsTask;
+import de.fmp.liulab.task.LoadMonolinksTask;
 
-public class LoadPTMsCommandTask extends CyRESTAbstractTask {
+public class LoadMonolinksCommandTask extends CyRESTAbstractTask {
 
 	private CyNetwork myNetwork;
 	private Parser parserFile;
 
-	private String[] columnNames = { "Node Name", "PTM(s)" };
-	private final Class[] columnClass = new Class[] { String.class, String.class };
+	private String[] columnNames = { "Node Name", "Sequence", "Monolink(s)" };
+	private final Class[] columnClass = new Class[] { String.class, String.class , String.class };
 
 	@ProvidesTitle
 	public String getTitle() {
-		return "Load PTM(s)";
+		return "Load Monolinked peptide(s)";
 	}
 
-	@Tunable(description = "PTM(s) file name", longDescription = "Name of the PTM(s) file. (Supported formats: *.csv)", exampleStringValue = "ptms.csv")
+	@Tunable(description = "Monolinked peptide(s) file name", longDescription = "Name of the Monolinked peptide(s) file. (Supported formats: *.csv)", exampleStringValue = "monolinks.csv")
 	public String fileName = "";
-
-	@Tunable(description = "Node(s) to find PTM(s)", longDescription = "Give the node(s) name, separated by comma, to find PTM(s). (type 'all' to get PTM(s) of all nodes)", exampleStringValue = "PDE12")
-	public String nodesName = "";
 
 	/**
 	 * Constructor
 	 */
-	public LoadPTMsCommandTask(CyApplicationManager cyApplicationManager) {
+	public LoadMonolinksCommandTask(CyApplicationManager cyApplicationManager) {
 		this.myNetwork = cyApplicationManager.getCurrentNetwork();
 	}
 
@@ -51,9 +48,6 @@ public class LoadPTMsCommandTask extends CyRESTAbstractTask {
 		if (!(fileName.isBlank() || fileName.isEmpty()))
 			this.parserFile(taskMonitor);
 
-		if (!(nodesName.isBlank() || nodesName.isEmpty()))
-			this.getPTMsFromServer(taskMonitor);
-
 	}
 
 	/**
@@ -62,7 +56,7 @@ public class LoadPTMsCommandTask extends CyRESTAbstractTask {
 	private void init_table_data_model_protein_domains() {
 		Object[][] data = new Object[1][2];
 		// create table model with data
-		LoadPTMsTask.ptmTableDataModel = new DefaultTableModel(data, columnNames) {
+		LoadMonolinksTask.monolinkTableDataModel = new DefaultTableModel(data, columnNames) {
 			/**
 			 * 
 			 */
@@ -77,6 +71,14 @@ public class LoadPTMsCommandTask extends CyRESTAbstractTask {
 			public Class<?> getColumnClass(int columnIndex) {
 				return columnClass[columnIndex];
 			}
+			
+			@Override
+			public void setValueAt(Object data, int row, int column) {
+				if (column == 1 || column == 2)
+					super.setValueAt(data.toString().toUpperCase(), row, column);
+				else
+					super.setValueAt(data, row, column);
+			}
 		};
 	}
 
@@ -90,34 +92,10 @@ public class LoadPTMsCommandTask extends CyRESTAbstractTask {
 
 		parserFile = new Parser(fileName);
 		// Update data table model
-		parserFile.updateDataModel(1);
+		parserFile.updateDataModel(2);
 
 		// Store PTM(s)
-		LoadPTMsTask.storePTMs(taskMonitor, myNetwork, false);
-	}
-
-	private void getPTMsFromServer(TaskMonitor taskMonitor) throws Exception {
-
-		List<String> names = Arrays.asList(nodesName.split(","));
-
-		if (!names.contains("all")) {
-
-			int countPtnDomain = 0;
-			for (String name : names) {
-
-				LoadPTMsTask.ptmTableDataModel.setValueAt(name, countPtnDomain, 0);
-				countPtnDomain++;
-			}
-
-			LoadPTMsTask.getNodesFromTable(myNetwork, false);
-		} else {
-			LoadPTMsTask.getNodesFromTable(myNetwork, true);
-		}
-
-		// Get PTM(s) from server.
-		// At the end, storePTMs will be called.
-		LoadPTMsTask.getPTMsFromServer(taskMonitor, myNetwork, false);
-
+		LoadMonolinksTask.storeMonolinks(taskMonitor, myNetwork, false);
 	}
 
 	@SuppressWarnings("unchecked")

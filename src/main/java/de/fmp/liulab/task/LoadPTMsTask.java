@@ -105,7 +105,7 @@ public class LoadPTMsTask extends AbstractTask implements ActionListener {
 	public LoadPTMsTask(CyApplicationManager cyApplicationManager, final VisualMappingManager vmmServiceRef,
 			CyCustomGraphics2Factory vgFactory) {
 
-		this.menuBar.isFromPTM = true;
+		this.menuBar.domain_ptm_or_monolink = 1;
 		this.cyApplicationManager = cyApplicationManager;
 		this.myNetwork = cyApplicationManager.getCurrentNetwork();
 		this.vgFactory = vgFactory;
@@ -822,9 +822,9 @@ public class LoadPTMsTask extends AbstractTask implements ActionListener {
 				try {
 					String[] cols = ptmsStr.split(",");
 					for (String col : cols) {
-						String[] domainsArray = col.split("\\[|\\]");
-						String ptmName = domainsArray[0].trim();
-						String[] colRange = domainsArray[1].split("-");
+						String[] ptmsArray = col.split("\\[|\\]");
+						String ptmName = ptmsArray[0].trim();
+						String[] colRange = ptmsArray[1].split("-");
 						char residue = colRange[0].charAt(0);
 						int position = Integer.parseInt(colRange[1]);
 						ptms.add(new PTM(ptmName, residue, position));

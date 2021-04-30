@@ -63,6 +63,8 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 	private static JButton intraLinkColorButton;
 	private static JButton interLinkColorButton;
+	private static JButton ptmColorButton;
+	private static JButton monolinkColorButton;
 	private static JButton borderNodeColorButton;
 	private static JCheckBox show_inter_link;
 	private static JCheckBox show_intra_link;
@@ -215,6 +217,31 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		else
 			propertyValue = cm.getProperties().getProperty("xlinkcynet.pymol_path");
 		Util.PYMOL_PATH = propertyValue;
+
+		if (cm == null)
+			propertyValue = ((Properties) XlinkCyNETProps).getProperty("xlinkcynet.showPTMs");
+		else
+			propertyValue = cm.getProperties().getProperty("xlinkcynet.showPTMs");
+		Util.showPTMs = Boolean.parseBoolean(propertyValue);
+
+		if (cm == null)
+			propertyValue = ((Properties) XlinkCyNETProps).getProperty("xlinkcynet.PTMColor");
+		else
+			propertyValue = cm.getProperties().getProperty("xlinkcynet.PTMColor");
+		Util.PTMColor = stringToColor(propertyValue);
+
+		if (cm == null)
+			propertyValue = ((Properties) XlinkCyNETProps).getProperty("xlinkcynet.showMonolinkedPeptides");
+		else
+			propertyValue = cm.getProperties().getProperty("xlinkcynet.showMonolinkedPeptides");
+		Util.showMonolinkedPeptides = Boolean.parseBoolean(propertyValue);
+
+		if (cm == null)
+			propertyValue = ((Properties) XlinkCyNETProps).getProperty("xlinkcynet.MonoLinksPeptideColor");
+		else
+			propertyValue = cm.getProperties().getProperty("xlinkcynet.MonoLinksPeptideColor");
+		Util.MonoLinksPeptideColor = stringToColor(propertyValue);
+
 	}
 
 	/**
@@ -356,6 +383,88 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			}
 		});
 		link_panel.add(interLinkColorButton);
+		offset_y += 30;
+
+		ptmColorButton = new JButton();
+		ptmColorButton.setBounds(offset_x, offset_y, button_width, 15);
+		ptmColorButton.setBackground(Util.PTMColor);
+		ptmColorButton.setForeground(Util.PTMColor);
+		ptmColorButton.setOpaque(true);
+		ptmColorButton.setBorderPainted(false);
+		ptmColorButton.setToolTipText("Value: R:" + Util.PTMColor.getRed() + " G:" + Util.PTMColor.getGreen()
+				+ " B:" + Util.PTMColor.getBlue() + " - " + String.format("#%02X%02X%02X",
+						Util.PTMColor.getRed(), Util.PTMColor.getGreen(), Util.PTMColor.getBlue()));
+
+		ptmColorButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		ptmColorButton.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent e) {
+				if (ptmColorButton.isEnabled()) {
+					Color initialcolor = ptmColorButton.getBackground();
+					Color color = JColorChooser.showDialog(null, "Select a color", initialcolor);
+					if (color == null)
+						color = initialcolor;
+					ptmColorButton.setBackground(color);
+					ptmColorButton.setForeground(color);
+					ptmColorButton.setOpaque(true);
+					ptmColorButton.setBorderPainted(false);
+					Util.PTMColor = color;
+					XlinkCyNETProps.setProperty("xlinkcynet.PtmLinksColor",
+							color.getRed() + "#" + color.getGreen() + "#" + color.getBlue());
+
+					ptmColorButton.setToolTipText("Value: R:" + Util.PTMColor.getRed() + " G:"
+							+ Util.PTMColor.getGreen() + " B:" + Util.PTMColor.getBlue() + " - "
+							+ String.format("#%02X%02X%02X", Util.PTMColor.getRed(), Util.PTMColor.getGreen(),
+									Util.PTMColor.getBlue()));
+
+					if (myNetwork != null && netView != null) {
+						Util.setPTMStyleForAllNodes(myNetwork, netView);
+					}
+				}
+			}
+		});
+		link_panel.add(ptmColorButton);
+		offset_y += 30;
+
+		monolinkColorButton = new JButton();
+		monolinkColorButton.setBounds(offset_x, offset_y, button_width, 15);
+		monolinkColorButton.setBackground(Util.MonoLinksPeptideColor);
+		monolinkColorButton.setForeground(Util.MonoLinksPeptideColor);
+		monolinkColorButton.setOpaque(true);
+		monolinkColorButton.setBorderPainted(false);
+		monolinkColorButton.setToolTipText("Value: R:" + Util.MonoLinksPeptideColor.getRed() + " G:"
+				+ Util.MonoLinksPeptideColor.getGreen() + " B:" + Util.MonoLinksPeptideColor.getBlue() + " - "
+				+ String.format("#%02X%02X%02X", Util.MonoLinksPeptideColor.getRed(),
+						Util.MonoLinksPeptideColor.getGreen(), Util.MonoLinksPeptideColor.getBlue()));
+
+		monolinkColorButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		monolinkColorButton.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent e) {
+				if (monolinkColorButton.isEnabled()) {
+					Color initialcolor = monolinkColorButton.getBackground();
+					Color color = JColorChooser.showDialog(null, "Select a color", initialcolor);
+					if (color == null)
+						color = initialcolor;
+					monolinkColorButton.setBackground(color);
+					monolinkColorButton.setForeground(color);
+					monolinkColorButton.setOpaque(true);
+					monolinkColorButton.setBorderPainted(false);
+					Util.MonoLinksPeptideColor = color;
+					XlinkCyNETProps.setProperty("xlinkcynet.MonoLinksPeptideColor",
+							color.getRed() + "#" + color.getGreen() + "#" + color.getBlue());
+
+					monolinkColorButton.setToolTipText("Value: R:" + Util.MonoLinksPeptideColor.getRed() + " G:"
+							+ Util.MonoLinksPeptideColor.getGreen() + " B:" + Util.MonoLinksPeptideColor.getBlue()
+							+ " - " + String.format("#%02X%02X%02X", Util.MonoLinksPeptideColor.getRed(),
+									Util.MonoLinksPeptideColor.getGreen(), Util.MonoLinksPeptideColor.getBlue()));
+
+					if (myNetwork != null && netView != null) {
+						Util.setMonolinkPeptidesStyle(myNetwork, netView);
+					}
+				}
+			}
+		});
+		link_panel.add(monolinkColorButton);
+
 	}
 
 	/**
@@ -366,7 +475,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	 */
 	private void init_link_style_features(int offset_x, int button_width) {
 
-		int offset_y = 72;
+		int offset_y = 132;
 
 		JLabel opacity_edge_link = new JLabel("Opacity:");
 		opacity_edge_link.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
@@ -379,7 +488,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		width_edge_link_label.setBounds(10, offset_y, 100, 40);
 		link_panel.add(width_edge_link_label);
 
-		offset_y = 85;
+		offset_y = 145;
 		offset_x = 140;
 		if (Util.isWindows())
 			offset_x = 135;
@@ -450,7 +559,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		link_score_panel = new JPanel();
 		link_score_panel.setBackground(Color.WHITE);
 		link_score_panel.setBorder(BorderFactory.createTitledBorder("-Log(Score)"));
-		link_score_panel.setBounds(10, 140, 230, 115);
+		link_score_panel.setBounds(10, 200, 230, 115);
 		link_score_panel.setLayout(null);
 		link_panel.add(link_score_panel);
 
@@ -563,13 +672,13 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	 * @param offset_x     offset x
 	 * @param button_width button width
 	 */
-	private void init_link_legend_features(int offset_x, int button_width) {
+	private void init_link_edge_labels_features(int offset_x, int button_width) {
 
 		int offset_y = 40;
 		link_legend_panel = new JPanel();
 		link_legend_panel.setBackground(Color.WHITE);
 		link_legend_panel.setBorder(BorderFactory.createTitledBorder("Edge labels"));
-		link_legend_panel.setBounds(10, 255, 230, 115);
+		link_legend_panel.setBounds(10, 315, 230, 115);
 		link_legend_panel.setLayout(null);
 		link_panel.add(link_legend_panel);
 
@@ -693,7 +802,9 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 		int offset_y = 20;
 		show_inter_link = new JCheckBox("Display Interlink:");
+		show_inter_link.setBackground(Color.WHITE);
 		show_inter_link.setSelected(Util.showInterLinks);
+		show_inter_link.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 
 		show_intra_link = new JCheckBox("Display Intralink:");
 		show_intra_link.setBackground(Color.WHITE);
@@ -747,10 +858,8 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 				if (myNetwork != null && netView != null && style != null && handleFactory != null
 						&& bendFactory != null && lexicon != null) {
-					if (Util.showInterLinks)
-						Util.updateNodesStyles(myNetwork, netView, style, handleFactory, bendFactory, lexicon, false);
-					else
-						Util.updateNodesStyles(myNetwork, netView, style, handleFactory, bendFactory, lexicon, true);
+					Util.updateNodesStyles(myNetwork, netView, style, handleFactory, bendFactory, lexicon,
+							Util.showInterLinks);
 
 				}
 			}
@@ -758,8 +867,6 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		link_panel.add(show_intra_link);
 		offset_y += 30;
 
-		show_inter_link.setBackground(Color.WHITE);
-		show_inter_link.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		if (Util.isWindows())
 			show_inter_link.setBounds(5, offset_y, 115, 20);
 		else
@@ -815,6 +922,68 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			}
 		});
 		link_panel.add(show_inter_link);
+
+		offset_y += 30;
+		JCheckBox show_ptms = new JCheckBox("Display PTM:");
+		show_ptms.setBackground(Color.WHITE);
+		show_ptms.setSelected(Util.showPTMs);
+		show_ptms.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
+		if (Util.isWindows())
+			show_ptms.setBounds(5, offset_y, 115, 20);
+		else
+			show_ptms.setBounds(5, offset_y, 130, 20);
+
+		show_ptms.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				if (e.getStateChange() == ItemEvent.SELECTED) {// checkbox has been selected
+					ptmColorButton.setEnabled(true);
+					Util.showPTMs = true;
+					XlinkCyNETProps.setProperty("xlinkcynet.showPTMs", "true");
+
+				} else {
+					ptmColorButton.setEnabled(false);
+					Util.showPTMs = false;
+					XlinkCyNETProps.setProperty("xlinkcynet.showPTMs", "false");
+				}
+
+				if (myNetwork != null && netView != null) {
+					Util.setPTMStyleForAllNodes(myNetwork, netView);
+				}
+			}
+		});
+		link_panel.add(show_ptms);
+
+		offset_y += 30;
+		JCheckBox show_monolinks = new JCheckBox("Display Peptides:");
+		show_monolinks.setBackground(Color.WHITE);
+		show_monolinks.setSelected(Util.showPTMs);
+		show_monolinks.setToolTipText("Display intralinked peptides throughout the protein.");
+		show_monolinks.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
+		if (Util.isWindows())
+			show_monolinks.setBounds(5, offset_y, 115, 20);
+		else
+			show_monolinks.setBounds(5, offset_y, 130, 20);
+		show_monolinks.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				if (e.getStateChange() == ItemEvent.SELECTED) {// checkbox has been selected
+					monolinkColorButton.setEnabled(true);
+					Util.showMonolinkedPeptides = true;
+					XlinkCyNETProps.setProperty("xlinkcynet.showMonolinkedPeptides", "true");
+
+				} else {
+					monolinkColorButton.setEnabled(false);
+					Util.showMonolinkedPeptides = false;
+					XlinkCyNETProps.setProperty("xlinkcynet.showMonolinkedPeptides", "false");
+				}
+
+				if (myNetwork != null && netView != null) {
+					Util.setMonolinkPeptidesStyle(myNetwork, netView);
+				}
+			}
+		});
+		link_panel.add(show_monolinks);
 	}
 
 	/**
@@ -1086,23 +1255,23 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		this.init_link_color_buttons(offset_x, button_width);
 		this.init_link_style_features(offset_x, button_width);
 		this.init_link_log_score_features(offset_x, button_width);
-		this.init_link_legend_features(offset_x, button_width);
+		this.init_link_edge_labels_features(offset_x, button_width);
 		this.init_link_check_boxes_colors(offset_x, button_width);
 
 		this.add(link_panel, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.NORTH,
-				GridBagConstraints.BOTH, new Insets(10, 0, 10, 0), ipdax, 350));
+				GridBagConstraints.BOTH, new Insets(5, 0, 0, 0), ipdax, 440));
 
 		this.init_node_style_features(offset_x, button_width);
 		this.init_node_border_features(offset_x, button_width);
 
 		this.add(node_panel, new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTH,
-				GridBagConstraints.BOTH, new Insets(0, 0, 10, 0), ipdax, 150));
+				GridBagConstraints.BOTH, new Insets(0, 0, 5, 0), ipdax, 170));
 
 		this.init_pymol_panel(offset_x);
 		this.checkPyMOLname();
 
 		this.add(pymol_panel, new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0, GridBagConstraints.NORTH,
-				GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), ipdax, 85));
+				GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), ipdax, 75));
 
 	}
 

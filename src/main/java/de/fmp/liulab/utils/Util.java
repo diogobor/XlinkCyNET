@@ -100,19 +100,20 @@ public class Util {
 	private static String OS = System.getProperty("os.name").toLowerCase();
 
 	private final static float OFFSET_BEND = 2;
-	private final static float OFFSET_MONOLINK = 4;
+	private final static float OFFSET_MONOLINK = 1;
 	private final static float PTM_LENGTH = 45;
 	private static String edge_label_blank_spaces = "\n\n";
 
 	public static Color PTMColor = new Color(153, 153, 153);
 	public static Color IntraLinksColor = new Color(0, 153, 255);
 	public static Color InterLinksColor = new Color(102, 102, 0);
+	public static Color MonoLinksPeptideColor = new Color(0, 153, 255);
 	public static Color NodeBorderColor = new Color(315041);// Dark green
 	public static boolean showLinksLegend = false;
 	public static boolean showIntraLinks = false;
 	public static boolean showInterLinks = true;
 	public static boolean showPTMs = true;
-	public static boolean showMonolinksNodes = true;
+	public static boolean showMonolinkedPeptides = true;
 	public static Integer edge_label_font_size = 12;
 	public static Integer node_label_font_size = 12;
 	public static double node_label_factor_size = 1;
@@ -912,9 +913,13 @@ public class Util {
 
 			sb_monolinks.append(current_ptm.sequence);
 			sb_monolinks.append("[");
-			sb_monolinks.append(current_ptm.pos_site_a);// start position in protein sequence
+			sb_monolinks.append(current_ptm.pos_site_a);// reaction site position A
 			sb_monolinks.append("-");
-			sb_monolinks.append(current_ptm.pos_site_b);// end position in protein sequence
+			sb_monolinks.append(current_ptm.pos_site_b);// reaction site position B
+			sb_monolinks.append("][");
+			sb_monolinks.append(current_ptm.start_pos_protein);// start position in protein sequence
+			sb_monolinks.append("-");
+			sb_monolinks.append(current_ptm.end_pos_protein);// end position in protein sequence
 			sb_monolinks.append("], ");
 
 		}
@@ -1562,7 +1567,55 @@ public class Util {
 	}
 
 	/**
-	 * Method responsible for removing all PTMs of a protein
+	 * Method responsible for updating ptm edges
+	 * 
+	 * @param myNetwork current network
+	 * @param netView   current netview
+	 */
+	public static void setMonolinkPeptidesStyle(CyNetwork myNetwork, CyNetworkView netView) {
+		for (CyNode node : myNetwork.getNodeList()) {
+
+			// Check if the edge was inserted by this app
+			String node_name = myNetwork.getDefaultNodeTable().getRow(node.getSUID()).get(CyNetwork.NAME, String.class);
+
+			if (node_name != null && node_name.contains("MONOLINK")) {
+				View<CyNode> newNodeView = netView.getNodeView(node);
+				if (newNodeView == null)
+					continue;
+
+				newNodeView.setLockedValue(BasicVisualLexicon.NODE_FILL_COLOR, Util.MonoLinksPeptideColor);
+				newNodeView.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, Util.showMonolinkedPeptides);
+
+			}
+		}
+	}
+
+	/**
+	 * Method responsible for updating ptm edges
+	 * 
+	 * @param myNetwork current network
+	 * @param netView   current netview
+	 */
+	public static void setPTMStyleForAllNodes(CyNetwork myNetwork, CyNetworkView netView) {
+		for (CyEdge edge : myNetwork.getEdgeList()) {
+
+			// Check if the edge was inserted by this app
+			String edge_name = myNetwork.getDefaultEdgeTable().getRow(edge.getSUID()).get(CyNetwork.NAME, String.class);
+
+			if (edge_name != null && edge_name.contains("[Source: PTM - ")) {
+				View<CyEdge> newEdgeView = netView.getEdgeView(edge);
+				if (newEdgeView == null)
+					continue;
+
+				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_PAINT, Util.PTMColor);
+				newEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, Util.showPTMs);
+
+			}
+		}
+	}
+
+	/**
+	 * Method responsible for getting all PTMs of a protein
 	 * 
 	 * @param taskMonitor task monitor
 	 * @param myNetwork   current network
@@ -1572,19 +1625,19 @@ public class Util {
 
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Updating PTM(s)...");
 
-		List<CyEdge> edges_to_be_removed = new ArrayList<CyEdge>();
+		List<CyEdge> ptmEdges = new ArrayList<CyEdge>();
 		for (CyEdge edge : myNetwork.getAdjacentEdgeIterable(node, CyEdge.Type.ANY)) {
 
 			// Check if the edge was inserted by this app
 			String edge_name = myNetwork.getDefaultEdgeTable().getRow(edge.getSUID()).get(CyNetwork.NAME, String.class);
 
 			if (edge_name.contains("[Source: PTM - ")) {
-				edges_to_be_removed.add(edge);
+				ptmEdges.add(edge);
 
 			}
 		}
 
-		return edges_to_be_removed;
+		return ptmEdges;
 
 	}
 
@@ -1639,17 +1692,13 @@ public class Util {
 		View<CyNode> targetNodeView = netView.getNodeView(new_ptm_node);
 
 		if (Util.isProtein_expansion_horizontal) {
-			targetNodeView.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION,
-					(x_or_y_Pos_source) /** Util.node_label_factor_size */
-			);
+			targetNodeView.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, (x_or_y_Pos_source));
 			targetNodeView.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION,
 					Util.getYPositionOf(sourceNodeView) - PTM_LENGTH);
 		} else {
 			targetNodeView.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION,
 					Util.getXPositionOf(sourceNodeView) - PTM_LENGTH);
-			targetNodeView.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION,
-					(x_or_y_Pos_source) /** Util.node_label_factor_size */
-			);
+			targetNodeView.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, (x_or_y_Pos_source));
 		}
 
 		targetNodeView.setLockedValue(BasicVisualLexicon.NODE_WIDTH, 0.01);
@@ -1788,24 +1837,37 @@ public class Util {
 			newMonolinkView = netView.getNodeView(current_node);
 		}
 
-		double node_width = (monolink.pos_site_b - monolink.pos_site_a) * node_label_factor_size;
-
-		newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_WIDTH, node_width);
-		newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_HEIGHT, 4.0);
 		newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_LABEL, "");
 		newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, true);
 		newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_BORDER_WIDTH, 0.0);
 		newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_BORDER_PAINT, Color.WHITE);
-		newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_FILL_COLOR, Color.RED);
+		newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_FILL_COLOR, MonoLinksPeptideColor);
 		newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_SELECTED_PAINT, Color.RED);
 		newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_Z_LOCATION, 1.0);
 
-		String tooltip = "<html><p><b>Monolink: </b>" + monolink.sequence + "<br/><b>Start position: </b>"
-				+ monolink.pos_site_a + "<br/><b>End position: </b>" + monolink.pos_site_b + "</p></html>";
+		String sequence = "";
+
+		// SEQUENCE[1-4]
+		if (monolink.pos_site_a == 1) {
+			sequence = "<b>[" + monolink.sequence.charAt(0) + "]</b>"
+					+ monolink.sequence.substring(1, monolink.pos_site_b - 1) + "<b>["
+					+ monolink.sequence.charAt(monolink.pos_site_b - 1) + "]</b>"
+					+ monolink.sequence.substring(monolink.pos_site_b, monolink.sequence.length());
+		} else {
+			// SEQUENCE[3-6]
+			sequence = monolink.sequence.substring(0, monolink.pos_site_a - 1) + "<b>["
+					+ monolink.sequence.charAt(monolink.pos_site_a - 1) + "]</b>"
+					+ monolink.sequence.substring(monolink.pos_site_a, monolink.pos_site_b - 1) + "<b>["
+					+ monolink.sequence.charAt(monolink.pos_site_b - 1) + "]</b>"
+					+ monolink.sequence.substring(monolink.pos_site_b, monolink.sequence.length());
+		}
+
+		String tooltip = "<html><p><b>Monolink: </b>" + sequence + "<br/><b>Reaction site 1: </b>" + monolink.pos_site_a
+				+ "<br/><b>Reaction site 2: </b>" + monolink.pos_site_b + "</p></html>";
 
 		newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_TOOLTIP, tooltip);
 
-		xl_pos_source = monolink.pos_site_a * Util.node_label_factor_size;
+		xl_pos_source = monolink.start_pos_protein * Util.node_label_factor_size;
 
 		if (xl_pos_source <= center_position_source_node) { // [-protein_length/2, 0]
 			x_or_y_Pos_source = (-center_position_source_node) + xl_pos_source;
@@ -1814,12 +1876,24 @@ public class Util {
 		}
 		x_or_y_Pos_source += initial_position_source_node;
 
+		double node_width = (monolink.end_pos_protein - monolink.start_pos_protein + 1) * node_label_factor_size;
+
 		if (Util.isProtein_expansion_horizontal) {
-			newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, (x_or_y_Pos_source + OFFSET_MONOLINK));
+
+			newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_WIDTH, node_width);
+			newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_HEIGHT, 4.0);
+
+			newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION,
+					(x_or_y_Pos_source - OFFSET_MONOLINK + (node_width / 2)));
 			newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, Util.getYPositionOf(sourceNodeView));
 		} else {
+
+			newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_WIDTH, 4.0);
+			newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_HEIGHT, node_width);
+
 			newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, Util.getXPositionOf(sourceNodeView));
-			newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, (x_or_y_Pos_source + OFFSET_MONOLINK));
+			newMonolinkView.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION,
+					(x_or_y_Pos_source - OFFSET_MONOLINK + (node_width / 2)));
 		}
 	}
 
@@ -3802,10 +3876,11 @@ public class Util {
 			String _url = "https://www.uniprot.org/uniprot/" + proteinID + ".fasta";
 			final URL url = new URL(_url);
 			final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-			connection.setRequestMethod("POST");
+			connection.setRequestMethod("GET");
+			connection.setRequestProperty("Accept", "text/html");
+			connection.setRequestProperty("Accept-Language", "en-US");
+			connection.setRequestProperty("Connection", "close");
 			connection.setDoOutput(true);
-			connection.setReadTimeout(1000);
-			connection.setConnectTimeout(1000);
 			connection.connect();
 
 			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {

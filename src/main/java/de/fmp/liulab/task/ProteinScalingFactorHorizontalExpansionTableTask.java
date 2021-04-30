@@ -14,7 +14,9 @@ import org.cytoscape.model.CyTable;
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.TaskMonitor;
 
+import de.fmp.liulab.model.CrossLink;
 import de.fmp.liulab.model.PTM;
+import de.fmp.liulab.model.Protein;
 import de.fmp.liulab.model.ProteinDomain;
 import de.fmp.liulab.utils.Util;
 
@@ -256,7 +258,7 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 
 						if (!(monolinks.isBlank() || monolinks.isEmpty()) && monolinksMapOK) {
 
-							updatePTMsMap(nodeName, monolinks, taskMonitor);
+							updateMonolinksMap(nodeName, monolinks, taskMonitor);
 						}
 					}
 				}
@@ -359,6 +361,67 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 
 			if (ptmsList.size() > 0) {
 				LoadPTMsTask.updatePTMsMap(myNetwork, currentNode, ptmsList);
+
+			}
+		} else {
+			taskMonitor.showMessage(TaskMonitor.Level.WARN, "WARNING: Node " + nodeName + " has not been found.\n");
+		}
+
+	}
+
+	/**
+	 * Method responsible for updating monolink map
+	 * 
+	 * @param nodeName     node name
+	 * @param monolinksStr monolinks stored in Cytoscape Table
+	 * @param taskMonitor  task monitor
+	 */
+	private void updateMonolinksMap(String nodeName, String monolinksStr, TaskMonitor taskMonitor) {
+
+		List<CrossLink> monolinksList = new ArrayList<CrossLink>();
+		try {
+			String[] cols = monolinksStr.split(",");
+			for (String col : cols) {
+				//SEQUENCE[xl_pos_a-xl_pos_b][pept_pos1-pept_pos2]
+				String[] monolinksArray = col.split("\\[|\\]");
+				String sequence = monolinksArray[0].trim();
+				
+				
+				String[] colXLpositions = monolinksArray[1].split("-");
+				int xl_a = Integer.parseInt(colXLpositions[0]);
+				int xl_b = Integer.parseInt(colXLpositions[1]);
+				
+				String[] colPeptidePosition_Protein = monolinksArray[3].split("-");
+				int pos_a = Integer.parseInt(colPeptidePosition_Protein[0]);
+				int pos_b = Integer.parseInt(colPeptidePosition_Protein[1]);
+				monolinksList.add(new CrossLink(sequence, xl_a, xl_b, pos_a, pos_b));
+			}
+		} catch (Exception e) {
+			taskMonitor.showMessage(TaskMonitor.Level.WARN,
+					"ERROR: Node: " + nodeName + " - Monolinks don't match with the pattern 'name[xl_a-xl_b]'\n");
+			return;
+		}
+
+		CyNode currentNode = null;
+
+		// Check if the node exists in the network
+		Optional<CyRow> isNodePresent = myNetwork.getDefaultNodeTable().getAllRows().stream()
+				.filter(new Predicate<CyRow>() {
+					public boolean test(CyRow o) {
+						return o.get(CyNetwork.NAME, String.class).equals(nodeName);
+					}
+				}).findFirst();
+
+		if (isNodePresent.isPresent()) {// Get node if exists
+			CyRow _node_row = isNodePresent.get();
+			currentNode = myNetwork.getNode(Long.parseLong(_node_row.getRaw(CyIdentifiable.SUID).toString()));
+
+			if (monolinksList.size() > 0) {
+				String node_name = myNetwork.getDefaultNodeTable().getRow(currentNode.getSUID()).get(CyNetwork.NAME,
+						String.class);
+
+				Protein ptn = new Protein(node_name, "", monolinksList);
+				LoadMonolinksTask.updateMonolinksMap(myNetwork, currentNode, ptn);
 
 			}
 		} else {

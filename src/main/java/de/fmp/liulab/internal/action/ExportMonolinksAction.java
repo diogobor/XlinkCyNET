@@ -7,7 +7,6 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 import javax.swing.ImageIcon;
@@ -23,19 +22,20 @@ import org.cytoscape.model.CyNetwork;
 import org.cytoscape.work.TaskMonitor;
 
 import de.fmp.liulab.internal.view.ExtensionFileFilter;
-import de.fmp.liulab.model.PTM;
+import de.fmp.liulab.model.CrossLink;
+import de.fmp.liulab.model.Protein;
 import de.fmp.liulab.utils.Util;
 
 /**
- * Class responsible for exporting post-translational modifications
+ * Class responsible for exporting monolinked peptides
  * 
  * @author borges.diogo
  *
  */
-public class ExportPTMsAction extends AbstractCyAction {
+public class ExportMonolinksAction extends AbstractCyAction {
 
 	private static final String MENU_NAME = "Export";
-	private static final String MENU_CATEGORY = "Apps.XlinkCyNET.Post-translational Modifications";
+	private static final String MENU_CATEGORY = "Apps.XlinkCyNET.Monolinked peptides";
 	private static final long serialVersionUID = 1L;
 	private CyApplicationManager cyApplicationManager;
 	private CyNetwork myNetwork;
@@ -45,10 +45,10 @@ public class ExportPTMsAction extends AbstractCyAction {
 	 * 
 	 * @param cyApplicationManager main app manager
 	 */
-	public ExportPTMsAction(CyApplicationManager cyApplicationManager) {
+	public ExportMonolinksAction(CyApplicationManager cyApplicationManager) {
 		super(MENU_NAME);
 		setPreferredMenu(MENU_CATEGORY);
-		setAcceleratorKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_PERIOD, CTRL_DOWN_MASK));
+		setAcceleratorKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_SLASH, CTRL_DOWN_MASK));
 		this.cyApplicationManager = cyApplicationManager;
 	}
 
@@ -66,16 +66,17 @@ public class ExportPTMsAction extends AbstractCyAction {
 
 		boolean isEmpty = false;
 		String msg = "";
-		if (!Util.ptmsMap.containsKey(myNetwork.toString()) || Util.ptmsMap.get(myNetwork.toString()).size() == 0) {
-			msg = "<html><p>There is no PTM(s) for the following network: <b>" + myNetwork.toString()
+		if (!Util.monolinksMap.containsKey(myNetwork.toString())
+				|| Util.monolinksMap.get(myNetwork.toString()).size() == 0) {
+			msg = "<html><p>There is no monolinked peptides for the following network: <b>" + myNetwork.toString()
 					+ "</b></p></html>";
 			isEmpty = true;
 		} else {
 			msg = "<html><p><b>Selected network:</b></p><p>" + myNetwork.toString() + "</p></html>";
 		}
 
-		JOptionPane.showMessageDialog(null, msg, "XlinkCyNET - Export PTM(s)", JOptionPane.INFORMATION_MESSAGE,
-				new ImageIcon(getClass().getResource("/images/logo.png")));
+		JOptionPane.showMessageDialog(null, msg, "XlinkCyNET - Export Monolinked Peptide(s)",
+				JOptionPane.INFORMATION_MESSAGE, new ImageIcon(getClass().getResource("/images/logo.png")));
 
 		if (isEmpty)
 			return;
@@ -83,7 +84,7 @@ public class ExportPTMsAction extends AbstractCyAction {
 		JFrame parentFrame = new JFrame();
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setFileFilter(new ExtensionFileFilter("CSV file", "csv"));
-		fileChooser.setDialogTitle("Save PTM(s)");
+		fileChooser.setDialogTitle("Save Monolinked Peptide(s)");
 
 		int userSelection = fileChooser.showSaveDialog(parentFrame);
 
@@ -93,7 +94,7 @@ public class ExportPTMsAction extends AbstractCyAction {
 			if (!full_fileName.toLowerCase().endsWith(".csv")) {
 				full_fileName += ".csv";
 			}
-			createPTMsFile(full_fileName, myNetwork, null);
+			createMonolinksFile(full_fileName, myNetwork, null);
 		}
 	}
 
@@ -121,38 +122,38 @@ public class ExportPTMsAction extends AbstractCyAction {
 	}
 
 	/**
-	 * Method responsible for creating the output file with all ptms for the
+	 * Method responsible for creating the output file with all monolinks for the
 	 * selected network
 	 * 
 	 * @param fileName  file name
 	 * @param myNetwork current network
 	 */
-	public static void createPTMsFile(String fileName, CyNetwork myNetwork, TaskMonitor taskMonitor) {
+	public static void createMonolinksFile(String fileName, CyNetwork myNetwork, TaskMonitor taskMonitor) {
 		try {
 
-			if (Util.ptmsMap.containsKey(myNetwork.toString())) {
+			if (Util.monolinksMap.containsKey(myNetwork.toString())) {
 
 				FileWriter myWriter = new FileWriter(fileName);
 
-				Map<Long, List<PTM>> all_ptms = Util.ptmsMap.get(myNetwork.toString());
-				for (Map.Entry<Long, List<PTM>> entry : all_ptms.entrySet()) {
+				Map<Long, Protein> all_monolinks = Util.monolinksMap.get(myNetwork.toString());
+				for (Map.Entry<Long, Protein> entry : all_monolinks.entrySet()) {
 
 					String node_name = myNetwork.getDefaultNodeTable().getRow(entry.getKey()).getRaw(CyNetwork.NAME)
 							.toString();
 
-					List<PTM> current_proteinDomains = entry.getValue();
-					StringBuilder sb_PTMs = new StringBuilder();
-					for (PTM ptm : current_proteinDomains) {
-						sb_PTMs.append(ptm.name + "[" + ptm.residue + "-" + ptm.position + "],");
+					Protein current_proteinWithMonolinks = entry.getValue();
+					StringBuilder sb_monolinks = new StringBuilder();
+					for (CrossLink xl : current_proteinWithMonolinks.monolinks) {
+						sb_monolinks.append(xl.sequence + "[" + xl.pos_site_a + "-" + xl.pos_site_b + "],");
 					}
-					myWriter.write(node_name + "," + "\""
-							+ sb_PTMs.toString().substring(0, sb_PTMs.toString().length() - 1) + "\"\n");
+					myWriter.write(node_name + "," + current_proteinWithMonolinks.sequence + "," + "\""
+							+ sb_monolinks.toString().substring(0, sb_monolinks.toString().length() - 1) + "\"\n");
 				}
 
 				myWriter.close();
 				if (taskMonitor == null) {
 					JOptionPane.showMessageDialog(null, "File has been saved successfully!",
-							"XlinkCyNET - Export PTM(s)", JOptionPane.INFORMATION_MESSAGE);
+							"XlinkCyNET - Export Monolinked Peptide(s)", JOptionPane.INFORMATION_MESSAGE);
 				} else {
 					taskMonitor.showMessage(TaskMonitor.Level.INFO, "File has been saved successfully!");
 				}
@@ -160,8 +161,8 @@ public class ExportPTMsAction extends AbstractCyAction {
 			} else {// Network does not exists
 
 				if (taskMonitor == null) {
-					JOptionPane.showMessageDialog(null, "Network has not been found!", "XlinkCyNET - Export PTM(s)",
-							JOptionPane.WARNING_MESSAGE);
+					JOptionPane.showMessageDialog(null, "Network has not been found!",
+							"XlinkCyNET - Export Monolinked Peptide(s)", JOptionPane.WARNING_MESSAGE);
 				} else {
 					taskMonitor.showMessage(TaskMonitor.Level.WARN, "Network has not been found!");
 				}
@@ -173,7 +174,8 @@ public class ExportPTMsAction extends AbstractCyAction {
 			if (taskMonitor == null) {
 				String errorMsg = "<htmml><p>ERROR: It is not possible to save the file.</p><p>" + e.getMessage()
 						+ "</p></html>";
-				JOptionPane.showMessageDialog(null, errorMsg, "XlinkCyNET - Export PTM(s)", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(null, errorMsg, "XlinkCyNET - Export Monolinked Peptide(s)",
+						JOptionPane.ERROR_MESSAGE);
 			} else {
 				taskMonitor.showMessage(TaskMonitor.Level.ERROR, "ERROR: It is not possible to save the file.");
 			}

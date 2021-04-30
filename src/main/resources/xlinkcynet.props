@@ -1,9 +1,13 @@
 xlinkcynet.IntraLinksColor = 51#51#51
-xlinkcynet.InterLinksColor = 102#102#102
+xlinkcynet.InterLinksColor = 153#153#153
+xlinkcynet.PTMColor = 153#153#153
+xlinkcynet.MonoLinksPeptideColor = 51#51#51
 xlinkcynet.NodeBorderColor = 0#0#0
 xlinkcynet.showLinksLegend = false
 xlinkcynet.showIntraLinks = false
 xlinkcynet.showInterLinks = true
+xlinkcynet.showPTMs = true
+xlinkcynet.showMonolinkedPeptides = true
 xlinkcynet.edge_label_font_size = 12
 xlinkcynet.node_label_font_size = 12
 xlinkcynet.edge_label_opacity = 120

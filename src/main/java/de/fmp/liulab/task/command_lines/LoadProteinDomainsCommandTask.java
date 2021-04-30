@@ -1,4 +1,4 @@
-	package de.fmp.liulab.task.command_lines;
+package de.fmp.liulab.task.command_lines;
 
 import java.util.Arrays;
 import java.util.List;
@@ -100,7 +100,7 @@ public class LoadProteinDomainsCommandTask extends CyRESTAbstractTask {
 
 		parserFile = new Parser(fileName);
 		// Update data table model
-		parserFile.updateDataModel(false);
+		parserFile.updateDataModel(0);
 
 		// Store protein domains
 		LoadProteinDomainTask.storeProteinDomains(taskMonitor, myNetwork, false);

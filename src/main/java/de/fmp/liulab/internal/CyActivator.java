@@ -36,6 +36,7 @@ import org.osgi.framework.BundleContext;
 
 import de.fmp.liulab.core.ConfigurationManager;
 import de.fmp.liulab.internal.action.ControlURLAction;
+import de.fmp.liulab.internal.action.ExportMonolinksAction;
 import de.fmp.liulab.internal.action.ExportPTMsAction;
 import de.fmp.liulab.internal.action.ExportProteinDomainsAction;
 import de.fmp.liulab.internal.action.LoadMonolinksAction;
@@ -107,7 +108,10 @@ public class CyActivator extends AbstractCyActivator {
 		BendFactory bendFactory = getService(bc, BendFactory.class);
 		DialogTaskManager dialogTaskManager = getService(bc, DialogTaskManager.class);
 
-		// ### 3 - MONOLINKS ####
+		// ### 3 - MONOLINKED PEPTIDES ####
+
+		// ### 3.1 - EXPORT ###
+		ExportMonolinksAction myExportMonolinksAction = new ExportMonolinksAction(cyApplicationManager);
 
 		// ### 3.2 - LOAD ####
 
@@ -226,6 +230,7 @@ public class CyActivator extends AbstractCyActivator {
 		// #### SERVICES #####
 
 		registerService(bc, myLoadMonolinksAction, CyAction.class, new Properties());
+		registerService(bc, myExportMonolinksAction, CyAction.class, new Properties());
 		registerService(bc, myLoadPTMsAction, CyAction.class, new Properties());
 		registerService(bc, myExportPTMsAction, CyAction.class, new Properties());
 		registerService(bc, myShortcutWindowSingleNodeAction, CyAction.class, new Properties());

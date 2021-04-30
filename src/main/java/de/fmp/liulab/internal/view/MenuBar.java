@@ -18,7 +18,7 @@ import de.fmp.liulab.parser.Parser;
  */
 public class MenuBar implements ActionListener {
 
-	public boolean isFromPTM = false;
+	public int domain_ptm_or_monolink = 0;
 	private JMenuBar menuBar = new JMenuBar();
 	public static JFileChooser chooseNetwork = null;
 	private Parser parserFile;
@@ -37,7 +37,7 @@ public class MenuBar implements ActionListener {
 		if (source == importNetwork) {
 			chooseNetwork = new JFileChooser();
 			chooseNetwork.setFileFilter(new ExtensionFileFilter("CSV file (*.csv)", "csv"));
-			if (!isFromPTM)
+			if (domain_ptm_or_monolink == 0)
 				chooseNetwork.setFileFilter(new ExtensionFileFilter("Uniprot file (*.tab)", "tab"));
 			chooseNetwork.setFileSelectionMode(JFileChooser.FILES_ONLY);
 			chooseNetwork.setDialogTitle("Import file");
@@ -47,7 +47,7 @@ public class MenuBar implements ActionListener {
 
 			parserFile = new Parser(chooseNetwork.getSelectedFile().toString());
 			try {
-				parserFile.updateDataModel(isFromPTM);
+				parserFile.updateDataModel(domain_ptm_or_monolink);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

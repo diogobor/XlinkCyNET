@@ -53,6 +53,7 @@ import de.fmp.liulab.internal.UpdateViewListener;
 import de.fmp.liulab.internal.view.JFrameWithoutMaxAndMinButton;
 import de.fmp.liulab.internal.view.MenuBar;
 import de.fmp.liulab.model.CrossLink;
+import de.fmp.liulab.model.PTM;
 import de.fmp.liulab.model.Protein;
 import de.fmp.liulab.utils.Util;
 
@@ -107,7 +108,7 @@ public class LoadMonolinksTask extends AbstractTask implements ActionListener {
 	public LoadMonolinksTask(CyApplicationManager cyApplicationManager, final VisualMappingManager vmmServiceRef,
 			CyCustomGraphics2Factory vgFactory) {
 
-		this.menuBar.isFromPTM = true;
+		this.menuBar.domain_ptm_or_monolink = 2;
 		this.cyApplicationManager = cyApplicationManager;
 		this.myNetwork = cyApplicationManager.getCurrentNetwork();
 		this.vgFactory = vgFactory;
@@ -286,7 +287,7 @@ public class LoadMonolinksTask extends AbstractTask implements ActionListener {
 			public Class<?> getColumnClass(int columnIndex) {
 				return columnClassPTMTable[columnIndex];
 			}
-			
+
 			@Override
 			public void setValueAt(Object data, int row, int column) {
 				if (column == 1 || column == 2)
@@ -834,18 +835,23 @@ public class LoadMonolinksTask extends AbstractTask implements ActionListener {
 			if (!monolinksStr.isBlank() && !monolinksStr.isEmpty()) {
 
 				try {
-					String[] cols = monolinksStr.split(";");
+					String[] cols = monolinksStr.split(",");
 					for (String col : cols) {
-						col = col.trim();
-						int startPos = sequence.indexOf(col) + 1;
+						String[] monolinksArray = col.split("\\[|\\]");
+						String seq = monolinksArray[0].trim();
+						String[] colRange = monolinksArray[1].split("-");
+						int xl_a = Integer.parseInt(colRange[0]);
+						int xl_b = Integer.parseInt(colRange[1]);
+						int startPos = sequence.indexOf(seq) + 1;
 						if (startPos > 0) {
 
-							CrossLink xl = new CrossLink(col, startPos, col.length() + startPos - 1);
+							CrossLink xl = new CrossLink(seq, xl_a, xl_b, startPos, seq.length() + startPos - 1);
 							monolinks.add(xl);
 						}
 					}
 				} catch (Exception e) {
-					sbError.append("ERROR: Row: " + (row + 1) + " - Monolinks don't match with the pattern 'name;'\n");
+					sbError.append("ERROR: Row: " + (row + 1)
+							+ " - PTMs don't match with the pattern 'name[residue-position]'\n");
 				}
 			}
 			if (protein.isEmpty() || protein.isBlank()) {

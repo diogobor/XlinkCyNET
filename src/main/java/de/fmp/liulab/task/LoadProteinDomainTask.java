@@ -119,6 +119,8 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 	 */
 	public LoadProteinDomainTask(CyApplicationManager cyApplicationManager, final VisualMappingManager vmmServiceRef,
 			CyCustomGraphics2Factory vgFactory) {
+
+		this.menuBar.domain_ptm_or_monolink = 0;
 		this.cyApplicationManager = cyApplicationManager;
 		this.myNetwork = cyApplicationManager.getCurrentNetwork();
 		this.vgFactory = vgFactory;

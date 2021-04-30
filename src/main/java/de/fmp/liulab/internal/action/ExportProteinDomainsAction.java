@@ -64,11 +64,23 @@ public class ExportProteinDomainsAction extends AbstractCyAction {
 			return;
 		}
 
-		String msg = "<html><p><b>Selected network:</b></p><p>" + myNetwork.toString() + "</p></html>";
-
+		boolean isEmpty = false;
+		String msg = "";
+		if (!Util.proteinDomainsMap.containsKey(myNetwork.toString())
+				|| Util.proteinDomainsMap.get(myNetwork.toString()).size() == 0) {
+			msg = "<html><p>There is no protein domain(s) for the following network: <b>" + myNetwork.toString()
+					+ "</b></p></html>";
+			isEmpty = true;
+		} else {
+			msg = "<html><p><b>Selected network:</b></p><p>" + myNetwork.toString() + "</p></html>";
+		}
+		
 		JOptionPane.showMessageDialog(null, msg, "XlinkCyNET - Export protein domains", JOptionPane.INFORMATION_MESSAGE,
 				new ImageIcon(getClass().getResource("/images/logo.png")));
 
+		if (isEmpty)
+			return;
+		
 		JFrame parentFrame = new JFrame();
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setFileFilter(new ExtensionFileFilter("CSV file", "csv"));
