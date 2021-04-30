@@ -68,6 +68,8 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	private static JButton borderNodeColorButton;
 	private static JCheckBox show_inter_link;
 	private static JCheckBox show_intra_link;
+	private static JCheckBox show_ptms;
+	private static JCheckBox show_monolinks;
 
 	private static JSpinner spinner_font_size_link_legend;
 	private static JSpinner spinner_opacity_edge_label;
@@ -391,9 +393,9 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		ptmColorButton.setForeground(Util.PTMColor);
 		ptmColorButton.setOpaque(true);
 		ptmColorButton.setBorderPainted(false);
-		ptmColorButton.setToolTipText("Value: R:" + Util.PTMColor.getRed() + " G:" + Util.PTMColor.getGreen()
-				+ " B:" + Util.PTMColor.getBlue() + " - " + String.format("#%02X%02X%02X",
-						Util.PTMColor.getRed(), Util.PTMColor.getGreen(), Util.PTMColor.getBlue()));
+		ptmColorButton.setToolTipText("Value: R:" + Util.PTMColor.getRed() + " G:" + Util.PTMColor.getGreen() + " B:"
+				+ Util.PTMColor.getBlue() + " - " + String.format("#%02X%02X%02X", Util.PTMColor.getRed(),
+						Util.PTMColor.getGreen(), Util.PTMColor.getBlue()));
 
 		ptmColorButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		ptmColorButton.addMouseListener(new MouseAdapter() {
@@ -411,10 +413,10 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 					XlinkCyNETProps.setProperty("xlinkcynet.PtmLinksColor",
 							color.getRed() + "#" + color.getGreen() + "#" + color.getBlue());
 
-					ptmColorButton.setToolTipText("Value: R:" + Util.PTMColor.getRed() + " G:"
-							+ Util.PTMColor.getGreen() + " B:" + Util.PTMColor.getBlue() + " - "
-							+ String.format("#%02X%02X%02X", Util.PTMColor.getRed(), Util.PTMColor.getGreen(),
-									Util.PTMColor.getBlue()));
+					ptmColorButton
+							.setToolTipText("Value: R:" + Util.PTMColor.getRed() + " G:" + Util.PTMColor.getGreen()
+									+ " B:" + Util.PTMColor.getBlue() + " - " + String.format("#%02X%02X%02X",
+											Util.PTMColor.getRed(), Util.PTMColor.getGreen(), Util.PTMColor.getBlue()));
 
 					if (myNetwork != null && netView != null) {
 						Util.setPTMStyleForAllNodes(myNetwork, netView);
@@ -924,7 +926,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		link_panel.add(show_inter_link);
 
 		offset_y += 30;
-		JCheckBox show_ptms = new JCheckBox("Display PTM:");
+		show_ptms = new JCheckBox("Display PTM:");
 		show_ptms.setBackground(Color.WHITE);
 		show_ptms.setSelected(Util.showPTMs);
 		show_ptms.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
@@ -955,7 +957,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		link_panel.add(show_ptms);
 
 		offset_y += 30;
-		JCheckBox show_monolinks = new JCheckBox("Display Peptides:");
+		show_monolinks = new JCheckBox("Display Peptides:");
 		show_monolinks.setBackground(Color.WHITE);
 		show_monolinks.setSelected(Util.showPTMs);
 		show_monolinks.setToolTipText("Display intralinked peptides throughout the protein.");
@@ -1279,6 +1281,9 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 		show_intra_link.setSelected(Util.showIntraLinks);
 		show_inter_link.setSelected(Util.showInterLinks);
+		show_ptms.setSelected(Util.showPTMs);
+		show_monolinks.setSelected(Util.showMonolinkedPeptides);
+		
 		if (Util.showIntraLinks) {
 			intraLinkColorButton.setEnabled(true);
 			spinner_score_intralink.setEnabled(true);
@@ -1294,6 +1299,18 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		} else {
 			interLinkColorButton.setEnabled(false);
 			spinner_score_interlink.setEnabled(false);
+		}
+		
+		if (Util.showPTMs) {
+			ptmColorButton.setEnabled(true);
+		} else {
+			ptmColorButton.setEnabled(false);
+		}
+		
+		if (Util.showMonolinkedPeptides) {
+			monolinkColorButton.setEnabled(true);
+		} else {
+			monolinkColorButton.setEnabled(false);
 		}
 
 		intraLinkColorButton.setBackground(Util.IntraLinksColor);

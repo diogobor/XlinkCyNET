@@ -57,10 +57,14 @@ import de.fmp.liulab.task.SetDomainColorTaskFactory;
 import de.fmp.liulab.task.UpdateViewerTaskFactory;
 import de.fmp.liulab.task.command_lines.ApplyRestoreStyleCommandTask;
 import de.fmp.liulab.task.command_lines.ApplyRestoreStyleCommandTaskFactory;
+import de.fmp.liulab.task.command_lines.ExportMonolinksCommandTask;
+import de.fmp.liulab.task.command_lines.ExportMonolinksCommandTaskFactory;
 import de.fmp.liulab.task.command_lines.ExportPTMsCommandTask;
 import de.fmp.liulab.task.command_lines.ExportPTMsCommandTaskFactory;
 import de.fmp.liulab.task.command_lines.ExportProteinDomainsCommandTask;
 import de.fmp.liulab.task.command_lines.ExportProteinDomainsCommandTaskFactory;
+import de.fmp.liulab.task.command_lines.LoadMonolinksCommandTask;
+import de.fmp.liulab.task.command_lines.LoadMonolinksCommandTaskFactory;
 import de.fmp.liulab.task.command_lines.LoadPTMsCommandTask;
 import de.fmp.liulab.task.command_lines.LoadPTMsCommandTaskFactory;
 import de.fmp.liulab.task.command_lines.LoadProteinDomainsCommandTask;
@@ -362,6 +366,30 @@ public class CyActivator extends AbstractCyActivator {
 
 		TaskFactory exportPTMsTaskFactory = new ExportPTMsCommandTaskFactory(cyApplicationManager);
 		registerAllServices(bc, exportPTMsTaskFactory, exportPTMsProperties);
+
+		// Register load monolinks function
+		Properties loadMonolinksProperties = new Properties();
+		loadMonolinksProperties.setProperty(COMMAND_NAMESPACE, XLINKCYNET_COMMAND_NAMESPACE);
+		loadMonolinksProperties.setProperty(COMMAND, "loadMonolinks");
+		loadMonolinksProperties.setProperty(COMMAND_DESCRIPTION, LoadMonolinksCommandTaskFactory.DESCRIPTION);
+		loadMonolinksProperties.setProperty(COMMAND_LONG_DESCRIPTION, LoadMonolinksCommandTaskFactory.LONG_DESCRIPTION);
+		loadMonolinksProperties.setProperty(COMMAND_EXAMPLE_JSON, LoadMonolinksCommandTask.getExample());
+		loadMonolinksProperties.setProperty(COMMAND_SUPPORTS_JSON, "true");
+
+		TaskFactory loadMonolinkssTaskFactory = new LoadMonolinksCommandTaskFactory(cyApplicationManager);
+		registerAllServices(bc, loadMonolinkssTaskFactory, loadMonolinksProperties);
+
+		// Register export monolink(s) function
+		Properties exportMonolinksProperties = new Properties();
+		exportMonolinksProperties.setProperty(COMMAND_NAMESPACE, XLINKCYNET_COMMAND_NAMESPACE);
+		exportMonolinksProperties.setProperty(COMMAND, "exportMonolinks");
+		exportMonolinksProperties.setProperty(COMMAND_DESCRIPTION, ExportMonolinksCommandTaskFactory.DESCRIPTION);
+		exportMonolinksProperties.setProperty(COMMAND_LONG_DESCRIPTION, ExportMonolinksCommandTaskFactory.LONG_DESCRIPTION);
+		exportMonolinksProperties.setProperty(COMMAND_EXAMPLE_JSON, ExportMonolinksCommandTask.getExample());
+		exportMonolinksProperties.setProperty(COMMAND_SUPPORTS_JSON, "true");
+
+		TaskFactory exportMonolinksTaskFactory = new ExportMonolinksCommandTaskFactory(cyApplicationManager);
+		registerAllServices(bc, exportMonolinksTaskFactory, exportMonolinksProperties);
 
 	}
 

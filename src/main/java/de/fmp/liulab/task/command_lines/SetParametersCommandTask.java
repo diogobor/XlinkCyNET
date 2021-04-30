@@ -35,6 +35,18 @@ public class SetParametersCommandTask extends CyRESTAbstractTask {
 	@Tunable(description = "Interlinks color", longDescription = "Set a color to all identified interlinks", exampleStringValue = "#FF0000 or FF0000 or red")
 	public String interlinksColor = null;
 
+	@Tunable(description = "Display peptides", longDescription = "Display or hide all identified intralinked peptides", exampleStringValue = "true")
+	public boolean displayMonolinks = Util.showMonolinkedPeptides;
+
+	@Tunable(description = "Peptides color", longDescription = "Set a color to all identified intralinked peptides", exampleStringValue = "#FF0000 or FF0000 or red")
+	public String MonoLinksPeptideColor = null;
+
+	@Tunable(description = "Display post-translational modifications", longDescription = "Display or hide all PTM(s)", exampleStringValue = "true")
+	public boolean displayPTM = Util.showPTMs;
+
+	@Tunable(description = "PTM color", longDescription = "Set a color to all post-translational modifications", exampleStringValue = "#FF0000 or FF0000 or red")
+	public String PTMColor = null;
+
 	@Tunable(description = "Set opacity of cross-links", longDescription = "Set the opacity of all identified cross-links (range between 0 - transparent and 255 - opaque)", exampleStringValue = "120")
 	public Integer opacityLinks = Util.edge_link_opacity;
 
@@ -106,6 +118,8 @@ public class SetParametersCommandTask extends CyRESTAbstractTask {
 
 		Util.showIntraLinks = this.displayIntralinks;
 		Util.showInterLinks = this.displayInterlinks;
+		Util.showMonolinkedPeptides = this.displayMonolinks;
+		Util.showPTMs = this.displayPTM;
 
 		Color _linksColor;
 		if (this.intralinksColor != null) {
@@ -134,7 +148,7 @@ public class SetParametersCommandTask extends CyRESTAbstractTask {
 			if (this.interlinksColor.length() == 6 && !this.interlinksColor.startsWith("#")) {
 				this.interlinksColor = addCharp(this.interlinksColor);
 			}
-			
+
 			try {
 				_linksColor = Color.decode(this.interlinksColor);
 			} catch (Exception e) {
@@ -148,6 +162,48 @@ public class SetParametersCommandTask extends CyRESTAbstractTask {
 
 			if (_linksColor != null)
 				Util.InterLinksColor = _linksColor;
+		}
+		
+		if (this.MonoLinksPeptideColor != null) {
+
+			if (this.MonoLinksPeptideColor.length() == 6 && !this.MonoLinksPeptideColor.startsWith("#")) {
+				this.MonoLinksPeptideColor = addCharp(this.MonoLinksPeptideColor);
+			}
+
+			try {
+				_linksColor = Color.decode(this.MonoLinksPeptideColor);
+			} catch (Exception e) {
+				try {
+					Field field = Class.forName("java.awt.Color").getField(this.MonoLinksPeptideColor);
+					_linksColor = (Color) field.get(null);
+				} catch (Exception e2) {
+					_linksColor = null; // Not defined
+				}
+			}
+
+			if (_linksColor != null)
+				Util.MonoLinksPeptideColor = _linksColor;
+		}
+		
+		if (this.PTMColor != null) {
+
+			if (this.PTMColor.length() == 6 && !this.PTMColor.startsWith("#")) {
+				this.PTMColor = addCharp(this.PTMColor);
+			}
+
+			try {
+				_linksColor = Color.decode(this.PTMColor);
+			} catch (Exception e) {
+				try {
+					Field field = Class.forName("java.awt.Color").getField(this.PTMColor);
+					_linksColor = (Color) field.get(null);
+				} catch (Exception e2) {
+					_linksColor = null; // Not defined
+				}
+			}
+
+			if (_linksColor != null)
+				Util.PTMColor = _linksColor;
 		}
 
 		if (this.opacityLinks > 255)
@@ -182,7 +238,7 @@ public class SetParametersCommandTask extends CyRESTAbstractTask {
 			if (this.nodeBorderColor.length() == 6 && !this.nodeBorderColor.startsWith("#")) {
 				this.nodeBorderColor = addCharp(this.nodeBorderColor);
 			}
-			
+
 			try {
 				_linksColor = Color.decode(this.nodeBorderColor);
 			} catch (Exception e) {

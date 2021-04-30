@@ -278,7 +278,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		if (intraLinks.size() == 0 && interLinks.size() == 0) {// It's a intralink_single_node
 
 			String nodeName = (String) myCurrentRow.getRaw(CyNetwork.NAME);
-			if (!nodeName.contains("- Source") && !nodeName.contains("- Target") && !nodeName.contains("PTM - ")) {
+			if (!nodeName.contains("- Source") && !nodeName.contains("- Target") && !nodeName.contains("PTM - ")
+					&& !nodeName.contains("MONOLINK")) {
 				throw new Exception("There is neither intralink nor interlink for the protein: " + nodeName
 						+ ".\nCheck the columns name.");
 			}
@@ -604,7 +605,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		if (length_protein_a == null) {
 			if (length_protein_b == null) {
 
-				if (!nodeName.contains("- Source") && !nodeName.contains("- Target")) {
+				if (!nodeName.contains("- Source") && !nodeName.contains("- Target") && !nodeName.contains("MONOLINK")) {
 					throw new Exception(
 							"There is no information in column 'length_protein_a' or 'length_protein_b' for the protein: "
 									+ nodeName);
