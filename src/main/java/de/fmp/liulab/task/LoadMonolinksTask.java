@@ -234,7 +234,10 @@ public class LoadMonolinksTask extends AbstractTask implements ActionListener {
 
 		JLabel textLabel_ptn_sequence = new JLabel("Retrieve protein sequence(s):");
 		textLabel_ptn_sequence.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		textLabel_ptn_sequence.setBounds(10, offset_y, 160, 40);
+		if (Util.isWindows())
+			textLabel_ptn_sequence.setBounds(10, offset_y, 170, 40);
+		else
+			textLabel_ptn_sequence.setBounds(10, offset_y, 160, 40);
 		information_panel.add(textLabel_ptn_sequence);
 
 		offset_y = 80;
@@ -395,7 +398,7 @@ public class LoadMonolinksTask extends AbstractTask implements ActionListener {
 		Icon iconBtn = new ImageIcon(getClass().getResource("/images/browse_Icon.png"));
 		proteinSequenceServerButton = new JButton(iconBtn);
 		if (Util.isWindows())
-			proteinSequenceServerButton.setBounds(155, 55, 30, 30);
+			proteinSequenceServerButton.setBounds(180, 55, 30, 30);
 		else if (Util.isMac())
 			proteinSequenceServerButton.setBounds(179, 55, 30, 30);
 		else

@@ -385,7 +385,7 @@ public class LoadPTMsTask extends AbstractTask implements ActionListener {
 		Icon iconBtn = new ImageIcon(getClass().getResource("/images/browse_Icon.png"));
 		proteinPTMServerButton = new JButton(iconBtn);
 		if (Util.isWindows())
-			proteinPTMServerButton.setBounds(99, 55, 30, 30);
+			proteinPTMServerButton.setBounds(119, 55, 30, 30);
 		else if (Util.isMac())
 			proteinPTMServerButton.setBounds(123, 55, 30, 30);
 		else
