@@ -441,12 +441,16 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		Util.setNodeStyles(myNetwork, node, netView);
 		taskMonitor.setProgress(0.2);
 
+		if (Util.showPTMs) {
 		Util.setNodePTMs(taskMonitor, myNetwork, netView, node, style, handleFactory, bendFactory, lexicon, myPTMs,
 				true);
-
+		}
+		
+		if (Util.showMonolinkedPeptides) {
 		Util.setMonolinksToNode(taskMonitor, myNetwork, netView, node, style, handleFactory, bendFactory, lexicon,
 				myMonolinks, getPtnSequenceOfMonolinks(node));
-
+		}
+		
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Resizing edges...");
 		isPlotDone = Util.addOrUpdateEdgesToNetwork(myNetwork, node, style, netView, nodeView, handleFactory,
 				bendFactory, lexicon, Util.getProteinLength(), intraLinks, interLinks, taskMonitor, null);
@@ -605,7 +609,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		if (length_protein_a == null) {
 			if (length_protein_b == null) {
 
-				if (!nodeName.contains("- Source") && !nodeName.contains("- Target") && !nodeName.contains("MONOLINK")) {
+				if (!nodeName.contains("- Source") && !nodeName.contains("- Target")
+						&& !nodeName.contains("MONOLINK")) {
 					throw new Exception(
 							"There is no information in column 'length_protein_a' or 'length_protein_b' for the protein: "
 									+ nodeName);
@@ -912,7 +917,11 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		textLabel_required_fields.setBounds(20, offset_y, 150, 50);
 		mainPanel.add(textLabel_required_fields);
 
-		offset_y += 40;
+		if (Util.isWindows())
+			offset_y += 43;
+		else
+			offset_y += 40;
+
 		JLabel textLabel_search_for_ptms = new JLabel("Search for PTMs:");
 		textLabel_search_for_ptms.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
 		textLabel_search_for_ptms.setBounds(10, offset_y, 100, 40);
@@ -1252,7 +1261,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		proteinPTMServerButton = new JButton(iconBtn);
 		if (Util.isWindows())
-			proteinPTMServerButton.setBounds(88, 370, 30, 30);
+			proteinPTMServerButton.setBounds(108, 368, 30, 30);
 		else
 			proteinPTMServerButton.setBounds(113, 355, 30, 30);
 		proteinPTMServerButton.setEnabled(true);
@@ -1363,7 +1372,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		ptm_panel = new JPanel();
 		ptm_panel.setBorder(BorderFactory.createTitledBorder("Post-translational modifications"));
 		if (Util.isWindows())
-			ptm_panel.setBounds(10, 385, 503, 120);
+			ptm_panel.setBounds(10, 405, 503, 120);
 		else
 			ptm_panel.setBounds(10, 395, 503, 120);
 		ptm_panel.setLayout(null);
@@ -1487,12 +1496,14 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 							taskMonitor.showMessage(TaskMonitor.Level.WARN, e2.getMessage());
 						}
 
-						try {
-							getNodePTMsFromTable();
-							taskMonitor.setProgress(0.4);
-						} catch (Exception e2) {
-							textLabel_status_result.setText(e2.getMessage());
-							taskMonitor.showMessage(TaskMonitor.Level.WARN, e2.getMessage());
+						if (Util.showPTMs) {
+							try {
+								getNodePTMsFromTable();
+								taskMonitor.setProgress(0.4);
+							} catch (Exception e2) {
+								textLabel_status_result.setText(e2.getMessage());
+								taskMonitor.showMessage(TaskMonitor.Level.WARN, e2.getMessage());
+							}
 						}
 
 						textLabel_status_result.setText("Setting protein domains to node...");
