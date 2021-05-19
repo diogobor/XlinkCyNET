@@ -3920,7 +3920,7 @@ public class Util {
 	private static ArrayList<ProteinDomain> getProteinDomainsFromSupfam(String proteinID, TaskMonitor taskMonitor) {
 
 		try {
-			String _url = "http://supfam.org/SUPERFAMILY/cgi-bin/das/up/features?segment=" + proteinID;
+			String _url = "https://supfam.org/SUPERFAMILY/cgi-bin/das/up/features?segment=" + proteinID;
 			final URL url = new URL(_url);
 			final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 			connection.setRequestMethod("GET");
@@ -3931,6 +3931,7 @@ public class Util {
 			connection.setReadTimeout(1000);
 			connection.setConnectTimeout(1000);
 			connection.connect();
+			
 			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
 
 				// Get Response
