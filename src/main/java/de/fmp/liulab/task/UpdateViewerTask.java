@@ -117,7 +117,7 @@ public class UpdateViewerTask extends AbstractTask {
 			return;
 
 		Util.stopUpdateViewer = false;
-		Tuple2 inter_and_intralinks = Util.getAllLinksFromAdjacentEdgesNode(current_node, myNetwork);
+		Tuple2 inter_and_intralinks = Util.getAllLinksFromNode(current_node, myNetwork);
 		MainSingleNodeTask.interLinks = (ArrayList<CrossLink>) inter_and_intralinks.getFirst();
 		MainSingleNodeTask.intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
 

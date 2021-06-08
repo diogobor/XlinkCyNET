@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+import org.cytoscape.model.CyEdge;
 import org.cytoscape.model.CyIdentifiable;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
@@ -45,6 +46,28 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 	}
 
 	/**
+	 * Check if 'crosslinks_ab' or 'crosslinks_ba' columns has been set as 'Edge Attribute' at import time
+	 * @throws IOException
+	 */
+	private void checkCrosslinksColumns() throws IOException {
+		
+		CyEdge one_edge = Util.getEdge(myNetwork, "interacts with", true);
+		if (one_edge != null) {
+
+			CyRow edge_row = myNetwork.getRow(one_edge);
+			Object crosslinks_ab = edge_row.getRaw(Util.XL_PROTEIN_A_B);
+			Object crosslinks_ba = edge_row.getRaw(Util.XL_PROTEIN_B_A);
+
+			if (crosslinks_ab == null && crosslinks_ba == null) {
+
+				throw new IOException(
+						"There is no information in column 'crosslinks_ab' or 'crosslinks_ba' or they have been set as 'Source/Target Node Attribute'.\nPlease set these columns as 'Edge Attribute' at import time.");
+
+			}
+		}
+	}
+
+	/**
 	 * Default method
 	 */
 	@Override
@@ -52,6 +75,9 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 
 		if (myNetwork == null)
 			return;
+
+		// Check if crosslink_ab and cross_link_ba are set on Edge Table
+		checkCrosslinksColumns();
 
 		if (isProcessing)
 			return;
@@ -382,15 +408,14 @@ public class ProteinScalingFactorHorizontalExpansionTableTask extends AbstractTa
 		try {
 			String[] cols = monolinksStr.split(",");
 			for (String col : cols) {
-				//SEQUENCE[xl_pos_a-xl_pos_b][pept_pos1-pept_pos2]
+				// SEQUENCE[xl_pos_a-xl_pos_b][pept_pos1-pept_pos2]
 				String[] monolinksArray = col.split("\\[|\\]");
 				String sequence = monolinksArray[0].trim();
-				
-				
+
 				String[] colXLpositions = monolinksArray[1].split("-");
 				int xl_a = Integer.parseInt(colXLpositions[0]);
 				int xl_b = Integer.parseInt(colXLpositions[1]);
-				
+
 				String[] colPeptidePosition_Protein = monolinksArray[3].split("-");
 				int pos_a = Integer.parseInt(colPeptidePosition_Protein[0]);
 				int pos_b = Integer.parseInt(colPeptidePosition_Protein[1]);

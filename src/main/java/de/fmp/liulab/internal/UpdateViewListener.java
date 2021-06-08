@@ -11,9 +11,12 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import javax.swing.JOptionPane;
+
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.events.SetCurrentNetworkEvent;
 import org.cytoscape.application.events.SetCurrentNetworkListener;
+import org.cytoscape.model.CyEdge;
 import org.cytoscape.model.CyIdentifiable;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
@@ -299,8 +302,8 @@ public class UpdateViewListener
 	 * Method responsible for update all nodes according to the current selected
 	 * network
 	 */
-	@Override
-	public void handleEvent(SetCurrentNetworkEvent e) {
+	
+	public void handleEvent(SetCurrentNetworkEvent e){
 
 		MainSingleNodeTask.interLinks = null;
 		MainSingleNodeTask.intraLinks = null;
@@ -345,8 +348,8 @@ public class UpdateViewListener
 			if (nodes.size() == 1) {
 
 				CyRow proteinA_node_row = myNetwork.getRow(nodes.get(0));
-				Object length_other_protein_a = proteinA_node_row.getRaw("length_protein_a");
-				Object length_other_protein_b = proteinA_node_row.getRaw("length_protein_b");
+				Object length_other_protein_a = proteinA_node_row.getRaw(Util.PROTEIN_LENGTH_A);
+				Object length_other_protein_b = proteinA_node_row.getRaw(Util.PROTEIN_LENGTH_B);
 
 				if (length_other_protein_a == null) {
 					if (length_other_protein_b == null)
@@ -370,9 +373,7 @@ public class UpdateViewListener
 
 			Util.filterUnmodifiedEdges(myNetwork, netView);
 
-		} catch (
-
-		Exception exception) {
+		} catch (Exception exception) {
 		} finally {
 
 			MainSingleNodeTask.isPlotDone = true;

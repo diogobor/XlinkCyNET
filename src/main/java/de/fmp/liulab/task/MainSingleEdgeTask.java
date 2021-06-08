@@ -175,10 +175,10 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 
 				if (!isIntralink) { // Interlinks
 
-					Tuple2 inter_and_intralinks_source = Util.getAllLinksFromAdjacentEdgesNode(sourceNode, myNetwork);
+					Tuple2 inter_and_intralinks_source = Util.getAllLinksFromNode(sourceNode, myNetwork);
 					crosslinks = (ArrayList<CrossLink>) inter_and_intralinks_source.getFirst();
 
-					Tuple2 inter_and_intralinks_target = Util.getAllLinksFromAdjacentEdgesNode(targetNode, myNetwork);
+					Tuple2 inter_and_intralinks_target = Util.getAllLinksFromNode(targetNode, myNetwork);
 					crosslinks.addAll((ArrayList<CrossLink>) inter_and_intralinks_target.getFirst());
 
 					crosslinks = crosslinks.stream().distinct().collect(Collectors.toList());
@@ -197,7 +197,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 					});
 
 				} else {// Intralink
-					Tuple2 inter_and_intralinks_source = Util.getAllLinksFromAdjacentEdgesNode(sourceNode, myNetwork);
+					Tuple2 inter_and_intralinks_source = Util.getAllLinksFromNode(sourceNode, myNetwork);
 					crosslinks = (ArrayList<CrossLink>) inter_and_intralinks_source.getSecond();
 					MainSingleNodeTask.intraLinks = (ArrayList<CrossLink>) crosslinks;
 					myCurrentRow = myNetwork.getRow(sourceNode);

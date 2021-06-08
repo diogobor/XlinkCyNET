@@ -629,7 +629,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		/**
 		 * Get intra and interlinks
 		 */
-		Tuple2 inter_and_intralinks = Util.getAllLinksFromAdjacentEdgesNode(node, myNetwork);
+		Tuple2 inter_and_intralinks = Util.getAllLinksFromNode(node, myNetwork);
 		interLinks = (ArrayList<CrossLink>) inter_and_intralinks.getFirst();
 		intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
 

@@ -86,8 +86,8 @@ public class Util {
 	public static String PROTEIN_LENGTH_A = "length_protein_a";
 	public static String PROTEIN_LENGTH_B = "length_protein_b";
 	public static String NODE_LABEL_POSITION = "NODE_LABEL_POSITION";
-	private static String XL_PROTEIN_A_B = "crosslinks_ab";
-	private static String XL_PROTEIN_B_A = "crosslinks_ba";
+	public static String XL_PROTEIN_A_B = "crosslinks_ab";
+	public static String XL_PROTEIN_B_A = "crosslinks_ba";
 	private static String PROTEIN_A = "protein_a";
 	private static String PROTEIN_B = "protein_b";
 	private static String XL_SCORE_AB = "score_ab";
@@ -623,7 +623,7 @@ public class Util {
 						+ ")] [Target: " + intraLinks.get(countEdge).protein_b + " ("
 						+ intraLinks.get(countEdge).pos_site_b + ")] - Score: " + intraLinks.get(countEdge).score;
 
-				CyEdge current_edge = getEdge(myNetwork, egde_name_added_by_app);
+				CyEdge current_edge = getEdge(myNetwork, egde_name_added_by_app, false);
 				if (current_edge == null) {// Add a new edge if does not exist
 
 					String node_name_source = intraLinks.get(countEdge).protein_a + " ["
@@ -805,9 +805,10 @@ public class Util {
 	 * 
 	 * @param myNetwork current network
 	 * @param edge_name current edge name
-	 * @return return edge
+	 * @param isSimilar check if the name is similar or equals with edge_name
+	 * @return edge
 	 */
-	public static CyEdge getEdge(CyNetwork myNetwork, final String edge_name) {
+	public static CyEdge getEdge(CyNetwork myNetwork, final String edge_name, boolean isSimilar) {
 
 		CyEdge _edge = null;
 
@@ -815,13 +816,23 @@ public class Util {
 			return _edge;
 
 		// Check if the node exists in the network
-		Optional<CyRow> isEdgePresent = myNetwork.getDefaultEdgeTable().getAllRows().stream()
-				.filter(new Predicate<CyRow>() {
-					public boolean test(CyRow o) {
-						return o.get(CyNetwork.NAME, String.class).equals(edge_name);
-					}
-				}).findFirst();
+		Optional<CyRow> isEdgePresent = null;
 
+		if (isSimilar) {
+			isEdgePresent = myNetwork.getDefaultEdgeTable().getAllRows().stream().filter(new Predicate<CyRow>() {
+				public boolean test(CyRow o) {
+					return o.get(CyNetwork.NAME, String.class).contains(edge_name);
+				}
+			}).findFirst();
+
+		} else {
+			isEdgePresent = myNetwork.getDefaultEdgeTable().getAllRows().stream().filter(new Predicate<CyRow>() {
+				public boolean test(CyRow o) {
+					return o.get(CyNetwork.NAME, String.class).equals(edge_name);
+				}
+			}).findFirst();
+
+		}
 		if (isEdgePresent.isPresent()) {// Get node if exists
 			CyRow _node_row = isEdgePresent.get();
 			_edge = myNetwork.getEdge(Long.parseLong(_node_row.getRaw(CyIdentifiable.SUID).toString()));
@@ -1173,7 +1184,7 @@ public class Util {
 					+ current_inter_links.get(countEdge).pos_site_b + ")] - Score:"
 					+ current_inter_links.get(countEdge).score + " - Edge" + countEdge;
 
-			CyEdge newEdge = getEdge(myNetwork, egde_name_added_by_app);
+			CyEdge newEdge = getEdge(myNetwork, egde_name_added_by_app, false);
 			if (newEdge == null) {// Add a new edge if does not exist
 
 				newEdge = myNetwork.addEdge(sourceNode, targetNode, true);// INTERLINK
@@ -1938,7 +1949,7 @@ public class Util {
 			final String egde_name_added_by_app = "Edge" + countPTM + " [Source: PTM - " + node_name + " ("
 					+ ptm.residue + "-" + ptm.position + ")]";
 
-			CyEdge current_edge = Util.getEdge(myNetwork, egde_name_added_by_app);
+			CyEdge current_edge = Util.getEdge(myNetwork, egde_name_added_by_app, false);
 			if (current_edge == null) {// Add a new edge if does not exist
 
 				final String node_name_source = "PTM - " + node_name + " (" + ptm.residue + "-" + ptm.position + ")";
@@ -2253,7 +2264,7 @@ public class Util {
 						MainSingleNodeTask.node = proteinA_node;
 						setProteinLength(((Number) length_other_protein_a).floatValue());
 
-						Tuple2 inter_and_intralinks = Util.getAllLinksFromAdjacentEdgesNode(proteinA_node, myNetwork);
+						Tuple2 inter_and_intralinks = Util.getAllLinksFromNode(proteinA_node, myNetwork);
 						MainSingleNodeTask.interLinks = (ArrayList<CrossLink>) inter_and_intralinks.getFirst();
 						MainSingleNodeTask.intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
 
@@ -2263,15 +2274,15 @@ public class Util {
 								MainSingleNodeTask.intraLinks, MainSingleNodeTask.interLinks, null, null);
 
 						if (current_node != null) {
-							inter_and_intralinks = getAllLinksFromAdjacentEdgesNode(current_node, myNetwork);// update
-																												// intraLinks
-																												// &
-																												// interLinks
-																												// with
-																												// the
-																												// current
-																												// selected
-																												// node
+							inter_and_intralinks = getAllLinksFromNode(current_node, myNetwork);// update
+																								// intraLinks
+																								// &
+																								// interLinks
+																								// with
+																								// the
+																								// current
+																								// selected
+																								// node
 							MainSingleNodeTask.interLinks = (ArrayList<CrossLink>) inter_and_intralinks.getFirst();
 							MainSingleNodeTask.intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
 						}
@@ -2498,7 +2509,7 @@ public class Util {
 					/**
 					 * Get intra and interlinks
 					 */
-					Tuple2 inter_and_intralinks = Util.getAllLinksFromAdjacentEdgesNode(cyNode, myNetwork);
+					Tuple2 inter_and_intralinks = Util.getAllLinksFromNode(cyNode, myNetwork);
 					MainSingleNodeTask.interLinks = (ArrayList<CrossLink>) inter_and_intralinks.getFirst();
 					MainSingleNodeTask.intraLinks = (ArrayList<CrossLink>) inter_and_intralinks.getSecond();
 
@@ -2864,7 +2875,7 @@ public class Util {
 					+ MainSingleNodeTask.intraLinks.get(countEdge).protein_b + " ("
 					+ MainSingleNodeTask.intraLinks.get(countEdge).pos_site_b + ")]";
 
-			current_edge_intra = getEdge(myNetwork, egde_name_added_by_app);
+			current_edge_intra = getEdge(myNetwork, egde_name_added_by_app, false);
 			if (current_edge_intra != null) {
 				View<CyEdge> currentEdgeView = netView.getEdgeView(current_edge_intra);
 				currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
@@ -2934,6 +2945,165 @@ public class Util {
 	public static <T> Predicate<T> distinctByKey(Function<? super T, Object> keyExtractor) {
 		Map<Object, Boolean> map = new ConcurrentHashMap<>();
 		return t -> map.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
+	}
+
+	/**
+	 * Get all links from adjacent edges of a node (crosslinks_ab and crosslinks_ba
+	 * columns are set as edge attribute)
+	 * 
+	 * @param node      current node
+	 * @param myNetwork current network
+	 * @return all intra and interlinks
+	 */
+	public static Tuple2 getAllLinksFromNode(CyNode node, CyNetwork myNetwork) {
+		if (node == null || myNetwork == null) {
+			return new Tuple2(new ArrayList<CrossLink>(), new ArrayList<CrossLink>());
+		}
+
+		Set<Tuple2> cross_links_with_score = new HashSet<Tuple2>();
+		Set<String> cross_links_set = new HashSet<String>();
+
+		for (CyEdge edge : myNetwork.getAdjacentEdgeIterable(node, CyEdge.Type.ANY)) {
+
+			CyRow myCurrentRow = myNetwork.getRow(edge);
+			if (myCurrentRow.getRaw(XL_PROTEIN_A_B) != null) {
+				if (myCurrentRow.getRaw(XL_SCORE_AB) != null) {
+
+					List<String> xls = Arrays.asList(myCurrentRow.getRaw(XL_PROTEIN_A_B).toString().split("#"));
+					List<String> scores = Arrays.asList(myCurrentRow.getRaw(XL_SCORE_AB).toString().split("#"));
+					for (int i = 0; i < xls.size(); i++) {
+						cross_links_with_score.add(new Tuple2(xls.get(i), scores.get(i)));
+					}
+
+				} else {
+					cross_links_set.addAll(Arrays.asList(myCurrentRow.getRaw(XL_PROTEIN_A_B).toString().split("#")));
+
+				}
+			}
+
+			if (myCurrentRow.getRaw(XL_PROTEIN_B_A) != null) {
+				if (myCurrentRow.getRaw(XL_SCORE_BA) != null) {
+
+					List<String> xls = Arrays.asList(myCurrentRow.getRaw(XL_PROTEIN_B_A).toString().split("#"));
+					List<String> scores = Arrays.asList(myCurrentRow.getRaw(XL_SCORE_BA).toString().split("#"));
+					for (int i = 0; i < xls.size(); i++) {
+						cross_links_with_score.add(new Tuple2(xls.get(i), scores.get(i)));
+					}
+
+				} else {
+					cross_links_set.addAll(Arrays.asList(myCurrentRow.getRaw(XL_PROTEIN_B_A).toString().split("#")));
+				}
+			}
+
+		}
+
+		// ############ GET ALL EDGES THAT BELONG TO THE SELECTED NODE #############
+
+		List<CrossLink> interLinks = new ArrayList<CrossLink>();
+		List<CrossLink> intraLinks = new ArrayList<CrossLink>();
+		final String selected_node_name = myNetwork.getDefaultNodeTable().getRow(node.getSUID()).getRaw(CyNetwork.NAME)
+				.toString();
+
+		if (cross_links_with_score.size() > 0) {
+
+			// Get only links that belong to the selected node
+			cross_links_with_score.removeIf(new Predicate<Tuple2>() {
+
+				public boolean test(Tuple2 xl) {
+					if (((String) xl.getFirst()).isBlank() || ((String) xl.getFirst()).isEmpty()
+							|| ((String) xl.getFirst()).equals("0") || ((String) xl.getFirst()).equals("NA")
+							|| ((String) xl.getSecond()).isBlank() || ((String) xl.getSecond()).isEmpty()
+							|| ((String) xl.getSecond()).equals("0") || ((String) xl.getSecond()).equals("NA"))
+						return true;
+					String[] current_xl = ((String) xl.getFirst()).split(selected_node_name);
+					return (current_xl.length == 1);
+				}
+			});
+
+			for (Tuple2 xl : cross_links_with_score.stream().filter(distinctByKey(p -> p.getFirst()))
+					.collect(Collectors.toList())) {
+
+				try {
+					String[] current_xl = splitLinks(((String) xl.getFirst()), selected_node_name);// xl.split("-");
+
+					if (current_xl[0].equals(current_xl[2])) {// it's intralink
+
+						int pos_a = Integer.parseInt(current_xl[1]);
+						int pos_b = Integer.parseInt(current_xl[3]);
+						if (pos_a > pos_b) {
+							int tmp_ = pos_a;
+							pos_a = pos_b;
+							pos_b = tmp_;
+						}
+						intraLinks.add(new CrossLink(current_xl[0], current_xl[2], pos_a, pos_b,
+								Double.parseDouble(((String) xl.getSecond()))));
+
+					} else {// it's interlink
+
+						interLinks.add(new CrossLink(current_xl[0], current_xl[2], Integer.parseInt(current_xl[1]),
+								Integer.parseInt(current_xl[3]), Double.parseDouble(((String) xl.getSecond()))));
+
+					}
+				} catch (Exception e) {
+				}
+			}
+
+		} else {
+
+			// Get only links that belong to the selected node
+			cross_links_set.removeIf(new Predicate<String>() {
+
+				public boolean test(String xl) {
+					if (xl.isBlank() || xl.isEmpty() || xl.equals("0") || xl.equals("NA"))
+						return true;
+					String[] current_xl = xl.split(selected_node_name);
+					return (current_xl.length == 1);
+				}
+			});
+
+			for (
+
+			String xl : cross_links_set) {
+
+				try {
+					String[] current_xl = splitLinks(xl, selected_node_name);// xl.split("-");
+
+					if (current_xl[0].equals(current_xl[2])) {// it's intralink
+
+						int pos_a = Integer.parseInt(current_xl[1]);
+						int pos_b = Integer.parseInt(current_xl[3]);
+						if (pos_a > pos_b) {
+							int tmp_ = pos_a;
+							pos_a = pos_b;
+							pos_b = tmp_;
+						}
+						intraLinks.add(new CrossLink(current_xl[0], current_xl[2], pos_a, pos_b));
+
+					} else {// it's interlink
+
+						interLinks.add(new CrossLink(current_xl[0], current_xl[2], Integer.parseInt(current_xl[1]),
+								Integer.parseInt(current_xl[3])));
+
+					}
+				} catch (Exception e) {
+				}
+			}
+		}
+
+		// Remove duplicate values
+		interLinks = new ArrayList<CrossLink>(new HashSet<CrossLink>(interLinks));
+		intraLinks = new ArrayList<CrossLink>(new HashSet<CrossLink>(intraLinks));
+
+		Collections.sort(interLinks);
+		Collections.sort(intraLinks);
+
+		// If both lists are empty, try to retrieve cross-links from NodeTable
+		if (interLinks.size() == 0 && intraLinks.size() == 0) {
+			Tuple2 inter_and_intralinks = getAllLinksFromAdjacentEdgesNode(node, myNetwork);
+			return inter_and_intralinks;
+		}
+
+		return new Tuple2(interLinks, intraLinks);
 	}
 
 	/**
@@ -3090,6 +3260,10 @@ public class Util {
 				}
 			}
 		}
+
+		// Remove duplicate values
+		interLinks = new ArrayList<CrossLink>(new HashSet<CrossLink>(interLinks));
+		intraLinks = new ArrayList<CrossLink>(new HashSet<CrossLink>(intraLinks));
 
 		Collections.sort(interLinks);
 		Collections.sort(intraLinks);
@@ -3931,7 +4105,7 @@ public class Util {
 			connection.setReadTimeout(1000);
 			connection.setConnectTimeout(1000);
 			connection.connect();
-			
+
 			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
 
 				// Get Response

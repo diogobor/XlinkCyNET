@@ -962,10 +962,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		show_monolinks.setSelected(Util.showPTMs);
 		show_monolinks.setToolTipText("Display intralinked peptides throughout the protein.");
 		show_monolinks.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		if (Util.isWindows())
-			show_monolinks.setBounds(5, offset_y, 115, 20);
-		else
-			show_monolinks.setBounds(5, offset_y, 130, 20);
+		show_monolinks.setBounds(5, offset_y, 130, 20);
 		show_monolinks.addItemListener(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
@@ -1283,7 +1280,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		show_inter_link.setSelected(Util.showInterLinks);
 		show_ptms.setSelected(Util.showPTMs);
 		show_monolinks.setSelected(Util.showMonolinkedPeptides);
-		
+
 		if (Util.showIntraLinks) {
 			intraLinkColorButton.setEnabled(true);
 			spinner_score_intralink.setEnabled(true);
@@ -1300,13 +1297,13 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			interLinkColorButton.setEnabled(false);
 			spinner_score_interlink.setEnabled(false);
 		}
-		
+
 		if (Util.showPTMs) {
 			ptmColorButton.setEnabled(true);
 		} else {
 			ptmColorButton.setEnabled(false);
 		}
-		
+
 		if (Util.showMonolinkedPeptides) {
 			monolinkColorButton.setEnabled(true);
 		} else {
