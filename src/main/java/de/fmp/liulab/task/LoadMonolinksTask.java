@@ -53,7 +53,6 @@ import de.fmp.liulab.internal.UpdateViewListener;
 import de.fmp.liulab.internal.view.JFrameWithoutMaxAndMinButton;
 import de.fmp.liulab.internal.view.MenuBar;
 import de.fmp.liulab.model.CrossLink;
-import de.fmp.liulab.model.PTM;
 import de.fmp.liulab.model.Protein;
 import de.fmp.liulab.utils.Util;
 

@@ -96,6 +96,7 @@ public class Util {
 	public static String PYMOL_PATH = "";
 	public static String PDB_PATH = "\"/Applications/\"";
 	public static List<CyNetwork> myCyNetworkList = new ArrayList<CyNetwork>();
+	private static char REACTION_RESIDUE = 'K';
 
 	private static String OS = System.getProperty("os.name").toLowerCase();
 
@@ -114,6 +115,7 @@ public class Util {
 	public static boolean showInterLinks = true;
 	public static boolean showPTMs = true;
 	public static boolean showMonolinkedPeptides = true;
+	public static boolean showResidues = false;
 	public static Integer edge_label_font_size = 12;
 	public static Integer node_label_font_size = 12;
 	public static double node_label_factor_size = 1;
@@ -827,6 +829,7 @@ public class Util {
 
 		} else {
 			isEdgePresent = myNetwork.getDefaultEdgeTable().getAllRows().stream().filter(new Predicate<CyRow>() {
+
 				public boolean test(CyRow o) {
 					return o.get(CyNetwork.NAME, String.class).equals(edge_name);
 				}
@@ -834,6 +837,7 @@ public class Util {
 
 		}
 		if (isEdgePresent.isPresent()) {// Get node if exists
+
 			CyRow _node_row = isEdgePresent.get();
 			_edge = myNetwork.getEdge(Long.parseLong(_node_row.getRaw(CyIdentifiable.SUID).toString()));
 		}
@@ -1937,20 +1941,16 @@ public class Util {
 			final String node_name_added_by_app = "MONOLINK" + countMonolink + " [Source: " + node_name + " ("
 					+ monolink.sequence + ")]";
 
-			CyNode current_node = Util.getNode(myNetwork, node_name_added_by_app);
-			if (current_node == null) {// Add a new node if does not exist
+			CyNode _node = Util.getNode(myNetwork, node_name_added_by_app);
+			if (_node == null) {// Add a new node if does not exist
 
-				CyNode new_monolink_node = myNetwork.addNode();
-				myNetwork.getRow(new_monolink_node).set(CyNetwork.NAME, node_name_added_by_app);
-
-				setMonolinkStyle(netView, new_monolink_node, sourceNodeView, monolink, xl_pos_source,
-						center_position_source_node, x_or_y_Pos_source, initial_position_source_node);
-
-			} else {
-				setMonolinkStyle(netView, current_node, sourceNodeView, monolink, xl_pos_source,
-						center_position_source_node, x_or_y_Pos_source, initial_position_source_node);
-
+				_node = myNetwork.addNode();
+				myNetwork.getRow(_node).set(CyNetwork.NAME, node_name_added_by_app);
 			}
+
+			setMonolinkStyle(netView, _node, sourceNodeView, monolink, xl_pos_source, center_position_source_node,
+					x_or_y_Pos_source, initial_position_source_node);
+
 			countMonolink++;
 		}
 
@@ -1976,6 +1976,77 @@ public class Util {
 			Protein ptn = new Protein(node_name, proteinSequence, myMonolinks);
 			protein_with_monolinks.put(node.getSUID(), ptn);
 			Util.monolinksMap.put(network_name, protein_with_monolinks);
+		}
+	}
+
+	private static void setResidueStyle(CyNetworkView netView, CyNode current_node, View<CyNode> sourceNodeView,
+			Integer aminoacidPos, String proteinSequence, double xl_pos_source, double center_position_source_node,
+			double x_or_y_Pos_source, double initial_position_source_node) {
+
+		View<CyNode> newResidueView = netView.getNodeView(current_node);
+		while (newResidueView == null) {
+			netView.updateView();
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
+			newResidueView = netView.getNodeView(current_node);
+		}
+
+		newResidueView.setLockedValue(BasicVisualLexicon.NODE_LABEL, "");
+		newResidueView.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, true);
+		newResidueView.setLockedValue(BasicVisualLexicon.NODE_BORDER_WIDTH, 0.0);
+		newResidueView.setLockedValue(BasicVisualLexicon.NODE_BORDER_TRANSPARENCY, 0.0);
+		newResidueView.setLockedValue(BasicVisualLexicon.NODE_BORDER_PAINT, Color.WHITE);
+		newResidueView.setLockedValue(BasicVisualLexicon.NODE_FILL_COLOR, NodeBorderColor);
+		newResidueView.setLockedValue(BasicVisualLexicon.NODE_SELECTED_PAINT, Color.RED);
+		newResidueView.setLockedValue(BasicVisualLexicon.NODE_Z_LOCATION, 1.0);
+
+		String sequence = "";
+
+		// SEQUENCE[1]
+		if (aminoacidPos == 1) {
+			sequence = "<b>[" + proteinSequence.charAt(0) + "]</b>"
+					+ proteinSequence.substring(1, proteinSequence.length());
+		} else {
+			// SEQUENCE[>1]
+			sequence = proteinSequence.substring(0, aminoacidPos) + "<b>[" + proteinSequence.charAt(aminoacidPos)
+					+ "]</b>" + proteinSequence.substring(aminoacidPos + 1, proteinSequence.length());
+		}
+
+		String tooltip = "<html><p><b>Residue: </b> " + REACTION_RESIDUE + " [" + (aminoacidPos + 1) + "]<br/>"
+				+ sequence + "<br/>";
+
+		newResidueView.setLockedValue(BasicVisualLexicon.NODE_TOOLTIP, tooltip);
+
+		xl_pos_source = aminoacidPos * Util.node_label_factor_size;
+
+		if (xl_pos_source <= center_position_source_node) { // [-protein_length/2, 0]
+			x_or_y_Pos_source = (-center_position_source_node) + xl_pos_source;
+		} else { // [0, protein_length/2]
+			x_or_y_Pos_source = xl_pos_source - center_position_source_node;
+		}
+		x_or_y_Pos_source += initial_position_source_node;
+
+		double node_height = 15d;
+
+		if (Util.isProtein_expansion_horizontal) {
+
+			newResidueView.setLockedValue(BasicVisualLexicon.NODE_WIDTH, 1.0);
+			newResidueView.setLockedValue(BasicVisualLexicon.NODE_HEIGHT, node_height);
+
+			newResidueView.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION,
+					(x_or_y_Pos_source));
+			newResidueView.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, Util.getYPositionOf(sourceNodeView));
+		} else {
+
+			newResidueView.setLockedValue(BasicVisualLexicon.NODE_WIDTH, node_height);
+			newResidueView.setLockedValue(BasicVisualLexicon.NODE_HEIGHT, 1.0);
+
+			newResidueView.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, Util.getXPositionOf(sourceNodeView));
+			newResidueView.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION,
+					(x_or_y_Pos_source));
 		}
 	}
 
@@ -2801,13 +2872,82 @@ public class Util {
 	}
 
 	/**
+	 * Method responsible for getting all amino acid positions in a protein sequence
+	 * 
+	 * @param aa
+	 * @param proteinSequence
+	 * @return list with positions
+	 */
+	private static List<Integer> getAllAminoAcidPosInAProtein(char aa, String proteinSequence) {
+
+		List<Integer> aaPos = new ArrayList<Integer>();
+		int index = proteinSequence.indexOf(aa);
+		while (index >= 0) {
+			aaPos.add(index);
+			index = proteinSequence.indexOf(aa, index + 1);
+		}
+		return aaPos;
+	}
+
+	/**
+	 * Method responsible for setting residues style
+	 * 
+	 * @param myNetwork       current network
+	 * @param node            current node
+	 * @param netView         current network view
+	 * @param style           current style
+	 * @param proteinSequence protein sequence of the current node
+	 */
+	public static void setNodeResidues(CyNetwork myNetwork, CyNode node, CyNetworkView netView, VisualStyle style,
+			String proteinSequence) {
+
+		if (myNetwork == null || node == null || style == null || netView == null) {
+			return;
+		}
+
+		final String node_name = myNetwork.getDefaultNodeTable().getRow(node.getSUID()).getRaw(CyNetwork.NAME)
+				.toString();
+
+		View<CyNode> sourceNodeView = netView.getNodeView(node);
+
+		double x_or_y_Pos_source = 0;
+		double xl_pos_source = 0;
+		double center_position_source_node = (Util.proteinLength * Util.node_label_factor_size) / 2.0;
+
+		double initial_position_source_node = 0;
+		if (Util.isProtein_expansion_horizontal) {
+			initial_position_source_node = Util.getXPositionOf(sourceNodeView);
+		} else {
+			initial_position_source_node = Util.getYPositionOf(sourceNodeView);
+		}
+
+		List<Integer> aaPos = getAllAminoAcidPosInAProtein(REACTION_RESIDUE, proteinSequence);
+		for (int countMonolink = 0; countMonolink < aaPos.size(); countMonolink++) {
+
+			final String node_name_added_by_app = "RESIDUE" + countMonolink + " [Source: " + node_name + " ("
+					+ (aaPos.get(countMonolink) + 1) + ")]";
+			CyNode _node = Util.getNode(myNetwork, node_name_added_by_app);
+			if (_node == null) {// Add a new node if does not exist
+
+				_node = myNetwork.addNode();
+				myNetwork.getRow(_node).set(CyNetwork.NAME, node_name_added_by_app);
+			}
+
+			setResidueStyle(netView, _node, sourceNodeView, aaPos.get(countMonolink), proteinSequence, xl_pos_source,
+					center_position_source_node, x_or_y_Pos_source, initial_position_source_node);
+
+		}
+	}
+
+	/**
 	 * Set style to node
 	 * 
 	 * @param myNetwork current network
 	 * @param node      current node
 	 * @param netView   current network view
 	 */
-	public static void setNodeStyles(CyNetwork myNetwork, CyNode node, CyNetworkView netView) {
+	public static void setNodeStyles(CyNetwork myNetwork, CyNode node, CyNetworkView netView, VisualStyle style,
+			String proteinSequence) {
 
 		updateNodeStyle(myNetwork, node, netView);
 
@@ -2827,6 +2967,10 @@ public class Util {
 			myNetwork.getRow(node).set(PROTEIN_SCALING_FACTOR_COLUMN_NAME, node_label_factor_size);
 		if (myNetwork.getRow(node).get(Util.HORIZONTAL_EXPANSION_COLUMN_NAME, Boolean.class) != null)
 			myNetwork.getRow(node).set(HORIZONTAL_EXPANSION_COLUMN_NAME, isProtein_expansion_horizontal);
+
+		if (showResidues) {
+			setNodeResidues(myNetwork, node, netView, style, proteinSequence);
+		}
 
 	}
 
@@ -3419,7 +3563,7 @@ public class Util {
 			}
 		}
 
-		// Remove duplicate values
+// Remove duplicate values
 		interLinks = new ArrayList<CrossLink>(new HashSet<CrossLink>(interLinks));
 		intraLinks = new ArrayList<CrossLink>(new HashSet<CrossLink>(intraLinks));
 

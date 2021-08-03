@@ -353,7 +353,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		double tmp_scaling_factor = Util.node_label_factor_size;
 		Util.node_label_factor_size = 1.0;
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting node styles...");
-		Util.setNodeStyles(myNetwork, node, netView);
+
+		Util.setNodeStyles(myNetwork, node, netView, style, Util.getProteinSequenceFromUniprot(myCurrentRow));
 		taskMonitor.setProgress(0.2);
 
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting protein domains...");
@@ -438,19 +439,19 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	private void resizeProtein(final TaskMonitor taskMonitor) {
 		isPlotDone = false;
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Resizing node length...");
-		Util.setNodeStyles(myNetwork, node, netView);
+		Util.setNodeStyles(myNetwork, node, netView, style, Util.getProteinSequenceFromUniprot(myCurrentRow));
 		taskMonitor.setProgress(0.2);
 
 		if (Util.showPTMs) {
-		Util.setNodePTMs(taskMonitor, myNetwork, netView, node, style, handleFactory, bendFactory, lexicon, myPTMs,
-				true);
+			Util.setNodePTMs(taskMonitor, myNetwork, netView, node, style, handleFactory, bendFactory, lexicon, myPTMs,
+					true);
 		}
-		
+
 		if (Util.showMonolinkedPeptides) {
-		Util.setMonolinksToNode(taskMonitor, myNetwork, netView, node, style, handleFactory, bendFactory, lexicon,
-				myMonolinks, getPtnSequenceOfMonolinks(node));
+			Util.setMonolinksToNode(taskMonitor, myNetwork, netView, node, style, handleFactory, bendFactory, lexicon,
+					myMonolinks, getPtnSequenceOfMonolinks(node));
 		}
-		
+
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Resizing edges...");
 		isPlotDone = Util.addOrUpdateEdgesToNetwork(myNetwork, node, style, netView, nodeView, handleFactory,
 				bendFactory, lexicon, Util.getProteinLength(), intraLinks, interLinks, taskMonitor, null);
@@ -1484,7 +1485,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 						taskMonitor.showMessage(TaskMonitor.Level.INFO, "Setting node styles...");
 
 						Util.node_label_factor_size = 1;
-						Util.setNodeStyles(myNetwork, node, netView);
+						Util.setNodeStyles(myNetwork, node, netView, style,
+								Util.getProteinSequenceFromUniprot(myCurrentRow));
 						taskMonitor.setProgress(0.2);
 
 						textLabel_status_result.setText("Getting protein domains from table...");
@@ -2138,6 +2140,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		}
 
 		// ############################################################################
+		
+		this.hideNodeResidues();
 	}
 
 	/**
@@ -2202,6 +2206,37 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 			View<CyNode> monolinkNodeView = netView.getNodeView(_node);
 			monolinkNodeView.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, false);
+		}
+
+	}
+	
+	/**
+	 * Method responsible for hiding nodes residues
+	 */
+	private void hideNodeResidues() {
+
+		if (myNetwork == null)
+			return;
+
+		String nodeName = (String) myCurrentRow.getRaw(CyNetwork.NAME);
+
+		// Check if the node exists in the network
+		Stream<CyRow> residuesRows = myNetwork.getDefaultNodeTable().getAllRows().stream()
+				.filter(new Predicate<CyRow>() {
+					public boolean test(CyRow o) {
+						return o.get(CyNetwork.NAME, String.class).contains("RESIDUE")
+								&& o.get(CyNetwork.NAME, String.class).contains(nodeName);
+					}
+				});
+
+		for (Iterator<CyRow> i = residuesRows.iterator(); i.hasNext();) {
+
+			CyRow _node_row = i.next();
+
+			CyNode _node = myNetwork.getNode(Long.parseLong(_node_row.getRaw(CyIdentifiable.SUID).toString()));
+
+			View<CyNode> residueNodeView = netView.getNodeView(_node);
+			residueNodeView.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, false);
 		}
 
 	}
