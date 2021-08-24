@@ -98,6 +98,7 @@ public class CyActivator extends AbstractCyActivator {
 	public void start(BundleContext bc) {
 
 		// #### 1 - ABOUT ####
+		
 		OpenBrowser openBrowser = getService(bc, OpenBrowser.class);
 		String version = bc.getBundle().getVersion().toString();
 		ControlURLAction controlURLAction = new ControlURLAction(openBrowser, version);
