@@ -78,7 +78,7 @@ public class UpdateViewerTask extends AbstractTask {
 	 * @param current_node current node
 	 * @param taskMonitor  task monitor
 	 */
-	private void updateNodesAndEdges(final CyNode current_node, TaskMonitor taskMonitor) {
+	private void updateNodesAndEdges(final CyNode current_node, TaskMonitor taskMonitor) throws Exception {
 
 		MainSingleNodeTask.isPlotDone = false;
 

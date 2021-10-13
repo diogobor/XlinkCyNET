@@ -25,6 +25,7 @@ import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerModel;
@@ -41,6 +42,7 @@ import org.cytoscape.view.model.VisualLexicon;
 import org.cytoscape.view.presentation.property.values.BendFactory;
 import org.cytoscape.view.presentation.property.values.HandleFactory;
 import org.cytoscape.view.vizmap.VisualStyle;
+import org.cytoscape.work.TaskMonitor.Level;
 
 import de.fmp.liulab.core.ConfigurationManager;
 import de.fmp.liulab.utils.Util;
@@ -860,8 +862,14 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 				if (myNetwork != null && netView != null && style != null && handleFactory != null
 						&& bendFactory != null && lexicon != null) {
-					Util.updateNodesStyles(myNetwork, netView, style, handleFactory, bendFactory, lexicon,
-							Util.showInterLinks);
+					try {
+						Util.updateNodesStyles(myNetwork, netView, style, handleFactory, bendFactory, lexicon,
+								Util.showInterLinks);
+					} catch (Exception e1) {
+						JOptionPane.showMessageDialog(null, e1.getMessage(), "XlinkCyNET - Alert",
+								JOptionPane.ERROR_MESSAGE);
+						return;
+					}
 
 				}
 			}
@@ -917,8 +925,14 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 
 				if (myNetwork != null && netView != null && style != null && handleFactory != null
 						&& bendFactory != null && lexicon != null) {
-					Util.updateNodesStyles(myNetwork, netView, style, handleFactory, bendFactory, lexicon,
-							e.getStateChange() == ItemEvent.DESELECTED);
+					try {
+						Util.updateNodesStyles(myNetwork, netView, style, handleFactory, bendFactory, lexicon,
+								e.getStateChange() == ItemEvent.DESELECTED);
+					} catch (Exception e1) {
+						JOptionPane.showMessageDialog(null, e1.getMessage(), "XlinkCyNET - Alert",
+								JOptionPane.ERROR_MESSAGE);
+						return;
+					}
 
 				}
 			}

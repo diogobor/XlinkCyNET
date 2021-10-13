@@ -2036,8 +2036,7 @@ public class Util {
 			newResidueView.setLockedValue(BasicVisualLexicon.NODE_WIDTH, 1.0);
 			newResidueView.setLockedValue(BasicVisualLexicon.NODE_HEIGHT, node_height);
 
-			newResidueView.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION,
-					(x_or_y_Pos_source));
+			newResidueView.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, (x_or_y_Pos_source));
 			newResidueView.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, Util.getYPositionOf(sourceNodeView));
 		} else {
 
@@ -2045,8 +2044,7 @@ public class Util {
 			newResidueView.setLockedValue(BasicVisualLexicon.NODE_HEIGHT, 1.0);
 
 			newResidueView.setLockedValue(BasicVisualLexicon.NODE_X_LOCATION, Util.getXPositionOf(sourceNodeView));
-			newResidueView.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION,
-					(x_or_y_Pos_source));
+			newResidueView.setLockedValue(BasicVisualLexicon.NODE_Y_LOCATION, (x_or_y_Pos_source));
 		}
 	}
 
@@ -2724,7 +2722,8 @@ public class Util {
 	 * @param hideInterLinks checkbox on SettingsPanel is unselected
 	 */
 	public static void updateNodesStyles(CyNetwork myNetwork, CyNetworkView netView, VisualStyle style,
-			HandleFactory handleFactory, BendFactory bendFactory, VisualLexicon lexicon, boolean hideInterLinks) {
+			HandleFactory handleFactory, BendFactory bendFactory, VisualLexicon lexicon, boolean hideInterLinks)
+			throws Exception {
 
 		List<CyNode> allnodes = myNetwork.getNodeList();
 
@@ -3256,8 +3255,9 @@ public class Util {
 	 * @param node      current node
 	 * @param myNetwork current network
 	 * @return all intra and interlinks
+	 * @throws Exception
 	 */
-	public static Tuple2 getAllLinksFromNode(CyNode node, CyNetwork myNetwork) {
+	public static Tuple2 getAllLinksFromNode(CyNode node, CyNetwork myNetwork) throws Exception {
 		if (node == null || myNetwork == null) {
 			return new Tuple2(new ArrayList<CrossLink>(), new ArrayList<CrossLink>());
 		}
@@ -3267,36 +3267,54 @@ public class Util {
 
 		for (CyEdge edge : myNetwork.getAdjacentEdgeIterable(node, CyEdge.Type.ANY)) {
 
-			CyRow myCurrentRow = myNetwork.getRow(edge);
-			if (myCurrentRow.getRaw(XL_PROTEIN_A_B) != null) {
-				if (myCurrentRow.getRaw(XL_SCORE_AB) != null) {
+			try {
+				CyRow myCurrentRow = myNetwork.getRow(edge);
+				if (myCurrentRow.getRaw(XL_PROTEIN_A_B) != null) {
+					if (myCurrentRow.getRaw(XL_SCORE_AB) != null) {
 
-					List<String> xls = Arrays.asList(myCurrentRow.getRaw(XL_PROTEIN_A_B).toString().split("#"));
-					List<String> scores = Arrays.asList(myCurrentRow.getRaw(XL_SCORE_AB).toString().split("#"));
-					for (int i = 0; i < xls.size(); i++) {
-						cross_links_with_score.add(new Tuple2(xls.get(i), scores.get(i)));
+						List<String> xls = Arrays.asList(myCurrentRow.getRaw(XL_PROTEIN_A_B).toString().split("#"));
+						List<String> scores = Arrays.asList(myCurrentRow.getRaw(XL_SCORE_AB).toString().split("#"));
+
+						if (xls.size() == scores.size()) {
+							for (int i = 0; i < xls.size(); i++) {
+								cross_links_with_score.add(new Tuple2(xls.get(i), scores.get(i)));
+							}
+						} else if (xls.size() > 0) {
+							for (int i = 0; i < xls.size(); i++) {
+								cross_links_with_score.add(new Tuple2(xls.get(i), "0"));
+							}
+						}
+
+					} else {
+						cross_links_set
+								.addAll(Arrays.asList(myCurrentRow.getRaw(XL_PROTEIN_A_B).toString().split("#")));
+
 					}
-
-				} else {
-					cross_links_set.addAll(Arrays.asList(myCurrentRow.getRaw(XL_PROTEIN_A_B).toString().split("#")));
-
 				}
-			}
 
-			if (myCurrentRow.getRaw(XL_PROTEIN_B_A) != null) {
-				if (myCurrentRow.getRaw(XL_SCORE_BA) != null) {
+				if (myCurrentRow.getRaw(XL_PROTEIN_B_A) != null) {
+					if (myCurrentRow.getRaw(XL_SCORE_BA) != null) {
 
-					List<String> xls = Arrays.asList(myCurrentRow.getRaw(XL_PROTEIN_B_A).toString().split("#"));
-					List<String> scores = Arrays.asList(myCurrentRow.getRaw(XL_SCORE_BA).toString().split("#"));
-					for (int i = 0; i < xls.size(); i++) {
-						cross_links_with_score.add(new Tuple2(xls.get(i), scores.get(i)));
+						List<String> xls = Arrays.asList(myCurrentRow.getRaw(XL_PROTEIN_B_A).toString().split("#"));
+						List<String> scores = Arrays.asList(myCurrentRow.getRaw(XL_SCORE_BA).toString().split("#"));
+
+						if (xls.size() == scores.size()) {
+							for (int i = 0; i < xls.size(); i++) {
+								cross_links_with_score.add(new Tuple2(xls.get(i), scores.get(i)));
+							}
+						} else if (xls.size() > 0) {
+							for (int i = 0; i < xls.size(); i++) {
+								cross_links_with_score.add(new Tuple2(xls.get(i), "0"));
+							}
+						}
+					} else {
+						cross_links_set
+								.addAll(Arrays.asList(myCurrentRow.getRaw(XL_PROTEIN_B_A).toString().split("#")));
 					}
-
-				} else {
-					cross_links_set.addAll(Arrays.asList(myCurrentRow.getRaw(XL_PROTEIN_B_A).toString().split("#")));
 				}
+			} catch (Exception e) {
+				throw new Exception("ERROR: Crosslinks amount is different from score amount.");
 			}
-
 		}
 
 		// ############ GET ALL EDGES THAT BELONG TO THE SELECTED NODE #############
