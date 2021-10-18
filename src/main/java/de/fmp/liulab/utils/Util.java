@@ -3176,7 +3176,7 @@ public class Util {
 					+ MainSingleNodeTask.intraLinks.get(countEdge).protein_b + " ("
 					+ MainSingleNodeTask.intraLinks.get(countEdge).pos_site_b + ")]";
 
-			current_edge_intra = getEdge(myNetwork, egde_name_added_by_app, false);
+			current_edge_intra = getEdge(myNetwork, egde_name_added_by_app, true);
 			if (current_edge_intra != null) {
 				View<CyEdge> currentEdgeView = netView.getEdgeView(current_edge_intra);
 				currentEdgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
