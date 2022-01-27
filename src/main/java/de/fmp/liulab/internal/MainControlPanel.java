@@ -87,6 +87,8 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	private static JLabel pymolPathStr;
 	private static JCheckBox show_links_legend;
 
+	private static JCheckBox useAlphaFold;
+
 	private Properties XlinkCyNETProps;
 
 	// Update nodes and edges
@@ -1199,11 +1201,11 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		else
 			pymolPath_label.setBounds(10, offset_y, 100, 40);
 		pymol_panel.add(pymolPath_label);
-		offset_y += 30;
 
+		offset_y += 20;
 		pymolPathStr = new JLabel("???");
-		pymolPathStr.setFont(new java.awt.Font("Tahoma", Font.ITALIC, 12));
-		pymolPathStr.setBounds(10, offset_y, 350, 40);
+		pymolPathStr.setFont(new java.awt.Font("Tahoma", Font.ITALIC, 8));
+		pymolPathStr.setBounds(10, offset_y - 3, 350, 40);
 		pymol_panel.add(pymolPathStr);
 
 		offset_y = 20;
@@ -1230,6 +1232,30 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		});
 
 		pymol_panel.add(pyMOL_pathButton);
+
+		offset_y += 40;
+
+		useAlphaFold = new JCheckBox("Use AlphaFold");
+		useAlphaFold.setBackground(Color.WHITE);
+		useAlphaFold.setSelected(Util.useAlphaFold);
+		useAlphaFold.setToolTipText("Use AlphaFold for predicting protein structure.");
+		useAlphaFold.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
+		useAlphaFold.setBounds(5, offset_y, 200, 20);
+		useAlphaFold.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				if (e.getStateChange() == ItemEvent.SELECTED) {// checkbox has been selected
+					Util.useAlphaFold = true;
+					XlinkCyNETProps.setProperty("xlinkcynet.useAlphaFold", "true");
+
+				} else {
+					Util.useAlphaFold = false;
+					XlinkCyNETProps.setProperty("xlinkcynet.useAlphaFold", "false");
+				}
+
+			}
+		});
+		pymol_panel.add(useAlphaFold);
 	}
 
 	/**

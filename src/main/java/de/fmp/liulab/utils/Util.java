@@ -130,6 +130,7 @@ public class Util {
 	public static double intralink_threshold_score = 0;
 	public static double interlink_threshold_score = 0;
 	public static double combinedlink_threshold_score = 0;
+	public static boolean useAlphaFold = false;
 
 	// Map<Network name, Map<Protein - Node SUID, List<ProteinDomain>>
 	public static Map<String, Map<Long, List<ProteinDomain>>> proteinDomainsMap = new HashMap<String, Map<Long, List<ProteinDomain>>>();
@@ -3892,6 +3893,71 @@ public class Util {
 			} else {
 
 				taskMonitor.showMessage(TaskMonitor.Level.WARN, "There is no PDB file.");
+				return new String[] { "" };
+			}
+
+		} catch (Exception e) {
+			taskMonitor.showMessage(TaskMonitor.Level.WARN, e.getMessage());
+			return new String[] { "" };
+		}
+	}
+
+	/**
+	 * Get PDB file from AlphaFold server
+	 * 
+	 * @param pdbID protein id
+	 * @return pdb file name
+	 */
+	public static String[] getPDBfileFromAlphaFoldServer(String pdbID, TaskMonitor taskMonitor) {
+
+		try {
+			String _url = "https://alphafold.ebi.ac.uk/files/AF-" + pdbID + "-F1-model_v2.pdb";
+			final URL url = new URL(_url);
+			final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setRequestMethod("GET");
+			connection.setRequestProperty("Accept", "text/html");
+			connection.setRequestProperty("Accept-Language", "en-US");
+			connection.setRequestProperty("Connection", "close");
+			connection.setDoOutput(true);
+			connection.setReadTimeout(1000);
+			connection.setConnectTimeout(1000);
+			connection.connect();
+
+			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+
+				// Get Response
+				InputStream inputStream = connection.getErrorStream(); // first check for error.
+				if (inputStream == null) {
+					inputStream = connection.getInputStream();
+				}
+				BufferedReader rd = new BufferedReader(new InputStreamReader(inputStream));
+				String line;
+
+				StringBuilder response = new StringBuilder();
+				int total_lines = connection.getContentLength();
+
+				int old_progress = 0;
+				int summary_processed = 0;
+
+				while ((line = rd.readLine()) != null) {
+					response.append(line);
+					response.append('\r');
+
+					summary_processed += line.toCharArray().length + 1;
+					int new_progress = (int) ((double) summary_processed / (total_lines) * 100);
+					if (new_progress > old_progress) {
+						old_progress = new_progress;
+
+						taskMonitor.showMessage(TaskMonitor.Level.INFO,
+								"Downloading PDB file from server: " + old_progress + "%");
+					}
+				}
+				rd.close();
+				return new String[] { "PDB", response.toString() };
+
+			} else {
+
+				taskMonitor.showMessage(TaskMonitor.Level.WARN, "There is no PDB for this ID: " + pdbID + ".");
 				return new String[] { "" };
 			}
 

@@ -31,6 +31,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
@@ -1071,40 +1072,51 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 							taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB information from Uniprot...");
 
 							Protein ptn = Util.getPDBidFromUniprot(myCurrentRow, taskMonitor);
-							List<PDB> pdbIds = ptn.pdbIds;
-							if (pdbIds.size() > 0) {
-								PDB pdbID = pdbIds.get(0);
 
-								if (pdbIds.size() > 1) {
-
-									// Open a window to select only one PDB
-									getPDBInformation(pdbIds, msgINFO, taskMonitor, ptn, null, true, "", false, false,
-											(String) myCurrentRow.getRaw(CyNetwork.NAME), false);
-
-									try {
-										pyMOLThread.join();
-									} catch (InterruptedException e) {
-										e.printStackTrace();
-									}
-								}
+							if (Util.useAlphaFold) {
 
 								try {
-									processPDBFile(msgINFO, taskMonitor, pdbID, ptn);
+									processPDBFile(msgINFO, taskMonitor, null, ptn, Util.useAlphaFold);
 								} catch (Exception e) {
 									taskMonitor.showMessage(TaskMonitor.Level.ERROR, e.getMessage());
 								}
 
 							} else {
 
-								textLabel_status_result.setText("ERROR: Check Task History.");
-								taskMonitor.showMessage(TaskMonitor.Level.ERROR,
-										"There is no PDB for the protein: " + ptn.proteinID);
+								List<PDB> pdbIds = ptn.pdbIds;
+								if (pdbIds.size() > 0) {
+									PDB pdbID = pdbIds.get(0);
 
-								if (pyMOLButton != null)
-									pyMOLButton.setEnabled(true);
-								return;
+									if (pdbIds.size() > 1) {
+
+										// Open a window to select only one PDB
+										getPDBInformation(pdbIds, msgINFO, taskMonitor, ptn, null, true, "", false,
+												false, (String) myCurrentRow.getRaw(CyNetwork.NAME), false);
+
+										try {
+											pyMOLThread.join();
+										} catch (InterruptedException e) {
+											e.printStackTrace();
+										}
+									}
+
+									try {
+										processPDBFile(msgINFO, taskMonitor, pdbID, ptn, Util.useAlphaFold);
+									} catch (Exception e) {
+										taskMonitor.showMessage(TaskMonitor.Level.ERROR, e.getMessage());
+									}
+
+								} else {
+
+									textLabel_status_result.setText("ERROR: Check Task History.");
+									taskMonitor.showMessage(TaskMonitor.Level.ERROR,
+											"There is no PDB for the protein: " + ptn.proteinID);
+
+									if (pyMOLButton != null)
+										pyMOLButton.setEnabled(true);
+									return;
+								}
 							}
-
 						}
 					};
 
@@ -1855,7 +1867,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 						if (processPDBfile) {
 							PDB pdb = new PDB(value, "", "", "");
-							processPDBFile(msgINFO, taskMonitor, pdb, ptnSource);
+							processPDBFile(msgINFO, taskMonitor, pdb, ptnSource, false);
 						} else
 							processPDBorCiFfileWithSpecificChain(taskMonitor, pdbFile, ptnSource, HasMoreThanOneChain,
 									value);
@@ -1958,7 +1970,8 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 	 * @param ptn         protein
 	 * @throws Exception
 	 */
-	public void processPDBFile(String msgINFO, TaskMonitor taskMonitor, PDB pdbID, Protein ptn) throws Exception {
+	public void processPDBFile(String msgINFO, TaskMonitor taskMonitor, PDB pdbID, Protein ptn, boolean isAlphaFold)
+			throws Exception {
 
 		msgINFO = "Creating tmp PDB file...";
 
@@ -1966,27 +1979,35 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			textLabel_status_result.setText(msgINFO);
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, msgINFO);
 
-		if (pdbID.resolution.equals("SMR")) {// It means that there is no PDB ID stored on
-			// Uniprot, but there is a SWISS-MODEL
+		if (!isAlphaFold) {
 
-			String new_pdbID = Util.getPDBidOrURLFromSwissModel(pdbID.entry, ptn.checksum, taskMonitor);
-			pdbID.entry = new_pdbID;
+			if (pdbID.resolution.equals("SMR")) {// It means that there is no PDB ID stored on
+				// Uniprot, but there is a SWISS-MODEL
 
-			if (new_pdbID.isBlank() || new_pdbID.isEmpty()) {
+				String new_pdbID = Util.getPDBidOrURLFromSwissModel(pdbID.entry, ptn.checksum, taskMonitor);
+				pdbID.entry = new_pdbID;
 
-				if (textLabel_status_result != null) {
+				if (new_pdbID.isBlank() || new_pdbID.isEmpty()) {
 
-					textLabel_status_result.setText("ERROR: Check Task History.");
-					pyMOLButton.setEnabled(true);
+					if (textLabel_status_result != null) {
+
+						textLabel_status_result.setText("ERROR: Check Task History.");
+						pyMOLButton.setEnabled(true);
+					}
+
+					taskMonitor.showMessage(TaskMonitor.Level.ERROR,
+							"There is no PDB for the protein: " + ptn.proteinID);
+					return;
 				}
 
-				taskMonitor.showMessage(TaskMonitor.Level.ERROR, "There is no PDB for the protein: " + ptn.proteinID);
-				return;
 			}
-
 		}
 
-		String pdbFile = ProteinStructureManager.createPDBFile(pdbID.entry, taskMonitor);
+		String pdbID_entry = ptn.proteinID;
+		if (!isAlphaFold)
+			pdbID_entry = pdbID.entry;
+
+		String pdbFile = ProteinStructureManager.createPDBFile(pdbID_entry, isAlphaFold, taskMonitor);
 		if (pdbFile.equals("ERROR")) {
 
 			if (textLabel_status_result != null) {
@@ -2009,7 +2030,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		// tmpPyMOLScriptFile[0-> PyMOL script file name]
 		String[] tmpPyMOLScriptFile = ProteinStructureManager.createPyMOLScriptFileUnknowChain(ptn, intraLinks,
-				taskMonitor, pdbFile, pdbID.entry);
+				taskMonitor, pdbFile, pdbID_entry);
 
 		if (tmpPyMOLScriptFile[0].equals("CHAINS")) {
 
@@ -2140,7 +2161,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		}
 
 		// ############################################################################
-		
+
 		this.hideNodeResidues();
 	}
 
@@ -2209,7 +2230,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		}
 
 	}
-	
+
 	/**
 	 * Method responsible for hiding nodes residues
 	 */

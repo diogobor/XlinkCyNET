@@ -244,61 +244,74 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 		source_node_name = (String) myCurrentRow.getRaw(CyNetwork.NAME);
 
 		String msgINFO = "";
-		List<PDB> pdbIdsSource = ptnSource.pdbIds;
 
-		if (pdbIdsSource.size() > 0) {
+		if (!Util.useAlphaFold) {
 
-			taskMonitor.showMessage(Level.INFO, "Selecting target node: " + targetNode.getSUID());
-			myCurrentRow = myNetwork.getRow(targetNode);
+//			String pdbFile_source = ProteinStructureManager.createPDBFile(ptnSource.proteinID, Util.useAlphaFold, taskMonitor);
+//
+//			try {
+//				SingleNodeTask.processPDBFile(msgINFO, taskMonitor, null, ptnSource, Util.useAlphaFold);
+//			} catch (Exception e) {
+//				taskMonitor.showMessage(TaskMonitor.Level.ERROR, e.getMessage());
+//			}
 
-			taskMonitor.showMessage(Level.INFO, "Getting PDB information...");
-			Protein ptnTarget = Util.getPDBidFromUniprot(myCurrentRow, taskMonitor);
-			target_node_name = (String) myCurrentRow.getRaw(CyNetwork.NAME);
+//		} else {
+			List<PDB> pdbIdsSource = ptnSource.pdbIds;
 
-			List<PDB> pdbIdsTarget = ptnTarget.pdbIds;
-			if (pdbIdsTarget.size() > 0) {
+			if (pdbIdsSource.size() > 0) {
 
-				List<String> pdbIdsSourceList = new ArrayList<String>();
-				pdbIdsSource.forEach(id -> pdbIdsSourceList.add(id.entry));
-				List<String> pdbIdsTargetList = new ArrayList<String>();
-				pdbIdsTarget.forEach(id -> pdbIdsTargetList.add(id.entry));
+				taskMonitor.showMessage(Level.INFO, "Selecting target node: " + targetNode.getSUID());
+				myCurrentRow = myNetwork.getRow(targetNode);
 
-				List<PDB> result = pdbIdsSource.stream().filter(os -> pdbIdsTarget.stream() // filter
-						.anyMatch(ns -> // compare both
-						os.entry.equals(ns.entry))).collect(Collectors.toList());
+				taskMonitor.showMessage(Level.INFO, "Getting PDB information...");
+				Protein ptnTarget = Util.getPDBidFromUniprot(myCurrentRow, taskMonitor);
+				target_node_name = (String) myCurrentRow.getRaw(CyNetwork.NAME);
 
-				if (result.size() == 0) {
-					taskMonitor.showMessage(Level.ERROR,
-							"There is no common PDB for nodes: " + source_node_name + " and " + target_node_name + ".");
+				List<PDB> pdbIdsTarget = ptnTarget.pdbIds;
+				if (pdbIdsTarget.size() > 0) {
 
-					throw new Exception(
-							"There is no common PDB for nodes: " + source_node_name + " and " + target_node_name + ".");
-				}
+					List<String> pdbIdsSourceList = new ArrayList<String>();
+					pdbIdsSource.forEach(id -> pdbIdsSourceList.add(id.entry));
+					List<String> pdbIdsTargetList = new ArrayList<String>();
+					pdbIdsTarget.forEach(id -> pdbIdsTargetList.add(id.entry));
 
-				if (result.size() > 1) {
+					List<PDB> result = pdbIdsSource.stream().filter(os -> pdbIdsTarget.stream() // filter
+							.anyMatch(ns -> // compare both
+							os.entry.equals(ns.entry))).collect(Collectors.toList());
 
-					List<PDB> pdbIds = new ArrayList<PDB>(result);
-					// Open a window to select only one PDB
-					SingleNodeTask.getPDBInformation(pdbIds, msgINFO, taskMonitor, ptnSource, ptnTarget, true, "",
-							false, true, source_node_name + "#" + target_node_name, false);
+					if (result.size() == 0) {
+						taskMonitor.showMessage(Level.ERROR, "There is no common PDB for nodes: " + source_node_name
+								+ " and " + target_node_name + ".");
+
+						throw new Exception("There is no common PDB for nodes: " + source_node_name + " and "
+								+ target_node_name + ".");
+					}
+
+					if (result.size() > 1) {
+
+						List<PDB> pdbIds = new ArrayList<PDB>(result);
+						// Open a window to select only one PDB
+						SingleNodeTask.getPDBInformation(pdbIds, msgINFO, taskMonitor, ptnSource, ptnTarget, true, "",
+								false, true, source_node_name + "#" + target_node_name, false);
+
+					} else {
+
+						MainSingleEdgeTask.processPDBFile(taskMonitor, ((PDB) result.iterator().next()).entry,
+								ptnSource, ptnTarget, source_node_name + "#" + target_node_name, false, "");
+
+					}
 
 				} else {
+					taskMonitor.showMessage(Level.ERROR, "There is no PDB for the target node: " + target_node_name);
 
-					MainSingleEdgeTask.processPDBFile(taskMonitor, ((PDB) result.iterator().next()).entry, ptnSource,
-							ptnTarget, source_node_name + "#" + target_node_name, false, "");
-
+					throw new Exception("There is no PDB for the target node: " + target_node_name + ".");
 				}
 
 			} else {
-				taskMonitor.showMessage(Level.ERROR, "There is no PDB for the target node: " + target_node_name);
+				taskMonitor.showMessage(Level.ERROR, "There is no PDB for the source node: " + source_node_name);
 
-				throw new Exception("There is no PDB for the target node: " + target_node_name + ".");
+				throw new Exception("There is no PDB for the source node: " + source_node_name + ".");
 			}
-
-		} else {
-			taskMonitor.showMessage(Level.ERROR, "There is no PDB for the source node: " + source_node_name);
-
-			throw new Exception("There is no PDB for the source node: " + source_node_name + ".");
 		}
 
 	}
@@ -324,7 +337,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 				return;
 			}
 
-			SingleNodeTask.processPDBFile(msgINFO, taskMonitor, pdbID, ptn);
+			SingleNodeTask.processPDBFile(msgINFO, taskMonitor, pdbID, ptn, Util.useAlphaFold);
 
 		} else {
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "There is no PDB for the protein: " + ptn.proteinID);
@@ -341,7 +354,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 	 * @param ptnSource   protein source
 	 * @param ptnTarget   protein target
 	 * @param nodeName    node name
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public static void processPDBFile(TaskMonitor taskMonitor, String pdbID, Protein ptnSource, Protein ptnTarget,
 			String nodeName, boolean processTarget, String proteinChain_proteinSource) throws Exception {
@@ -419,7 +432,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 
 			taskMonitor.showMessage(TaskMonitor.Level.INFO, "Creating tmp PDB file...");
 
-			pdbFile = ProteinStructureManager.createPDBFile(pdbID, taskMonitor);
+			pdbFile = ProteinStructureManager.createPDBFile(pdbID, false, taskMonitor);
 			if (pdbFile.equals("ERROR")) {
 
 				taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Error creating PDB file.");
@@ -499,7 +512,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 	 * @param ptnSource           protein source
 	 * @param ptnTarget           protein target
 	 * @param proteinChain_target chain of protein target
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public static void processPDBorCIFfileWithSpecificChain(TaskMonitor taskMonitor, Protein ptnSource,
 			Protein ptnTarget, String proteinChain_target) throws Exception {
@@ -539,7 +552,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 					"No sequence has been found in pdb/cif file for: " + target_node_name);
 
 			throw new Exception("No sequence has been found in pdb/cif file for: " + target_node_name);
-			
+
 		}
 
 		// Filter cross-links to obtain only links that belong to source and target

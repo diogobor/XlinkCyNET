@@ -105,7 +105,7 @@ public class ProteinStructureManager {
 	 * @param taskMonitor task monitor
 	 * @return file name
 	 */
-	public static String createPDBFile(String pdbID, TaskMonitor taskMonitor) {
+	public static String createPDBFile(String pdbID, boolean isAlphaFold, TaskMonitor taskMonitor) {
 
 		String finalStr = "";
 		File f = null;
@@ -113,15 +113,23 @@ public class ProteinStructureManager {
 		try {
 
 			String[] returnFile = null;
-			if (pdbID.startsWith("https://swissmodel.expasy.org/repository/")) {
-				// Download file from SwissModel server
-				returnFile = Util.getPDBfileFromSwissModelServer(pdbID, taskMonitor);
 
+			if (isAlphaFold) {
+
+				// Download file from AlphaFold server
+				returnFile = Util.getPDBfileFromAlphaFoldServer(pdbID, taskMonitor);
+				
 			} else {
+				if (pdbID.startsWith("https://swissmodel.expasy.org/repository/")) {
+					// Download file from SwissModel server
+					returnFile = Util.getPDBfileFromSwissModelServer(pdbID, taskMonitor);
 
-				// Retrieving file from RCSB server
-				// [PDB or CIF, file content]
-				returnFile = Util.getPDBorCIFfileFromServer(pdbID, taskMonitor);
+				} else {
+
+					// Retrieving file from RCSB server
+					// [PDB or CIF, file content]
+					returnFile = Util.getPDBorCIFfileFromServer(pdbID, taskMonitor);
+				}
 			}
 
 			// write this script to tmp file and return path
