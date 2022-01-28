@@ -1073,48 +1073,64 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 							Protein ptn = Util.getPDBidFromUniprot(myCurrentRow, taskMonitor);
 
-							if (Util.useAlphaFold) {
+							if (ptn.proteinID == null || ptn.proteinID.isBlank() || ptn.proteinID.isEmpty()) {
 
-								try {
-									processPDBFile(msgINFO, taskMonitor, null, ptn, Util.useAlphaFold);
-								} catch (Exception e) {
-									taskMonitor.showMessage(TaskMonitor.Level.ERROR, e.getMessage());
-								}
+								String node_name = myNetwork.getDefaultNodeTable().getRow(node.getSUID())
+										.get(CyNetwork.NAME, String.class);
+
+								textLabel_status_result.setText("ERROR: Check Task History.");
+								taskMonitor.showMessage(TaskMonitor.Level.ERROR,
+										"Accession number is invalid for the protein: " + node_name);
+
+								if (pyMOLButton != null)
+									pyMOLButton.setEnabled(true);
+								return;
 
 							} else {
 
-								List<PDB> pdbIds = ptn.pdbIds;
-								if (pdbIds.size() > 0) {
-									PDB pdbID = pdbIds.get(0);
-
-									if (pdbIds.size() > 1) {
-
-										// Open a window to select only one PDB
-										getPDBInformation(pdbIds, msgINFO, taskMonitor, ptn, null, true, "", false,
-												false, (String) myCurrentRow.getRaw(CyNetwork.NAME), false);
-
-										try {
-											pyMOLThread.join();
-										} catch (InterruptedException e) {
-											e.printStackTrace();
-										}
-									}
+								if (Util.useAlphaFold) {
 
 									try {
-										processPDBFile(msgINFO, taskMonitor, pdbID, ptn, Util.useAlphaFold);
+										processPDBFile(msgINFO, taskMonitor, null, ptn, Util.useAlphaFold);
 									} catch (Exception e) {
 										taskMonitor.showMessage(TaskMonitor.Level.ERROR, e.getMessage());
 									}
 
 								} else {
 
-									textLabel_status_result.setText("ERROR: Check Task History.");
-									taskMonitor.showMessage(TaskMonitor.Level.ERROR,
-											"There is no PDB for the protein: " + ptn.proteinID);
+									List<PDB> pdbIds = ptn.pdbIds;
+									if (pdbIds.size() > 0) {
+										PDB pdbID = pdbIds.get(0);
 
-									if (pyMOLButton != null)
-										pyMOLButton.setEnabled(true);
-									return;
+										if (pdbIds.size() > 1) {
+
+											// Open a window to select only one PDB
+											getPDBInformation(pdbIds, msgINFO, taskMonitor, ptn, null, true, "", false,
+													false, (String) myCurrentRow.getRaw(CyNetwork.NAME), false);
+
+											try {
+												pyMOLThread.join();
+											} catch (InterruptedException e) {
+												e.printStackTrace();
+											}
+										}
+
+										try {
+											processPDBFile(msgINFO, taskMonitor, pdbID, ptn, Util.useAlphaFold);
+										} catch (Exception e) {
+											taskMonitor.showMessage(TaskMonitor.Level.ERROR, e.getMessage());
+										}
+
+									} else {
+
+										textLabel_status_result.setText("ERROR: Check Task History.");
+										taskMonitor.showMessage(TaskMonitor.Level.ERROR,
+												"There is no PDB for the protein: " + ptn.proteinID);
+
+										if (pyMOLButton != null)
+											pyMOLButton.setEnabled(true);
+										return;
+									}
 								}
 							}
 						}
