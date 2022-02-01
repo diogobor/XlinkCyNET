@@ -31,7 +31,6 @@ import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
@@ -1895,7 +1894,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 									processTarget, "");
 						else
 							MainSingleEdgeTask.processPDBorCIFfileWithSpecificChain(taskMonitor, ptnSource, ptnTarget,
-									value);
+									value, pdbFile, pdbFile);
 
 					}
 				} catch (Exception e) {
@@ -2023,7 +2022,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 		if (!isAlphaFold)
 			pdbID_entry = pdbID.entry;
 
-		String pdbFile = ProteinStructureManager.createPDBFile(pdbID_entry, isAlphaFold, taskMonitor);
+		String pdbFile = ProteinStructureManager.createPDBFile(pdbID_entry, isAlphaFold, false, taskMonitor);
 		if (pdbFile.equals("ERROR")) {
 
 			if (textLabel_status_result != null) {

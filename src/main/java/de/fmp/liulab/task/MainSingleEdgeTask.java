@@ -245,17 +245,55 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 
 		String msgINFO = "";
 
-		if (!Util.useAlphaFold) {
+		if (Util.useAlphaFold) {
 
-//			String pdbFile_source = ProteinStructureManager.createPDBFile(ptnSource.proteinID, Util.useAlphaFold, taskMonitor);
-//
-//			try {
-//				SingleNodeTask.processPDBFile(msgINFO, taskMonitor, null, ptnSource, Util.useAlphaFold);
-//			} catch (Exception e) {
-//				taskMonitor.showMessage(TaskMonitor.Level.ERROR, e.getMessage());
-//			}
+			String pdbFile_source = ProteinStructureManager.createPDBFile(ptnSource.proteinID, Util.useAlphaFold, false,
+					taskMonitor);
 
-//		} else {
+			if (pdbFile_source.equals("ERROR")) {
+
+				taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Error creating PDB file.");
+
+				JOptionPane.showMessageDialog(null, "Error creating PDB file. Check Task History for more details.",
+						"XlinkCyNET - Alert", JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+
+			taskMonitor.showMessage(Level.INFO, "Selecting target node: " + sourceNode.getSUID());
+			myCurrentRow = myNetwork.getRow(targetNode);
+
+			taskMonitor.showMessage(Level.INFO, "Getting PDB information...");
+			Protein ptnTarget = Util.getPDBidFromUniprot(myCurrentRow, taskMonitor);
+			target_node_name = (String) myCurrentRow.getRaw(CyNetwork.NAME);
+
+			String pdbFile_target = ProteinStructureManager.createPDBFile(ptnTarget.proteinID, Util.useAlphaFold, true,
+					taskMonitor);
+
+			if (pdbFile_target.equals("ERROR")) {
+
+				taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Error creating PDB file.");
+
+				JOptionPane.showMessageDialog(null, "Error creating PDB file. Check Task History for more details.",
+						"XlinkCyNET - Alert", JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+
+			// ### SOURCE #####
+			String proteinChain_proteinSource = "A";
+			// ### TARGET ###
+			String proteinChain_proteinTarget = "B";
+
+			// Set the chain of protein source
+			proteinChain_source = proteinChain_proteinSource;
+
+			HasMoreThanOneChain_proteinTarget = false;
+
+			// At this point we have the selected chain of protein source and one chain of
+			// protein target. So, we can create pymol script
+			processPDBorCIFfileWithSpecificChain(taskMonitor, ptnSource, ptnTarget, proteinChain_proteinTarget,
+					pdbFile_source, pdbFile_target);
+
+		} else {
 			List<PDB> pdbIdsSource = ptnSource.pdbIds;
 
 			if (pdbIdsSource.size() > 0) {
@@ -322,26 +360,38 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB information from Uniprot...");
 
 		Protein ptn = Util.getPDBidFromUniprot(myCurrentRow, taskMonitor);
-		List<PDB> pdbIds = ptn.pdbIds;
-		if (pdbIds.size() > 0) {
 
-			SingleNodeTask.myCurrentRow = myCurrentRow;
-			PDB pdbID = pdbIds.get(0);
+		if (Util.useAlphaFold) {
 
-			if (pdbIds.size() > 1) {
-
-				// Open a window to select only one PDB
-				SingleNodeTask.getPDBInformation(pdbIds, msgINFO, taskMonitor, ptn, null, true, "", false, false,
-						(String) myCurrentRow.getRaw(CyNetwork.NAME), false);
-
-				return;
+			try {
+				SingleNodeTask.processPDBFile(msgINFO, taskMonitor, null, ptn, Util.useAlphaFold);
+			} catch (Exception e) {
+				taskMonitor.showMessage(TaskMonitor.Level.ERROR, e.getMessage());
+				throw new Exception("There is no PDB for the protein: " + ptn.proteinID);
 			}
 
-			SingleNodeTask.processPDBFile(msgINFO, taskMonitor, pdbID, ptn, Util.useAlphaFold);
-
 		} else {
-			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "There is no PDB for the protein: " + ptn.proteinID);
-			throw new Exception("There is no PDB for the protein: " + ptn.proteinID);
+			List<PDB> pdbIds = ptn.pdbIds;
+			if (pdbIds.size() > 0) {
+
+				SingleNodeTask.myCurrentRow = myCurrentRow;
+				PDB pdbID = pdbIds.get(0);
+
+				if (pdbIds.size() > 1) {
+
+					// Open a window to select only one PDB
+					SingleNodeTask.getPDBInformation(pdbIds, msgINFO, taskMonitor, ptn, null, true, "", false, false,
+							(String) myCurrentRow.getRaw(CyNetwork.NAME), false);
+
+					return;
+				}
+
+				SingleNodeTask.processPDBFile(msgINFO, taskMonitor, pdbID, ptn, Util.useAlphaFold);
+
+			} else {
+				taskMonitor.showMessage(TaskMonitor.Level.ERROR, "There is no PDB for the protein: " + ptn.proteinID);
+				throw new Exception("There is no PDB for the protein: " + ptn.proteinID);
+			}
 		}
 	}
 
@@ -417,7 +467,8 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 					// At this point we have the selected chain of protein source and one chain of
 					// protein target. So, we can create pymol script
 
-					processPDBorCIFfileWithSpecificChain(taskMonitor, ptnSource, ptnTarget, returnPDB_proteinTarget[1]);
+					processPDBorCIFfileWithSpecificChain(taskMonitor, ptnSource, ptnTarget, returnPDB_proteinTarget[1],
+							pdbFile, pdbFile);
 
 				}
 
@@ -425,14 +476,15 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 
 				// At this point we have the selected chain of protein source and one chain of
 				// protein target. So, we can create pymol script
-				processPDBorCIFfileWithSpecificChain(taskMonitor, ptnSource, ptnTarget, proteinChain_proteinTarget);
+				processPDBorCIFfileWithSpecificChain(taskMonitor, ptnSource, ptnTarget, proteinChain_proteinTarget,
+						pdbFile, pdbFile);
 			}
 
 		} else { // Process protein source
 
 			taskMonitor.showMessage(TaskMonitor.Level.INFO, "Creating tmp PDB file...");
 
-			pdbFile = ProteinStructureManager.createPDBFile(pdbID, false, taskMonitor);
+			pdbFile = ProteinStructureManager.createPDBFile(pdbID, false, false, taskMonitor);
 			if (pdbFile.equals("ERROR")) {
 
 				taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Error creating PDB file.");
@@ -515,19 +567,20 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 	 * @throws Exception
 	 */
 	public static void processPDBorCIFfileWithSpecificChain(TaskMonitor taskMonitor, Protein ptnSource,
-			Protein ptnTarget, String proteinChain_target) throws Exception {
+			Protein ptnTarget, String proteinChain_target, String pdbFile_source, String pdbFile_target)
+			throws Exception {
 
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Chain of protein target: " + proteinChain_target);
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting sequence of protein source: " + source_node_name);
 
 		String proteinSequence_source_FromPDBFile = "";
 
-		if (pdbFile.endsWith("pdb"))
+		if (pdbFile_source.endsWith("pdb"))
 			proteinSequence_source_FromPDBFile = ProteinStructureManager.getProteinSequenceFromPDBFileWithSpecificChain(
-					pdbFile, ptnSource, taskMonitor, proteinChain_source, false);
+					pdbFile_source, ptnSource, taskMonitor, proteinChain_source, false);
 		else
 			proteinSequence_source_FromPDBFile = ProteinStructureManager.getProteinSequenceFromCIFFileWithSpecificChain(
-					pdbFile, ptnSource, taskMonitor, proteinChain_source, false);
+					pdbFile_source, ptnSource, taskMonitor, proteinChain_source, false);
 
 		if (proteinSequence_source_FromPDBFile.isBlank() || proteinSequence_source_FromPDBFile.isEmpty()) {
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR,
@@ -540,12 +593,12 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 
 		String proteinSequence_target_FromPDBFile = "";
 
-		if (pdbFile.endsWith("pdb"))
+		if (pdbFile_target.endsWith("pdb"))
 			proteinSequence_target_FromPDBFile = ProteinStructureManager.getProteinSequenceFromPDBFileWithSpecificChain(
-					pdbFile, ptnTarget, taskMonitor, proteinChain_target, true);
+					pdbFile_target, ptnTarget, taskMonitor, proteinChain_target, true);
 		else
 			proteinSequence_target_FromPDBFile = ProteinStructureManager.getProteinSequenceFromCIFFileWithSpecificChain(
-					pdbFile, ptnTarget, taskMonitor, proteinChain_target, true);
+					pdbFile_target, ptnTarget, taskMonitor, proteinChain_target, true);
 
 		if (proteinSequence_target_FromPDBFile.isBlank() || proteinSequence_target_FromPDBFile.isEmpty()) {
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR,
@@ -566,9 +619,10 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 		});
 
 		String tmpPyMOLScriptFile = ProteinStructureManager.createPyMOLScriptFile(ptnSource, ptnTarget, crosslinks,
-				taskMonitor, pdbFile, proteinSequence_source_FromPDBFile, proteinSequence_target_FromPDBFile,
-				HasMoreThanOneChain_proteinSource, HasMoreThanOneChain_proteinTarget, proteinChain_source,
-				proteinChain_target, source_node_name, target_node_name);
+				taskMonitor, pdbFile_source, pdbFile_target, proteinSequence_source_FromPDBFile,
+				proteinSequence_target_FromPDBFile, HasMoreThanOneChain_proteinSource,
+				HasMoreThanOneChain_proteinTarget, proteinChain_source, proteinChain_target, source_node_name,
+				target_node_name);
 
 		if (tmpPyMOLScriptFile.equals("ERROR")) {
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Error creating PyMOL script file.");

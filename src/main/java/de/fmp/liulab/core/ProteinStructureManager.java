@@ -105,7 +105,8 @@ public class ProteinStructureManager {
 	 * @param taskMonitor task monitor
 	 * @return file name
 	 */
-	public static String createPDBFile(String pdbID, boolean isAlphaFold, TaskMonitor taskMonitor) {
+	public static String createPDBFile(String pdbID, boolean isAlphaFold, boolean modifyChain,
+			TaskMonitor taskMonitor) {
 
 		String finalStr = "";
 		File f = null;
@@ -117,8 +118,8 @@ public class ProteinStructureManager {
 			if (isAlphaFold) {
 
 				// Download file from AlphaFold server
-				returnFile = Util.getPDBfileFromAlphaFoldServer(pdbID, taskMonitor);
-				
+				returnFile = Util.getPDBfileFromAlphaFoldServer(pdbID, modifyChain, taskMonitor);
+
 			} else {
 				if (pdbID.startsWith("https://swissmodel.expasy.org/repository/")) {
 					// Download file from SwissModel server
@@ -218,7 +219,7 @@ public class ProteinStructureManager {
 	 * @param ptnSource                          protein source
 	 * @param crossLinks                         crosslinks
 	 * @param taskMonitor                        task monitor
-	 * @param pdbFile                            pdb file name
+	 * @param pdbFile_source                     pdb file name
 	 * @param proteinSequence_source_FromPDBFile protein sequence in PDB file
 	 * @param HasMoreThanOneChain                it has more than one chain in PDB
 	 *                                           file
@@ -228,10 +229,10 @@ public class ProteinStructureManager {
 	 * @return pymol script file name
 	 */
 	public static String createPyMOLScriptFile(Protein ptnSource, Protein ptnTarget, List<CrossLink> crossLinks,
-			TaskMonitor taskMonitor, String pdbFile, String proteinSequence_source_FromPDBFile,
-			String proteinSequence_target_FromPDBFile, boolean HasMoreThanOneChain_proteinSource,
-			boolean HasMoreThanOneChain_proteinTarget, String proteinChain_source, String proteinChain_target,
-			String nodeName_source, String nodeName_target) {
+			TaskMonitor taskMonitor, String pdbFile_source, String pdbFile_target,
+			String proteinSequence_source_FromPDBFile, String proteinSequence_target_FromPDBFile,
+			boolean HasMoreThanOneChain_proteinSource, boolean HasMoreThanOneChain_proteinTarget,
+			String proteinChain_source, String proteinChain_target, String nodeName_source, String nodeName_target) {
 
 		// write this script to tmp file and return path
 		File f = getTmpFile(ptnSource.proteinID + "_" + ptnTarget.proteinID, "pml", taskMonitor);
@@ -251,7 +252,7 @@ public class ProteinStructureManager {
 				return "ERROR";
 			}
 
-			finalStr = createPyMOLScript(taskMonitor, ptnSource, ptnTarget, crossLinks, pdbFile,
+			finalStr = createPyMOLScript(taskMonitor, ptnSource, ptnTarget, crossLinks, pdbFile_source, pdbFile_target,
 					HasMoreThanOneChain_proteinSource, HasMoreThanOneChain_proteinTarget, proteinChain_source,
 					proteinChain_target, proteinSequence_source_FromPDBFile, proteinSequence_target_FromPDBFile,
 					nodeName_source, nodeName_target);
@@ -365,7 +366,7 @@ public class ProteinStructureManager {
 
 		return new String[] { f.getAbsolutePath() };
 	}
-
+	
 	/**
 	 * Get chain from the PDB fasta file
 	 * 
@@ -552,19 +553,25 @@ public class ProteinStructureManager {
 	 * @return script
 	 */
 	private static String createPyMOLScript(TaskMonitor taskMonitor, Protein ptnSource, Protein ptnTarget,
-			List<CrossLink> crossLinks, String pdbFile, boolean HasMoreThanOneChain_proteinSource,
-			boolean HasMoreThanOneChain_proteinTarget, String proteinChain_source, String proteinChain_target,
-			String proteinSequence_source_FromPDBFile, String proteinSequence_target_FromPDBFile,
-			String nodeName_source, String nodeName_target) {
+			List<CrossLink> crossLinks, String pdbFile_source, String pdbFile_target,
+			boolean HasMoreThanOneChain_proteinSource, boolean HasMoreThanOneChain_proteinTarget,
+			String proteinChain_source, String proteinChain_target, String proteinSequence_source_FromPDBFile,
+			String proteinSequence_target_FromPDBFile, String nodeName_source, String nodeName_target) {
 
 		// [0]-> Path
 		// [1]-> File name
 		taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB file name...");
 
-		String[] pdbFilePathName = getPDBFilePathName(pdbFile);
+		String[] pdbFilePathName_source = getPDBFilePathName(pdbFile_source);
+		String[] pdbFilePathName_target = null;
+		if (!pdbFile_source.equals(pdbFile_target)) {
+			pdbFilePathName_target = getPDBFilePathName(pdbFile_target);
+		}
 		StringBuilder sbScript = new StringBuilder();
-		sbScript.append("cd " + pdbFilePathName[0] + "\n");
-		sbScript.append("load " + pdbFilePathName[1] + "\n");
+		sbScript.append("cd " + pdbFilePathName_source[0] + "\n");
+		sbScript.append("load " + pdbFilePathName_source[1] + "\n");
+		if (!pdbFile_source.equals(pdbFile_target))
+			sbScript.append("load " + pdbFilePathName_target[1] + "\n");
 		sbScript.append("set ignore_case, 0\n");
 		sbScript.append("select chain_" + proteinChain_source + ", chain " + proteinChain_source + "\n");
 		sbScript.append("select chain_" + proteinChain_target + ", chain " + proteinChain_target + "\n");

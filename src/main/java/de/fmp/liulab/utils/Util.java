@@ -3908,7 +3908,7 @@ public class Util {
 	 * @param pdbID protein id
 	 * @return pdb file name
 	 */
-	public static String[] getPDBfileFromAlphaFoldServer(String pdbID, TaskMonitor taskMonitor) {
+	public static String[] getPDBfileFromAlphaFoldServer(String pdbID, boolean modifyChain, TaskMonitor taskMonitor) {
 
 		try {
 			String _url = "https://alphafold.ebi.ac.uk/files/AF-" + pdbID + "-F1-model_v2.pdb";
@@ -3953,7 +3953,12 @@ public class Util {
 					}
 				}
 				rd.close();
-				return new String[] { "PDB", response.toString() };
+
+				String final_response = response.toString();
+				if (modifyChain) {
+					final_response = final_response.replaceAll(" A ", " B ");
+				}
+				return new String[] { "PDB", final_response };
 
 			} else {
 
