@@ -17,6 +17,8 @@ XlinkCyNET can be downloaded at Cytoscape App Store (https://apps.cytoscape.org/
 
 ↪ Map cross-links on high-resolution structures through PyMOL.
 
+↪ AlphaFold is possible to be used to retrieve protein structures.
+
 ### Automation
 
 &#8618; XlinkCyNET supports Cytoscape Automation from both commands and CyREST by providing ten different commands: <br/>
