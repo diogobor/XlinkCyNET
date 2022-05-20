@@ -98,7 +98,7 @@ public class CyActivator extends AbstractCyActivator {
 	public void start(BundleContext bc) {
 
 		// #### 1 - ABOUT ####
-		
+
 		OpenBrowser openBrowser = getService(bc, OpenBrowser.class);
 		String version = bc.getBundle().getVersion().toString();
 		ControlURLAction controlURLAction = new ControlURLAction(openBrowser, version);
@@ -191,8 +191,8 @@ public class CyActivator extends AbstractCyActivator {
 		TaskFactory mySingleNodeContextMenuFactory = new MainSingleNodeTaskFactory(cyApplicationManager, vmmServiceRef,
 				customChartListener, bendFactory, handleFactory, true);
 
-		TaskFactory mySingleEdgeContextMenuFactory = new MainSingleEdgeTaskFactory(cyApplicationManager, vmmServiceRef,
-				customChartListener, bendFactory, handleFactory, true);
+		MainSingleEdgeTaskFactory mySingleEdgeContextMenuFactory = new MainSingleEdgeTaskFactory(cyApplicationManager,
+				vmmServiceRef, customChartListener, bendFactory, handleFactory, true);
 
 		CyNodeViewContextMenuFactory myNodeViewContextMenuFactory = new MainNodeContextMenu(
 				mySingleNodeContextMenuFactory, dialogTaskManager);
@@ -385,7 +385,8 @@ public class CyActivator extends AbstractCyActivator {
 		exportMonolinksProperties.setProperty(COMMAND_NAMESPACE, XLINKCYNET_COMMAND_NAMESPACE);
 		exportMonolinksProperties.setProperty(COMMAND, "exportMonolinks");
 		exportMonolinksProperties.setProperty(COMMAND_DESCRIPTION, ExportMonolinksCommandTaskFactory.DESCRIPTION);
-		exportMonolinksProperties.setProperty(COMMAND_LONG_DESCRIPTION, ExportMonolinksCommandTaskFactory.LONG_DESCRIPTION);
+		exportMonolinksProperties.setProperty(COMMAND_LONG_DESCRIPTION,
+				ExportMonolinksCommandTaskFactory.LONG_DESCRIPTION);
 		exportMonolinksProperties.setProperty(COMMAND_EXAMPLE_JSON, ExportMonolinksCommandTask.getExample());
 		exportMonolinksProperties.setProperty(COMMAND_SUPPORTS_JSON, "true");
 

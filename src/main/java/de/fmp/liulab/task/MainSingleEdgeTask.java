@@ -75,9 +75,10 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 	 * @param forcedWindowOpen
 	 * @param isCommandLine
 	 */
+	@SuppressWarnings("static-access")
 	public MainSingleEdgeTask(CyApplicationManager cyApplicationManager, final VisualMappingManager vmmServiceRef,
 			CyCustomGraphics2Factory<?> vgFactory, BendFactory bendFactory, HandleFactory handleFactory,
-			boolean forcedWindowOpen, boolean isCommandLine) {
+			boolean forcedWindowOpen, boolean isCommandLine, String customizedPDBFile) {
 
 		this.cyApplicationManager = cyApplicationManager;
 		this.netView = cyApplicationManager.getCurrentNetworkView();
@@ -87,6 +88,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 		this.bendFactory = bendFactory;
 		this.handleFactory = handleFactory;
 		this.IsCommandLine = isCommandLine;
+		this.pdbFile = customizedPDBFile;
 
 		SingleNodeTask = new MainSingleNodeTask(cyApplicationManager, vmmServiceRef, vgFactory, bendFactory,
 				handleFactory, forcedWindowOpen, isCommandLine);
@@ -159,6 +161,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 	 * @param taskMonitor
 	 * @throws Exception
 	 */
+	@SuppressWarnings("static-access")
 	private void executeSingleEdge(final TaskMonitor taskMonitor) throws Exception {
 
 		String edge_name = myNetwork.getDefaultEdgeTable().getRow(edge.getSUID()).get(CyNetwork.NAME, String.class);
@@ -240,12 +243,17 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 		myCurrentRow = myNetwork.getRow(sourceNode);
 
 		taskMonitor.showMessage(Level.INFO, "Getting PDB information...");
-		Protein ptnSource = Util.getPDBidFromUniprot(myCurrentRow, taskMonitor);
+		Protein ptnSource;
+		if (!Util.useCustomizedPDB) {
+			ptnSource = Util.getPDBidFromUniprot(myCurrentRow, taskMonitor);
+		} else {
+			ptnSource = Util.getProteinFromUniprot(myCurrentRow, taskMonitor);
+		}
 		source_node_name = (String) myCurrentRow.getRaw(CyNetwork.NAME);
 
 		String msgINFO = "";
 
-		if (Util.useAlphaFold) {
+		if (!Util.useCustomizedPDB && Util.useAlphaFold) {
 
 			String pdbFile_source = ProteinStructureManager.createPDBFile(ptnSource.proteinID, Util.useAlphaFold, false,
 					taskMonitor);
@@ -293,7 +301,8 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 			processPDBorCIFfileWithSpecificChain(taskMonitor, ptnSource, ptnTarget, proteinChain_proteinTarget,
 					pdbFile_source, pdbFile_target);
 
-		} else {
+		} else if (!Util.useCustomizedPDB) {
+
 			List<PDB> pdbIdsSource = ptnSource.pdbIds;
 
 			if (pdbIdsSource.size() > 0) {
@@ -334,8 +343,8 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 
 					} else {
 
-						MainSingleEdgeTask.processPDBFile(taskMonitor, ((PDB) result.iterator().next()).entry,
-								ptnSource, ptnTarget, source_node_name + "#" + target_node_name, false, "");
+						processPDBFile(taskMonitor, ((PDB) result.iterator().next()).entry, ptnSource, ptnTarget,
+								source_node_name + "#" + target_node_name, false, "", Util.useCustomizedPDB);
 
 					}
 
@@ -350,6 +359,17 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 
 				throw new Exception("There is no PDB for the source node: " + source_node_name + ".");
 			}
+		} else {
+
+			taskMonitor.showMessage(Level.INFO, "Selecting target node: " + targetNode.getSUID());
+			myCurrentRow = myNetwork.getRow(targetNode);
+
+			Protein ptnTarget = Util.getProteinFromUniprot(myCurrentRow, taskMonitor);
+			target_node_name = (String) myCurrentRow.getRaw(CyNetwork.NAME);
+
+			processPDBFile(taskMonitor, "", ptnSource, ptnTarget, source_node_name + "#" + target_node_name, false, "",
+					Util.useCustomizedPDB);
+
 		}
 
 	}
@@ -407,7 +427,8 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 	 * @throws Exception
 	 */
 	public static void processPDBFile(TaskMonitor taskMonitor, String pdbID, Protein ptnSource, Protein ptnTarget,
-			String nodeName, boolean processTarget, String proteinChain_proteinSource) throws Exception {
+			String nodeName, boolean processTarget, String proteinChain_proteinSource, boolean useCustomizedPDBFile)
+			throws Exception {
 
 		if (processTarget) { // process
 
@@ -418,7 +439,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 			HasMoreThanOneChain_proteinTarget = false;
 			boolean foundChain = true;
 			String proteinChain_proteinTarget = ProteinStructureManager.getChainFromPDBFasta(ptnTarget, pdbID,
-					taskMonitor, "");
+					taskMonitor, pdbFile);
 			if (proteinChain_proteinTarget.isBlank() || proteinChain_proteinTarget.isEmpty())
 				foundChain = false;
 
@@ -484,8 +505,11 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 
 			taskMonitor.showMessage(TaskMonitor.Level.INFO, "Creating tmp PDB file...");
 
-			pdbFile = ProteinStructureManager.createPDBFile(pdbID, false, false, taskMonitor);
-			if (pdbFile.equals("ERROR")) {
+			if (!useCustomizedPDBFile) {
+				pdbFile = ProteinStructureManager.createPDBFile(pdbID, false, false, taskMonitor);
+			}
+
+			if (pdbFile.isBlank() || pdbFile.isEmpty() || pdbFile.equals("ERROR")) {
 
 				taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Error creating PDB file.");
 
@@ -496,8 +520,9 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 
 			HasMoreThanOneChain_proteinSource = false;
 			boolean foundChain = true;
+
 			proteinChain_proteinSource = ProteinStructureManager.getChainFromPDBFasta(ptnSource, pdbID, taskMonitor,
-					"");
+					pdbFile);
 			if (proteinChain_proteinSource.isBlank() || proteinChain_proteinSource.isEmpty())
 				foundChain = false;
 
@@ -505,7 +530,7 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 
 				// [pdb protein sequence, protein chain, "true" -> there is more than one chain]
 				String[] returnPDB_proteinSource = null;
-				if (pdbFile.endsWith("pdb")) {
+				if (!pdbFile.isBlank() && !pdbFile.isEmpty() && pdbFile.endsWith("pdb")) {
 
 					taskMonitor.showMessage(TaskMonitor.Level.INFO,
 							"Getting protein sequence and chain of protein source from PDB file...");
@@ -545,14 +570,15 @@ public class MainSingleEdgeTask extends AbstractTask implements ActionListener {
 				} else { // There is only one chain (source)
 
 					// Call this method to obtain the target chain
-					processPDBFile(taskMonitor, pdbID, ptnSource, ptnTarget, nodeName, true,
-							proteinChain_proteinSource);
+					processPDBFile(taskMonitor, pdbID, ptnSource, ptnTarget, nodeName, true, proteinChain_proteinSource,
+							useCustomizedPDBFile);
 				}
 
 			} else {
 
 				// Call this method to obtain the target chain
-				processPDBFile(taskMonitor, pdbID, ptnSource, ptnTarget, nodeName, true, proteinChain_proteinSource);
+				processPDBFile(taskMonitor, pdbID, ptnSource, ptnTarget, nodeName, true, proteinChain_proteinSource,
+						useCustomizedPDBFile);
 			}
 		}
 	}

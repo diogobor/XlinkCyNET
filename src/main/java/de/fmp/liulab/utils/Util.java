@@ -2,6 +2,7 @@ package de.fmp.liulab.utils;
 
 import java.awt.Color;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
@@ -131,6 +132,7 @@ public class Util {
 	public static double interlink_threshold_score = 0;
 	public static double combinedlink_threshold_score = 0;
 	public static boolean useAlphaFold = false;
+	public static boolean useCustomizedPDB = false;
 
 	// Map<Network name, Map<Protein - Node SUID, List<ProteinDomain>>
 	public static Map<String, Map<Long, List<ProteinDomain>>> proteinDomainsMap = new HashMap<String, Map<Long, List<ProteinDomain>>>();
@@ -3650,7 +3652,7 @@ public class Util {
 	 * @param myCurrentRow current row
 	 * @return the proteinID
 	 */
-	private static String getProteinID(CyRow myCurrentRow) {
+	public static String getProteinID(CyRow myCurrentRow) {
 		Object protein_a_name = myCurrentRow.getRaw(PROTEIN_A);
 		Object protein_b_name = myCurrentRow.getRaw(PROTEIN_B);
 
@@ -3690,6 +3692,61 @@ public class Util {
 	}
 
 	/**
+	 * Method responsible for getting information from Uniprot server
+	 * 
+	 * @param proteinID   protein accession number
+	 * @param taskMonitor task monitor
+	 * @throws IOException exception
+	 */
+	private static String getProteinInfoFromUniprot(String proteinID, TaskMonitor taskMonitor) throws IOException {
+
+		String responseString = "";
+		String _url = "https://www.uniprot.org/uniprot/" + proteinID + ".xml";
+		final URL url = new URL(_url);
+		final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+		connection.setRequestMethod("POST");
+		connection.setDoOutput(true);
+		connection.setReadTimeout(300);
+		connection.setConnectTimeout(300);
+		connection.connect();
+
+		if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+
+			// Get Response
+			InputStream inputStream = connection.getErrorStream(); // first check for error.
+			if (inputStream == null) {
+				inputStream = connection.getInputStream();
+			}
+			BufferedReader rd = new BufferedReader(new InputStreamReader(inputStream));
+			String line;
+			StringBuilder response = new StringBuilder();
+			int total_lines = connection.getContentLength();
+
+			int old_progress = 0;
+			int summary_processed = 0;
+			while ((line = rd.readLine()) != null) {
+				response.append(line);
+				response.append('\r');
+
+				summary_processed += line.toCharArray().length + 1;
+				int new_progress = (int) ((double) summary_processed / (total_lines) * 100);
+				if (new_progress > old_progress) {
+					old_progress = new_progress;
+
+					taskMonitor.showMessage(TaskMonitor.Level.INFO,
+							"Downloading protein information from Uniprot: " + old_progress + "%");
+				}
+
+			}
+			rd.close();
+			responseString = response.toString();
+		}
+
+		return responseString;
+
+	}
+
+	/**
 	 * Get post-translational modifications from Uniprot
 	 * 
 	 * @param myCurrentRow current row of the table
@@ -3704,45 +3761,9 @@ public class Util {
 		ArrayList<PTM> ptmList = new ArrayList<PTM>();
 
 		try {
-			String _url = "https://www.uniprot.org/uniprot/" + proteinID + ".xml";
-			final URL url = new URL(_url);
-			final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-			connection.setRequestMethod("POST");
-			connection.setDoOutput(true);
-			connection.setReadTimeout(5000);
-			connection.setConnectTimeout(5000);
-			connection.connect();
+			String responseString = getProteinInfoFromUniprot(proteinID, taskMonitor);
 
-			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-
-				// Get Response
-				InputStream inputStream = connection.getErrorStream(); // first check for error.
-				if (inputStream == null) {
-					inputStream = connection.getInputStream();
-				}
-				BufferedReader rd = new BufferedReader(new InputStreamReader(inputStream));
-				String line;
-				StringBuilder response = new StringBuilder();
-				int total_lines = connection.getContentLength();
-
-				int old_progress = 0;
-				int summary_processed = 0;
-				while ((line = rd.readLine()) != null) {
-					response.append(line);
-					response.append('\r');
-
-					summary_processed += line.toCharArray().length + 1;
-					int new_progress = (int) ((double) summary_processed / (total_lines) * 100);
-					if (new_progress > old_progress) {
-						old_progress = new_progress;
-
-						taskMonitor.showMessage(TaskMonitor.Level.INFO,
-								"Downloading protein information from Uniprot: " + old_progress + "%");
-					}
-
-				}
-				rd.close();
-				String responseString = response.toString();
+			if (!(responseString.isBlank() || responseString.isEmpty())) {
 
 				if (responseString.startsWith("<!DOCTYPE html PUBLIC"))
 					return new ArrayList<PTM>();
@@ -4252,6 +4273,105 @@ public class Util {
 	}
 
 	/**
+	 * Method responsible for parsing protein information from Uniprot
+	 * 
+	 * @param myCurrentRow current row to get protein id
+	 * @param taskMonitor  task monitor
+	 * @return protein
+	 */
+	public static Protein getProteinFromUniprot(CyRow myCurrentRow, TaskMonitor taskMonitor) {
+
+		String proteinID = getProteinID(myCurrentRow);
+		if (proteinID.isBlank() || proteinID.isEmpty()) {
+			return new Protein();
+		}
+
+		try {
+			String responseString = getProteinInfoFromUniprot(proteinID, taskMonitor);
+
+			if (!(responseString.isBlank() || responseString.isEmpty())) {
+
+				if (responseString.startsWith("<!DOCTYPE html PUBLIC"))
+					return new Protein();
+
+				// Use method to convert XML string content to XML Document object
+				Document doc = convertStringToXMLDocument(responseString);
+
+				if (doc == null)
+					return new Protein();
+
+				// check if exists error
+				NodeList xmlnodes = doc.getElementsByTagName("error");
+				if (xmlnodes.getLength() > 0) {
+					throw new Exception("XlinkCyNET ERROR: " + xmlnodes.item(0).getNodeValue());
+				}
+
+				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting protein description...");
+				xmlnodes = doc.getElementsByTagName("recommendedName");
+				if (xmlnodes.getLength() == 0) {
+					xmlnodes = doc.getElementsByTagName("submittedName");
+				}
+				NodeList nodes = xmlnodes.item(0).getChildNodes();
+
+				String fullName = "";
+				for (int i = 0; i < nodes.getLength(); i++) {
+					Node node = nodes.item(i);
+					if (node instanceof Element) {
+						if (node.getNodeName().equals("fullName")) {
+							Node nodeChild = node.getFirstChild();
+							fullName = nodeChild.getNodeValue();
+							break;
+						}
+					}
+				}
+
+				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting gene name...");
+				xmlnodes = doc.getElementsByTagName("gene");
+				nodes = xmlnodes.item(0).getChildNodes();
+
+				String geneName = "";
+				for (int i = 0; i < nodes.getLength(); i++) {
+					Node node = nodes.item(i);
+					if (node instanceof Element) {
+						if (node.getNodeName().equals("name")) {
+							Node nodeChild = node.getFirstChild();
+							geneName = nodeChild.getNodeValue();
+							break;
+						}
+					}
+				}
+
+				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting protein sequence...");
+				xmlnodes = doc.getElementsByTagName("sequence");
+
+				String ptnSequence = "";
+				String checksum = "";
+				for (int i = 0; i < xmlnodes.getLength(); i++) {
+					Node node = xmlnodes.item(i);
+					if (node instanceof Element) {
+						if (node.getAttributes().item(0).getNodeName().equals("checksum")) {
+							checksum = node.getAttributes().item(0).getNodeValue();
+							Node nodeChild = node.getFirstChild();
+							ptnSequence = nodeChild.getNodeValue();
+							break;
+						}
+					}
+				}
+
+				Protein ptn = new Protein(proteinID, geneName, fullName, ptnSequence, checksum, null, null);
+				return ptn;
+
+			} else {
+				return new Protein();
+			}
+
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			return new Protein();
+		}
+	}
+
+	/**
 	 * Get PDB IDs from Uniprot
 	 * 
 	 * @param myCurrentRow current row
@@ -4265,45 +4385,9 @@ public class Util {
 		}
 
 		try {
-			String _url = "https://www.uniprot.org/uniprot/" + proteinID + ".xml";
-			final URL url = new URL(_url);
-			final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-			connection.setRequestMethod("POST");
-			connection.setDoOutput(true);
-			connection.setReadTimeout(5000);
-			connection.setConnectTimeout(5000);
-			connection.connect();
+			String responseString = getProteinInfoFromUniprot(proteinID, taskMonitor);
 
-			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-
-				// Get Response
-				InputStream inputStream = connection.getErrorStream(); // first check for error.
-				if (inputStream == null) {
-					inputStream = connection.getInputStream();
-				}
-				BufferedReader rd = new BufferedReader(new InputStreamReader(inputStream));
-				String line;
-				StringBuilder response = new StringBuilder();
-				int total_lines = connection.getContentLength();
-
-				int old_progress = 0;
-				int summary_processed = 0;
-				while ((line = rd.readLine()) != null) {
-					response.append(line);
-					response.append('\r');
-
-					summary_processed += line.toCharArray().length + 1;
-					int new_progress = (int) ((double) summary_processed / (total_lines) * 100);
-					if (new_progress > old_progress) {
-						old_progress = new_progress;
-
-						taskMonitor.showMessage(TaskMonitor.Level.INFO,
-								"Downloading protein information from Uniprot: " + old_progress + "%");
-					}
-
-				}
-				rd.close();
-				String responseString = response.toString();
+			if (!(responseString.isBlank() || responseString.isEmpty())) {
 
 				if (responseString.startsWith("<!DOCTYPE html PUBLIC"))
 					return new Protein();

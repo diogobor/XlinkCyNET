@@ -42,7 +42,6 @@ import org.cytoscape.view.model.VisualLexicon;
 import org.cytoscape.view.presentation.property.values.BendFactory;
 import org.cytoscape.view.presentation.property.values.HandleFactory;
 import org.cytoscape.view.vizmap.VisualStyle;
-import org.cytoscape.work.TaskMonitor.Level;
 
 import de.fmp.liulab.core.ConfigurationManager;
 import de.fmp.liulab.utils.Util;
@@ -88,6 +87,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 	private static JCheckBox show_links_legend;
 
 	private static JCheckBox useAlphaFold;
+	private static JCheckBox useCustomizedPDB;
 
 	private Properties XlinkCyNETProps;
 
@@ -1240,7 +1240,7 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 		useAlphaFold.setSelected(Util.useAlphaFold);
 		useAlphaFold.setToolTipText("Use AlphaFold for predicting protein structure.");
 		useAlphaFold.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
-		useAlphaFold.setBounds(5, offset_y, 200, 20);
+		useAlphaFold.setBounds(5, offset_y, offset_x - 5, 20);
 		useAlphaFold.addItemListener(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
@@ -1256,6 +1256,28 @@ public class MainControlPanel extends JPanel implements CytoPanelComponent {
 			}
 		});
 		pymol_panel.add(useAlphaFold);
+
+		useCustomizedPDB = new JCheckBox("Use customized PDB file");
+		useCustomizedPDB.setBackground(Color.WHITE);
+		useCustomizedPDB.setSelected(Util.useCustomizedPDB);
+		useCustomizedPDB.setToolTipText("Use customized PDB file to display protein structure.");
+		useCustomizedPDB.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 12));
+		useCustomizedPDB.setBounds(offset_x, offset_y, 200, 20);
+		useCustomizedPDB.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				if (e.getStateChange() == ItemEvent.SELECTED) {// checkbox has been selected
+					Util.useCustomizedPDB = true;
+					XlinkCyNETProps.setProperty("xlinkcynet.useCustomizedPDB", "true");
+
+				} else {
+					Util.useCustomizedPDB = false;
+					XlinkCyNETProps.setProperty("xlinkcynet.useCustomizedPDB", "false");
+				}
+
+			}
+		});
+		pymol_panel.add(useCustomizedPDB);
 	}
 
 	/**

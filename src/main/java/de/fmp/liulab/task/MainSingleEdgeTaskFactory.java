@@ -58,11 +58,16 @@ public class MainSingleEdgeTaskFactory extends AbstractTaskFactory {
 	@Override
 	public TaskIterator createTaskIterator() {
 		return new TaskIterator(new MainSingleEdgeTask(cyApplicationManager, vmmServiceRef, vgFactory, bendFactory,
-				handleFactory, forcedWindowOpen, false));
+				handleFactory, forcedWindowOpen, false, ""));
+	}
+
+	public TaskIterator createTaskIterator(String customizedPDBFile) {
+		return new TaskIterator(new MainSingleEdgeTask(cyApplicationManager, vmmServiceRef, vgFactory, bendFactory,
+				handleFactory, forcedWindowOpen, false, customizedPDBFile));
 	}
 
 	public TaskIterator createTaskIterator(boolean isCommand) {
 		return new TaskIterator(new MainSingleEdgeTask(cyApplicationManager, vmmServiceRef, vgFactory, bendFactory,
-				handleFactory, forcedWindowOpen, isCommand));
+				handleFactory, forcedWindowOpen, isCommand, ""));
 	}
 }

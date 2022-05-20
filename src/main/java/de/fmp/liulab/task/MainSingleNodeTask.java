@@ -33,6 +33,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
 import javax.swing.JComponent;
+import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -74,6 +75,7 @@ import org.cytoscape.work.TaskMonitor.Level;
 
 import de.fmp.liulab.core.ProteinStructureManager;
 import de.fmp.liulab.internal.UpdateViewListener;
+import de.fmp.liulab.internal.view.ExtensionFileFilter;
 import de.fmp.liulab.internal.view.JFrameWithoutMaxAndMinButton;
 import de.fmp.liulab.model.CrossLink;
 import de.fmp.liulab.model.GeneDomain;
@@ -1067,25 +1069,68 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 							}
 
 							if (textLabel_status_result != null)
-								textLabel_status_result.setText("Getting PDB information from Uniprot...");
-							taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting PDB information from Uniprot...");
+								textLabel_status_result.setText("Getting protein information from Uniprot...");
+							taskMonitor.showMessage(TaskMonitor.Level.INFO,
+									"Getting protein information from Uniprot...");
 
-							Protein ptn = Util.getPDBidFromUniprot(myCurrentRow, taskMonitor);
+							if (Util.useCustomizedPDB) {
 
-							if (ptn.proteinID == null || ptn.proteinID.isBlank() || ptn.proteinID.isEmpty()) {
+								Protein ptn = Util.getProteinFromUniprot(myCurrentRow, taskMonitor);
+								if (ptn.proteinID == null || ptn.proteinID.isBlank() || ptn.proteinID.isEmpty()) {
 
-								String node_name = myNetwork.getDefaultNodeTable().getRow(node.getSUID())
-										.get(CyNetwork.NAME, String.class);
+									String node_name = myNetwork.getDefaultNodeTable().getRow(node.getSUID())
+											.get(CyNetwork.NAME, String.class);
 
-								textLabel_status_result.setText("ERROR: Check Task History.");
-								taskMonitor.showMessage(TaskMonitor.Level.ERROR,
-										"Accession number is invalid for the protein: " + node_name);
+									textLabel_status_result.setText("ERROR: Check Task History.");
+									taskMonitor.showMessage(TaskMonitor.Level.ERROR,
+											"Accession number is invalid for the protein: " + node_name);
 
-								if (pyMOLButton != null)
-									pyMOLButton.setEnabled(true);
-								return;
+									if (pyMOLButton != null)
+										pyMOLButton.setEnabled(true);
+									return;
+
+								}
+
+								JFileChooser choosePDBFile = null;
+								choosePDBFile = new JFileChooser();
+								choosePDBFile.setFileFilter(
+										new ExtensionFileFilter("PDB or CIF file (*.pdb|*.cif)", "pdb", "cif"));
+								choosePDBFile.setFileSelectionMode(JFileChooser.FILES_ONLY);
+								choosePDBFile.setDialogTitle("Import file");
+
+								if (choosePDBFile.showOpenDialog(choosePDBFile) == JFileChooser.APPROVE_OPTION) {
+
+									String pdbFile = choosePDBFile.getSelectedFile().toString();
+									ptn.pdbIds = new ArrayList<PDB>();
+
+									try {
+										createPyMOLScript(taskMonitor, ptn, "", pdbFile);
+									} catch (Exception e) {
+										taskMonitor.showMessage(TaskMonitor.Level.ERROR, e.getMessage());
+									}
+								} else {
+									if (pyMOLButton != null)
+										pyMOLButton.setEnabled(true);
+									return;
+								}
 
 							} else {
+
+								Protein ptn = Util.getPDBidFromUniprot(myCurrentRow, taskMonitor);
+								if (ptn.proteinID == null || ptn.proteinID.isBlank() || ptn.proteinID.isEmpty()) {
+
+									String node_name = myNetwork.getDefaultNodeTable().getRow(node.getSUID())
+											.get(CyNetwork.NAME, String.class);
+
+									textLabel_status_result.setText("ERROR: Check Task History.");
+									taskMonitor.showMessage(TaskMonitor.Level.ERROR,
+											"Accession number is invalid for the protein: " + node_name);
+
+									if (pyMOLButton != null)
+										pyMOLButton.setEnabled(true);
+									return;
+
+								}
 
 								if (Util.useAlphaFold) {
 
@@ -1131,13 +1176,16 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 										return;
 									}
 								}
+
 							}
+
 						}
 					};
 
 					pyMOLThread.start();
 
 				} catch (Exception exception) {
+					System.out.println();
 				}
 			}
 		});
@@ -1891,7 +1939,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 						if (processPDBfile)
 							MainSingleEdgeTask.processPDBFile(taskMonitor, value, ptnSource, ptnTarget, nodeName,
-									processTarget, "");
+									processTarget, "", false);
 						else
 							MainSingleEdgeTask.processPDBorCIFfileWithSpecificChain(taskMonitor, ptnSource, ptnTarget,
 									value, pdbFile, pdbFile);
@@ -2038,6 +2086,21 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 			return;
 		}
 
+		createPyMOLScript(taskMonitor, ptn, pdbID_entry, pdbFile);
+	}
+
+	/**
+	 * Method responsible for creating PyMOL script (*.pml)
+	 * 
+	 * @param taskMonitor task monitor
+	 * @param ptn         current protein
+	 * @param pdbID_entry pdb entry
+	 * @param pdbFile     pdb full path
+	 * @throws Exception exception
+	 */
+	private void createPyMOLScript(TaskMonitor taskMonitor, Protein ptn, String pdbID_entry, String pdbFile)
+			throws Exception {
+		String msgINFO;
 		msgINFO = "Creating tmp PyMOL script file...";
 		if (textLabel_status_result != null)
 			textLabel_status_result.setText(msgINFO);

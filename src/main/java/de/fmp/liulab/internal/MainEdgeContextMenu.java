@@ -3,6 +3,7 @@ package de.fmp.liulab.internal;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 
 import org.cytoscape.application.swing.CyEdgeViewContextMenuFactory;
@@ -10,9 +11,12 @@ import org.cytoscape.application.swing.CyMenuItem;
 import org.cytoscape.model.CyEdge;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.View;
-import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.TaskIterator;
 import org.cytoscape.work.swing.DialogTaskManager;
+
+import de.fmp.liulab.internal.view.ExtensionFileFilter;
+import de.fmp.liulab.task.MainSingleEdgeTaskFactory;
+import de.fmp.liulab.utils.Util;
 
 /**
  * Class responsible for creating main edge context menu
@@ -21,7 +25,7 @@ import org.cytoscape.work.swing.DialogTaskManager;
  *
  */
 public class MainEdgeContextMenu implements CyEdgeViewContextMenuFactory, ActionListener {
-	private TaskFactory myFactory;
+	private MainSingleEdgeTaskFactory myFactory;
 	private DialogTaskManager dialogTaskManager;
 
 	/**
@@ -30,7 +34,7 @@ public class MainEdgeContextMenu implements CyEdgeViewContextMenuFactory, Action
 	 * @param myFactory         graphic instance
 	 * @param dialogTaskManager task manager
 	 */
-	public MainEdgeContextMenu(TaskFactory myFactory, DialogTaskManager dialogTaskManager) {
+	public MainEdgeContextMenu(MainSingleEdgeTaskFactory myFactory, DialogTaskManager dialogTaskManager) {
 		this.myFactory = myFactory;
 		this.dialogTaskManager = dialogTaskManager;
 	}
@@ -52,11 +56,34 @@ public class MainEdgeContextMenu implements CyEdgeViewContextMenuFactory, Action
 	 */
 	public void actionPerformed(ActionEvent e) {
 
-		// Get the task iterator
-		TaskIterator ti = myFactory.createTaskIterator();
+		TaskIterator ti = null;
 
-		// Execute the task through the TaskManager
-		dialogTaskManager.execute(ti);
+		if (Util.useCustomizedPDB) {
+			JFileChooser choosePDBFile = null;
+			choosePDBFile = new JFileChooser();
+			choosePDBFile.setFileFilter(new ExtensionFileFilter("PDB or CIF file (*.pdb|*.cif)", "pdb", "cif"));
+			choosePDBFile.setFileSelectionMode(JFileChooser.FILES_ONLY);
+			choosePDBFile.setDialogTitle("Import file");
+
+			if (choosePDBFile.showOpenDialog(choosePDBFile) == JFileChooser.APPROVE_OPTION) {
+
+				String pdbFile = choosePDBFile.getSelectedFile().toString();
+
+				// Get the task iterator
+				ti = myFactory.createTaskIterator(pdbFile);
+			}
+
+		}
+
+		else {
+			// Get the task iterator
+			ti = myFactory.createTaskIterator();
+
+		}
+
+		if (ti != null)
+			// Execute the task through the TaskManager
+			dialogTaskManager.execute(ti);
 	}
 
 }
