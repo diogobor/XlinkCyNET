@@ -235,14 +235,14 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 		information_panel.add(textLabel_Pfam);
 
 		offset_y += 10;
-		JRadioButton protein_domain_pfam = new JRadioButton("Pfam");
+		JRadioButton protein_domain_pfam = new JRadioButton("InterPro");
 		protein_domain_pfam.setSelected(Util.isProteinDomainPfam);
 		if (Util.isWindows()) {
-			protein_domain_pfam.setBounds(179, offset_y, 50, 20);
+			protein_domain_pfam.setBounds(179, offset_y, 75, 20);
 		} else if (Util.isMac()) {
-			protein_domain_pfam.setBounds(203, offset_y, 65, 20);
+			protein_domain_pfam.setBounds(203, offset_y, 90, 20);
 		} else {
-			protein_domain_pfam.setBounds(228, offset_y, 65, 20);
+			protein_domain_pfam.setBounds(228, offset_y, 90, 20);
 		}
 		protein_domain_pfam.addItemListener(new ItemListener() {
 
@@ -499,8 +499,8 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 						} else {
 
 							if (Util.isProteinDomainPfam) {
-								textLabel_status_result.setText("Accessing Pfam database...");
-								taskMonitor.showMessage(TaskMonitor.Level.INFO, "Accessing Pfam database...");
+								textLabel_status_result.setText("Accessing InterPro database...");
+								taskMonitor.showMessage(TaskMonitor.Level.INFO, "Accessing InterPro database...");
 							} else {
 								textLabel_status_result.setText("Accessing Supfam database...");
 								taskMonitor.showMessage(TaskMonitor.Level.INFO, "Accessing Supfam database...");
@@ -535,7 +535,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 					if (!isPfamLoaded) {
 						int input = JOptionPane.showConfirmDialog(null,
-								"Pfam process has not been finished yet. Do you want to close this window?",
+								"InterPro process has not been finished yet. Do you want to close this window?",
 								"XlinkCyNET - Protein domains", JOptionPane.INFORMATION_MESSAGE);
 						// 0=yes, 1=no, 2=cancel
 						if (input == 0) {
@@ -722,7 +722,7 @@ public class LoadProteinDomainTask extends AbstractTask implements ActionListene
 
 		if (!isPfamLoaded) {
 			int input = JOptionPane.showConfirmDialog(null,
-					"Supfam/Pfam process has not been finished yet. Do you want to close this window?",
+					"Supfam/InterPro process has not been finished yet. Do you want to close this window?",
 					"XlinkCyNET - Protein domains", JOptionPane.INFORMATION_MESSAGE);
 			// 0=yes, 1=no, 2=cancel
 			if (input == 0) {

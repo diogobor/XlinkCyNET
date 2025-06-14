@@ -796,7 +796,7 @@ public class MainSingleNodeTask extends AbstractTask implements ActionListener {
 
 		offset_y = 165;
 
-		JRadioButton protein_domain_pfam = new JRadioButton("Pfam");
+		JRadioButton protein_domain_pfam = new JRadioButton("InPro");
 		protein_domain_pfam.setSelected(Util.isProteinDomainPfam);
 		if (Util.isWindows()) {
 			protein_domain_pfam.setBounds(179, offset_y, 50, 20);

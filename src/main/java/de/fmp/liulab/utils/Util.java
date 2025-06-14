@@ -23,6 +23,12 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonNumber;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import javax.json.JsonValue;
 import javax.swing.AbstractListModel;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -3740,6 +3746,7 @@ public class Util {
 			}
 			rd.close();
 			responseString = response.toString();
+			connection.disconnect();
 		}
 
 		return responseString;
@@ -3909,10 +3916,11 @@ public class Util {
 					}
 				}
 				rd.close();
+				connection.disconnect();
 				return new String[] { "PDB", response.toString() };
 
 			} else {
-
+				connection.disconnect();
 				taskMonitor.showMessage(TaskMonitor.Level.WARN, "There is no PDB file.");
 				return new String[] { "" };
 			}
@@ -3979,10 +3987,11 @@ public class Util {
 				if (modifyChain) {
 					final_response = final_response.replaceAll(" A ", " B ");
 				}
+				connection.disconnect();
 				return new String[] { "PDB", final_response };
 
 			} else {
-
+				connection.disconnect();
 				taskMonitor.showMessage(TaskMonitor.Level.WARN, "There is no PDB for this ID: " + pdbID + ".");
 				return new String[] { "" };
 			}
@@ -4002,14 +4011,9 @@ public class Util {
 	public static String[] getPDBorCIFfileFromServer(String pdbID, TaskMonitor taskMonitor) {
 
 		try {
-			String _url = "https://files.rcsb.org/view/" + pdbID + ".pdb";
+			String _url = "https://files.rcsb.org/download/" + pdbID + ".pdb";
 			final URL url = new URL(_url);
 			final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-			connection.setRequestMethod("POST");
-			connection.setDoOutput(true);
-			connection.setReadTimeout(1000);
-			connection.setConnectTimeout(1000);
-			connection.connect();
 
 			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
 
@@ -4041,17 +4045,18 @@ public class Util {
 					}
 				}
 				rd.close();
+				connection.disconnect();
 				return new String[] { "PDB", response.toString() };
 
 			} else if (connection.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-
+				connection.disconnect();
 				taskMonitor.showMessage(TaskMonitor.Level.WARN,
 						"There is no PDB for this ID: " + pdbID + ". Trying to retrieve CIF file...");
 
 				return new String[] { "CIF", getCiFfileFromServer(pdbID, taskMonitor) };
 
 			} else {
-
+				connection.disconnect();
 				taskMonitor.showMessage(TaskMonitor.Level.WARN, "There is no PDB for this ID: " + pdbID + ".");
 				return new String[] { "" };
 			}
@@ -4108,10 +4113,11 @@ public class Util {
 					}
 				}
 				rd.close();
+				connection.disconnect();
 				return response.toString();
 
 			} else {
-
+				connection.disconnect();
 				taskMonitor.showMessage(TaskMonitor.Level.WARN, "There is no CIF for this ID: " + pdbID + ".");
 				return "";
 			}
@@ -4162,6 +4168,7 @@ public class Util {
 				rd.close();
 
 			} else {
+				connection.disconnect();
 				return new ArrayList<Fasta>();
 			}
 
@@ -4169,7 +4176,7 @@ public class Util {
 			for (int i = 0; i < cols.length - 1; i += 2) {
 				fastaList.add(new Fasta(cols[i], cols[i + 1]));
 			}
-
+			connection.disconnect();
 		} catch (Exception e) {
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR,
 					"ERROR: Download fasta file from RCSB PDB server:" + e.getMessage());
@@ -4208,6 +4215,7 @@ public class Util {
 					response.append('\r');
 				}
 				rd.close();
+				connection.disconnect();
 				String responseString = response.toString();
 
 				// Try to find out second RCSB link. Example:
@@ -4548,6 +4556,7 @@ public class Util {
 					response.append(line);
 				}
 				rd.close();
+				connection.disconnect();
 				return response.toString();
 
 			} else {
@@ -4596,6 +4605,7 @@ public class Util {
 					response.append('\r');
 				}
 				rd.close();
+				connection.disconnect();
 				String responseString = response.toString();
 
 				if (responseString.startsWith("<!DOCTYPE html PUBLIC"))
@@ -4671,14 +4681,18 @@ public class Util {
 	private static ArrayList<ProteinDomain> getProteinDomainsFromPfam(String proteinID, TaskMonitor taskMonitor) {
 
 		try {
-			String _url = "https://pfam.xfam.org/protein?entry=" + proteinID + "&output=xml";
+			String _url = "https://www.ebi.ac.uk/interpro/api/entry/pfam/protein/uniprot/" + proteinID;
 			final URL url = new URL(_url);
 			final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-			connection.setRequestMethod("POST");
-			connection.setDoOutput(true);
-			connection.setReadTimeout(1000);
-			connection.setConnectTimeout(1000);
-			connection.connect();
+
+			connection.setRequestMethod("GET");
+
+			// Optional headers (safe after method is set)
+			connection.setRequestProperty("Accept", "application/json");
+
+			connection.setReadTimeout(100000);
+			connection.setConnectTimeout(100000);
+
 			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
 
 				// Get Response
@@ -4709,51 +4723,49 @@ public class Util {
 					}
 				}
 				rd.close();
+				connection.disconnect();
 				String responseString = response.toString();
-
-				if (responseString.startsWith("<!DOCTYPE html PUBLIC"))
-					return new ArrayList<ProteinDomain>();
-
-				// Use method to convert XML string content to XML Document object
-				Document doc = convertStringToXMLDocument(responseString);
-
-				if (doc == null)
-					return new ArrayList<ProteinDomain>();
-
-				// check if exists error
-				NodeList xmlnodes = doc.getElementsByTagName("error");
-				if (xmlnodes.getLength() > 0) {
-					throw new Exception("XlinkCyNET ERROR: " + xmlnodes.item(0).getNodeValue());
-				}
-
-				xmlnodes = doc.getElementsByTagName("matches");
-
-				taskMonitor.showMessage(TaskMonitor.Level.INFO, "Getting domains...");
-
 				ArrayList<ProteinDomain> proteinDomainList = new ArrayList<ProteinDomain>();
-				for (int i = 0; i < xmlnodes.getLength(); i++) {
-					for (int j = 0; j < xmlnodes.item(i).getChildNodes().getLength(); j++) {
-						Node nNode = xmlnodes.item(i).getChildNodes().item(j);
-						if (nNode.getNodeType() == Node.ELEMENT_NODE) {
-							// get attributes names and values
-							String domain = nNode.getAttributes().item(1).getNodeValue();
-							domain = domain.replace(",", "_");
-
-							int startId = Integer
-									.parseInt(nNode.getChildNodes().item(1).getAttributes().item(7).getNodeValue());
-							int endId = Integer
-									.parseInt(nNode.getChildNodes().item(1).getAttributes().item(3).getNodeValue());
-							String eValue = nNode.getChildNodes().item(1).getAttributes().item(4).getNodeValue();
-							proteinDomainList.add(new ProteinDomain(domain, startId, endId, eValue));
-						}
-					}
+				
+				try (JsonReader reader = Json.createReader(new StringReader(responseString))) {
+				    JsonObject root = reader.readObject();
+				    JsonArray results = root.getJsonArray("results");
+				    
+				    for (JsonObject domainEntry : results.getValuesAs(JsonObject.class)) {
+				        JsonObject metadata = domainEntry.getJsonObject("metadata");
+				        String domain = metadata.getString("name");
+				        JsonArray proteins_obj = domainEntry.getJsonArray("proteins");
+				        
+				        for (JsonObject locationEntry : proteins_obj.getValuesAs(JsonObject.class)) {
+				        	JsonArray locations = locationEntry.getJsonArray("entry_protein_locations");
+				        	int startId = 0;
+				            int endId = 0;
+					        String eValue = "";
+					        for (JsonValue locVal : locations) {
+					            JsonObject location = locVal.asJsonObject();
+					            JsonArray fragments = location.getJsonArray("fragments");
+					            
+					            for (JsonValue fragVal : fragments) {
+					                JsonObject fragment = fragVal.asJsonObject();
+					                startId = fragment.getInt("start");
+					                endId = fragment.getInt("end");
+					                break;
+					            }
+					            
+					            JsonNumber scoreNumber = location.getJsonNumber("score");
+					            eValue = scoreNumber.toString();
+					            break;
+					        }
+					        proteinDomainList.add(new ProteinDomain(domain, startId, endId, eValue));
+					        break;
+				        }
+				    }
 				}
 				return proteinDomainList;
 			} else {
 				taskMonitor.showMessage(TaskMonitor.Level.WARN, "There is no Pfam file for the ID: " + proteinID);
 				return new ArrayList<ProteinDomain>();
 			}
-
 		} catch (Exception e) {
 			taskMonitor.showMessage(TaskMonitor.Level.WARN, e.getMessage());
 			return new ArrayList<ProteinDomain>();
